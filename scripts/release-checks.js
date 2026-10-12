@@ -1,19 +1,21 @@
 /** @module release-checks Validates metadata and the public package artifact contract. */
-import { readLatestRelease } from "./changelog.js";
-
-/** Stable and prerelease semantic versions, without a tag prefix. */
-const RELEASE_VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/u;
+import { readLatestRelease, readUnreleased } from "beez-rp/changelog";
+import { RELEASE_VERSION_PATTERN } from "./constants/release-checks.js";
 
 /**
- * Requires release notes matching the manifest while preserving Spanish copy.
+ * Requires manually maintained release notes without rewriting the changelog.
+ * Accepts the populated Unreleased block preserved by beez-rp 0.7, or a matching
+ * dated release block produced by earlier engine versions.
  * @param {{version: string}} metadata - Package release metadata.
  * @param {string} changelog - UTF-8 release notes.
  * @returns {void} Completes when release metadata is consistent.
  * @throws {Error} When the version or release notes are invalid.
  */
 export function validateReleaseMetadata(metadata, changelog) {
-  if (!RELEASE_VERSION.test(metadata.version)) throw new Error("release: package.version must be a semantic version");
-  // The `[Unreleased]` block collects future changes; the first released block must match the manifest.
+  if (!RELEASE_VERSION_PATTERN.test(metadata.version)) throw new Error("release: package.version must be a semantic version");
+  const unreleased = readUnreleased(changelog);
+  if (unreleased.unknownSections.length > 0) throw new Error("release: unreleased changelog contains unsupported change sections");
+  if (unreleased.entryCount > 0) return;
   const latest = readLatestRelease(changelog);
   if (!latest || latest.version !== metadata.version) throw new Error(`release: first released changelog version must be ${metadata.version}`);
   if (latest.entryCount === 0) throw new Error("release: current changelog entry must describe at least one change");

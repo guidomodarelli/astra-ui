@@ -1,12 +1,12 @@
 # Cambios
 
-Todos los cambios relevantes de beez-ui se documentan en este archivo con el formato de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/). Cada cambio agrega sus entradas en `[Unreleased]`; `pnpm create-version` las pasa a la versión publicada con su fecha.
+Todos los cambios relevantes de beez-ui se documentan en este archivo con el formato de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/). Cada cambio agrega sus entradas en `[Unreleased]`; `pnpm create-version` verifica su actualización manual y conserva el documento sin reescribirlo.
 
 ## [Unreleased]
 
 ### Added
 
-- Publicación desde GitHub Actions con versión y CHANGELOG calculados desde los commits, usando el token automático del repositorio.
+- Publicación desde GitHub Actions con versión calculada y CHANGELOG mantenido manualmente, usando el token automático del repositorio.
 
 ### Changed
 
@@ -17,6 +17,7 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 ### Fixed
 
 - Los eventos de teclado sin una tecla válida no interrumpen la navegación lateral; se conservan los atajos con Ctrl y Cmd.
+- La preparación del paquete acepta las notas de `[Unreleased]` que conserva el motor de publicación actual, sin exigir que se reescriba el historial.
 
 ## [0.11.0] - 2026-10-03
 

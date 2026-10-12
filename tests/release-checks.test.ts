@@ -16,15 +16,28 @@ describe("release contracts", () => {
     expect(() => validateReleaseMetadata(PACKAGE, "# Cambios\n\n## 0.1.1 - 2026-09-08\n\n- Publicación con tipos.\n")).not.toThrow();
   });
 
-  it("should skip the [Unreleased] block and accept bracketed release headings", () => {
-    const changelog = "# Cambios\n\n## [Unreleased]\n\n### Added\n\n- Próximo cambio.\n\n## [0.1.1] - 2026-09-08\n\n### Fixed\n\n- Publicación con tipos.\n";
+  it("should accept bracketed historical release headings when unreleased notes are empty", () => {
+    const changelog = "# Cambios\n\n## [Unreleased]\n\n## [0.1.1] - 2026-09-08\n\n### Fixed\n\n- Publicación con tipos.\n";
     expect(() => validateReleaseMetadata(PACKAGE, changelog)).not.toThrow();
-    expect(() => validateReleaseMetadata(PACKAGE, "## [Unreleased]\n\n- Próximo.\n\n## [0.1.0] - 2026-09-01\n\n- Anterior.\n")).toThrow(/0\.1\.1/);
+    expect(() => validateReleaseMetadata(PACKAGE, "## [Unreleased]\n\n## [0.1.0] - 2026-09-01\n\n- Anterior.\n")).toThrow(/0\.1\.1/);
   });
 
   it("should accept the changelog of a version commit, with an empty [Unreleased] above the dated release", () => {
     const changelog = "# Cambios\n\n## [Unreleased]\n\n## [0.1.1] - 2026-09-08\n\n### Fixed\n\n- Publicación con tipos.\n\n## [0.1.0] - 2026-09-01\n\n- Anterior.\n";
     expect(() => validateReleaseMetadata(PACKAGE, changelog)).not.toThrow();
+  });
+
+  it.each(["\n", "\r\n"])("should accept manually maintained unreleased notes when the engine preserves their bytes (%j)", (lineBreak) => {
+    // Arrange: beez-rp 0.7 preserves this document while bumping package.json.
+    const changelog = ["# Cambios", "", "## [Unreleased]", "", "### Fixed", "", "- La navegación conserva los atajos.", "", "## [0.1.0] - 2026-09-01", "", "- Anterior.", ""].join(lineBreak);
+
+    // Act and assert: current notes remain valid without relabeling published history.
+    expect(() => validateReleaseMetadata(PACKAGE, changelog)).not.toThrow();
+  });
+
+  it("should reject empty or unsupported unreleased notes when they cannot describe the current release", () => {
+    expect(() => validateReleaseMetadata(PACKAGE, "## [Unreleased]\n\n### Fixed\n\n## [0.1.0]\n\n- Anterior.\n")).toThrow(/changelog/i);
+    expect(() => validateReleaseMetadata(PACKAGE, "## [Unreleased]\n\n### Unsupported\n\n- Cambio.\n")).toThrow(/section/i);
   });
 
   it("should reject missing notes, mismatched versions and malformed versions", () => {
