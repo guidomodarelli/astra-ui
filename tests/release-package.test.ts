@@ -55,7 +55,7 @@ assert.throws(() => createRequire(import.meta.url).resolve("next"));
 assert.throws(() => createRequire(import.meta.url).resolve("@tanstack/react-router"));
 const html = renderToStaticMarkup(createElement(Button, { disabled: true }, "Guardar"));
 assert.match(html, /<button[^>]*disabled/);
-assert.match(html, /Guardar<\\/button>/);
+assert.match(html, />Guardar(<\\/span>)+<\\/button>/);
 assert.equal(parseFilterQuery("luz", [{ key: "", kind: "text", label: "Texto" }]).descriptionFilter, "luz");
 assert.equal(parseYearMonthFilterInput("09/2026"), 202609);
 `);
