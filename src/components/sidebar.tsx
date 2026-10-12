@@ -266,6 +266,7 @@ function SidebarProvider({
   React.useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
       if (
+        typeof event.key === "string" &&
         event.key.toLowerCase() === SIDEBAR_KEYBOARD_SHORTCUT &&
         (event.metaKey || event.ctrlKey)
       ) {

@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      skip_unpublished:
+        description: Omitir el tag del registry anterior durante una migración autorizada
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -40,6 +46,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Create and publish release
-        run: pnpm create-version --accept-suggested
+        shell: bash
+        run: |
+          release_arguments=(--accept-suggested)
+          if [[ "$SKIP_UNPUBLISHED" == "true" ]]; then
+            release_arguments+=(--skip-unpublished)
+          fi
+          pnpm create-version "${release_arguments[@]}"
         env:
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SKIP_UNPUBLISHED: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_unpublished }}

@@ -259,7 +259,7 @@ El workflow **Release** se ejecuta automáticamente con cada push o merge a `mai
 incluidos los cambios de `package.json`. También se puede iniciar en GitHub desde
 **Actions → Release → Run workflow**, seleccionando `main`.
 El workflow usa `pnpm create-version --accept-suggested`: beez-rp calcula la versión
-y genera el CHANGELOG desde los commits, prepara y valida el tarball, crea y sube
+y verifica el CHANGELOG mantenido manualmente, prepara y valida el tarball, crea y sube
 el commit y el tag y publica en GitHub Packages.
 
 El disparador también incluye los pushes que cambian `package.json`, pero
@@ -305,8 +305,8 @@ Los releases salen sólo desde `main`, limpio y al día con origin (sólo `CHANG
 ### Flujo validado de un release nuevo
 
 1. Actualiza `main` con fast-forward si está atrás.
-2. Genera `## [Unreleased]` desde los commits entre versiones, con una entrada por commit que conserva su hash y título original.
-3. Pide la versión (sugiere `patch`, `minor` o `major` según los commits), renombra `## [Unreleased]` a `## [X.Y.Z] - AAAA-MM-DD` dejando un `[Unreleased]` vacío arriba y crea el commit `X.Y.Z` con `package.json` y `CHANGELOG.md` y el tag anotado `vX.Y.Z`, antes de las validaciones largas.
+2. Verifica que `CHANGELOG.md` exista y haya cambiado manualmente desde el último release. Conserva sus bytes; no genera notas ni renombra `[Unreleased]`.
+3. Pide la versión (sugiere `patch`, `minor` o `major` según los commits) y crea el commit `X.Y.Z` con la versión del manifiesto, el CHANGELOG conservado y el tag anotado `vX.Y.Z`, antes de las validaciones largas.
 4. `prepare` (`scripts/release-hooks.js`): reusa el tarball ya preparado para esa versión si es posterior al último cambio de código (el commit de versión no cuenta); si no, ejecuta `pnpm release:prepare` sobre el commit de versión: instalación congelada, tests sin React Compiler, build optimizado, lint, typechecks, tests unitarios y pruebas de navegador, y genera el tarball verificado con `npm pack --ignore-scripts` (npm y no pnpm, para que sea reproducible) en `releases/<version>-<sha256>/guidomodarelli-beez-ui-<version>.tgz`.
 5. Sube `main` y el tag `vX.Y.Z` a origin con un único `git push --atomic`.
 6. Publicación: beez-rp exige que el commit de versión siga sin cambios, toma `releases/<version>-<sha256>/guidomodarelli-beez-ui-<version>.tgz`, verifica el SHA-256 de su ruta y compara su SHA-512 con el `integrity` de `npm pack --dry-run` sobre ese commit (`npm pack` es reproducible, así que coincidir prueba que es byte a byte lo que npm empaqueta) y recién ahí lo publica en GitHub Packages con etiqueta `latest`. Además, `prepublishOnly` ejecuta `beez-rp guard-publish`, que corta un `pnpm publish` manual (o yarn/bun): se publica sólo con `pnpm create-version`, que usa npm.
@@ -319,7 +319,7 @@ GitHub Packages crea los paquetes con visibilidad privada inicialmente. Para dis
 
 ### CHANGELOG
 
-`CHANGELOG.md` sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Cada cambio agrega sus entradas en el bloque `## [Unreleased]`, agrupadas en `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed` y `### Security` (solo las que apliquen). Nunca se escriben la versión ni la fecha a mano: `pnpm create-version` las agrega al publicar. Las versiones anteriores a este formato (`## 0.6.1 - 2026-09-26`) siguen siendo válidas. La regla completa está en `AGENTS.md`.
+`CHANGELOG.md` sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Cada cambio agrega sus entradas en el bloque `## [Unreleased]`, agrupadas en `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed` y `### Security` (solo las que apliquen). Desde beez-rp 0.7, `pnpm create-version` exige una actualización manual y conserva el archivo sin generar notas ni escribir versiones o fechas. La preparación acepta notas válidas en `[Unreleased]` y mantiene compatibilidad con un bloque histórico que coincida con el manifiesto. La regla completa está en `AGENTS.md`.
 
 Para validar y empaquetar la versión actual sin publicarla:
 

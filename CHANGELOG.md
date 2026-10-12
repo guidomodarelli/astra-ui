@@ -1,19 +1,25 @@
 # Cambios
 
-Todos los cambios relevantes de beez-ui se documentan en este archivo con el formato de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/). Cada cambio agrega sus entradas en `[Unreleased]`; `pnpm create-version` las pasa a la versión publicada con su fecha.
+Todos los cambios relevantes de beez-ui se documentan en este archivo con el formato de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/). Cada cambio agrega sus entradas en `[Unreleased]`; `pnpm create-version` verifica su actualización manual y conserva el documento sin reescribirlo.
 
 ## [Unreleased]
 
 ### Added
 
 - `Button` acepta la prop `loading`: muestra un spinner, marca el botón como ocupado e ignora los clics sin perder el foco; si es el trigger de un menú o popover, tampoco lo abre.
-- Publicación desde GitHub Actions con versión y CHANGELOG calculados desde los commits, usando el token automático del repositorio.
+- Publicación desde GitHub Actions con versión calculada y CHANGELOG mantenido manualmente, usando el token automático del repositorio.
 
 ### Changed
 
 - `Button` adopta el estilo y la animación de Arc: nuevos colores por variante (`default` pasa a usar `foreground` en lugar de `primary`), presión según el ancho del botón y animación del ancho cuando cambia el texto. También aplica a los botones con `asChild`. Los triggers de menús y popovers no se achican al presionarlos.
 - El release se inicia automáticamente al subir cambios a `main`, incluidos los cambios de `package.json`, y conserva la ejecución manual desde Actions.
 - El paquete pasa a publicarse en GitHub Packages como `@guidomodarelli/beez-ui`; los consumidores deben actualizar sus dependencias e imports y configurar acceso al registry de GitHub.
+- La ejecución manual del release permite omitir explícitamente un tag pendiente del registro anterior durante una migración; la ejecución automática conserva esa protección.
+
+### Fixed
+
+- Los eventos de teclado sin una tecla válida no interrumpen la navegación lateral; se conservan los atajos con Ctrl y Cmd.
+- La preparación del paquete acepta las notas de `[Unreleased]` que conserva el motor de publicación actual, sin exigir que se reescriba el historial.
 
 ## [0.11.0] - 2026-10-03
 
