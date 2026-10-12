@@ -55,7 +55,7 @@ test("should animate menus and dialogs while preserving keyboard dismissal", asy
   }
 });
 
-test("should spring pressed buttons, lift them on real hover and not animate disabled actions", async ({
+test("should press buttons by their width, keep menu triggers still and not animate disabled actions", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -64,22 +64,34 @@ test("should spring pressed buttons, lift them on real hover and not animate dis
     name: "Acción principal",
     exact: true,
   });
-  const canHover = await page.evaluate(
-    () => window.matchMedia("(hover: hover) and (pointer: fine)").matches,
-  );
   await button.hover();
-  if (canHover) {
-    await expect(button).toHaveCSS(
-      "transform",
-      "matrix(1.02, 0, 0, 1.02, 0, 0)",
-    );
-  }
+  // Arc answers hover with color only; the scale is reserved for the press.
+  await expect(button).toHaveCSS("transform", "none");
+  const width = (await button.boundingBox())!.width;
+  // Wide buttons press a little less so large surfaces don't feel spongy.
+  const pressScale = width > 220 ? 0.985 : 0.97;
   await page.mouse.down();
-  await expect(button).toHaveCSS("transform", "matrix(0.93, 0, 0, 0.93, 0, 0)");
+  await expect(button).toHaveCSS("transform", `matrix(${pressScale}, 0, 0, ${pressScale}, 0, 0)`);
   await page.mouse.up();
   await page.mouse.move(0, 0);
   await expect(button).toHaveCSS("transform", "none");
-  expect((await button.boundingBox())!.width).toBeGreaterThan(100);
+
+  // Menu triggers never scale, so the menu never measures a shrunken anchor.
+  // The open menu hides the rest of the page from the accessibility tree, so keep a handle to the node.
+  const trigger = await page.getByRole("button", { name: "Abrir menú", exact: true }).elementHandle();
+  await trigger!.hover();
+  await page.mouse.down();
+  const triggerTransforms = await trigger!.evaluate(async (element: HTMLElement) => {
+    const samples: string[] = [];
+    for (let frame = 0; frame < 15; frame += 1) {
+      await new Promise(requestAnimationFrame);
+      samples.push(getComputedStyle(element).transform);
+    }
+    return samples;
+  });
+  expect(triggerTransforms.every((transform) => transform === "none")).toBe(true);
+  await page.mouse.up();
+  await page.keyboard.press("Escape");
   const disabled = page.getByRole("button", {
     name: "Acción deshabilitada",
     exact: true,
@@ -360,4 +372,51 @@ test("should keep chevrons in their final orientation without animating when mot
   expect(await motion.properties({ slot: "select-icon" })).toEqual([]);
   expect(await motion.properties({ slot: "select-item" })).toEqual([]);
   expect(await motion.properties({ buttonText: "ARS (2)" })).toEqual([]);
+});
+
+test("should spring the button width to a new label instead of jumping", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/motion.html");
+  const button = page.getByRole("button", { name: "Guardar", exact: true });
+  const startWidth = (await button.boundingBox())!.width;
+
+  const widths = await button.evaluate(async (element: HTMLElement) => {
+    const samples: number[] = [];
+    element.click();
+    const startedAt = performance.now();
+    // Sample every frame while the morph spring runs.
+    while (performance.now() - startedAt < 600) {
+      await new Promise(requestAnimationFrame);
+      samples.push(element.getBoundingClientRect().width);
+    }
+    return samples;
+  });
+
+  const endWidth = widths.at(-1)!;
+  expect(endWidth).toBeGreaterThan(startWidth);
+  expect(widths.some((width) => width > startWidth + 1 && width < endWidth - 1)).toBe(true);
+  await expect(page.getByRole("button", { name: "Borrador guardado en tu cuenta", exact: true })).toBeVisible();
+});
+
+test("should swap a button label without animating its width when motion is reduced", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/motion.html");
+  const button = page.getByRole("button", { name: "Guardar", exact: true });
+  const startWidth = (await button.boundingBox())!.width;
+
+  const widths = await button.evaluate(async (element: HTMLElement) => {
+    const samples: number[] = [];
+    element.click();
+    for (let frame = 0; frame < 20; frame += 1) {
+      await new Promise(requestAnimationFrame);
+      samples.push(element.getBoundingClientRect().width);
+    }
+    return samples;
+  });
+
+  const endWidth = widths.at(-1)!;
+  expect(endWidth).toBeGreaterThan(startWidth);
+  // The new width is reached at once: every sample after the first resize is already final.
+  const firstResized = widths.findIndex((width) => width !== startWidth);
+  expect(widths.slice(firstResized).every((width) => Math.abs(width - endWidth) < 1)).toBe(true);
 });

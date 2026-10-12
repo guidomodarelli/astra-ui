@@ -4,7 +4,7 @@ beez-ui includes code adapted from the following projects.
 
 ## Arc
 
-`ArcButton` (`src/components/arc-button.tsx`) and its motion presets (`src/motion/arc-tokens.ts`) are adapted from the free Arc library: https://uiarc.dev, https://github.com/kuratlielia/arc-library
+`Button` styles and motion (`src/components/button.tsx`, `src/components/button-label.tsx`, `src/motion/arc-press.ts`, `src/motion/arc-tokens.ts`) are adapted from the free Arc library: https://uiarc.dev, https://github.com/kuratlielia/arc-library
 
 ```
 MIT License

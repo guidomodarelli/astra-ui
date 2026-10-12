@@ -6,11 +6,12 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ### Added
 
-- Nuevo componente `ArcButton` (también en `@guidomodarelli/beez-ui/arc-button`), adaptado del botón de Arc: variantes `primary`, `secondary`, `ghost` y `danger`, tamaños `sm`, `md` y `lg`, estado `loading` con spinner y animación del ancho cuando cambia el texto. Convive con `Button`, que no cambia.
+- `Button` acepta la prop `loading`: muestra un spinner, marca el botón como ocupado e ignora los clics sin perder el foco.
 - Publicación desde GitHub Actions con versión y CHANGELOG calculados desde los commits, usando el token automático del repositorio.
 
 ### Changed
 
+- `Button` adopta el estilo y la animación de Arc: nuevos colores por variante (`default` pasa a usar `foreground` en lugar de `primary`), presión según el ancho del botón y animación del ancho cuando cambia el texto. También aplica a los botones con `asChild`. Los triggers de menús y popovers no se achican al presionarlos.
 - El release se inicia automáticamente al subir cambios a `main`, incluidos los cambios de `package.json`, y conserva la ejecución manual desde Actions.
 - El paquete pasa a publicarse en GitHub Packages como `@guidomodarelli/beez-ui`; los consumidores deben actualizar sus dependencias e imports y configurar acceso al registry de GitHub.
 

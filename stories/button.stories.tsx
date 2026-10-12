@@ -10,6 +10,7 @@ type Args = {
     "default" | "outline" | "secondary" | "ghost" | "destructive" | "link";
   size:
     "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg";
+  loading: boolean;
   disabled: boolean;
 };
 
@@ -19,6 +20,7 @@ const meta = {
     children: "Guardar cambios",
     variant: "default",
     size: "default",
+    loading: false,
     disabled: false,
   },
   argTypes: {
@@ -49,12 +51,15 @@ const meta = {
         "icon-lg",
       ],
     },
+    loading: {
+      control: "boolean",
+    },
     disabled: {
       control: "boolean",
     },
   },
   parameters: {
-    controls: { include: ["children", "variant", "size", "disabled"] },
+    controls: { include: ["children", "variant", "size", "loading", "disabled"] },
   },
   render: ({ children, ...args }) => (
     <Button {...args} aria-label={children} onClick={fn()}>

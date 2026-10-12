@@ -1,26 +1,41 @@
 "use client"
 
+/**
+ * Button with Arc's look and motion (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md):
+ * width-aware press feedback, a label that springs to its new width and a loading spinner, behind
+ * beez-ui's variant, size and `asChild` contract.
+ */
+import { Children, cloneElement, isValidElement } from "react"
+import type { ComponentProps, MouseEvent, ReactElement, ReactNode, Ref } from "react"
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
 
-import { MotionSlot } from "../motion/motion-slot.js"
+import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
 import { cn } from "../lib/utils.js"
+import { useArcPress } from "../motion/arc-press.js"
+import { useAttachedElement } from "../motion/use-attached-element.js"
+import { ButtonLabel } from "./button-label.js"
 
+/**
+ * Class recipe. Press scale is driven by Motion alone, so `transform` never gets a CSS transition,
+ * and anchors of floating layers never scale because Radix measures them on pointerdown.
+ */
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button relative inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap outline-none select-none [-webkit-tap-highlight-color:transparent] transition-[color,background-color,border-color,opacity,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-busy:cursor-progress aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 motion-reduce:transition-none dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&:is([aria-haspopup]:not([aria-haspopup=false]),[data-state],[role=combobox])]:transform-none! [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        default:
+          "border-foreground bg-foreground text-background hover:not-disabled:opacity-90 hover:not-disabled:shadow-xs active:not-disabled:opacity-85",
         outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-border bg-background text-foreground hover:not-disabled:bg-muted hover:not-disabled:shadow-xs active:not-disabled:bg-muted aria-expanded:bg-muted disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-muted text-foreground hover:not-disabled:bg-muted/70 active:not-disabled:bg-muted/70 aria-expanded:bg-muted/70",
         ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+          "text-muted-foreground hover:not-disabled:bg-muted hover:not-disabled:text-foreground active:not-disabled:bg-muted active:not-disabled:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground disabled:text-muted-foreground/60 disabled:opacity-100",
         destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
+          "border-border bg-background text-destructive hover:not-disabled:border-destructive hover:not-disabled:bg-muted active:not-disabled:border-destructive active:not-disabled:bg-muted focus-visible:border-destructive/40 focus-visible:ring-destructive/20 disabled:bg-muted disabled:text-destructive/55 disabled:opacity-100 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
@@ -44,26 +59,79 @@ const buttonVariants = cva(
   }
 )
 
+/** Swallows activation while loading, keeping the button focusable instead of disabling it. */
+function preventActivation(event: MouseEvent<HTMLElement>) {
+  event.preventDefault()
+}
+
+type SlottableChildProps = { children?: ReactNode; onClick?: (event: MouseEvent<HTMLElement>) => void }
+
+/**
+ * Wraps the content of an `asChild` element in the Arc label, so links morph and spin like buttons.
+ * While loading, the child's own click handler is replaced too, because Slot runs it before ours.
+ * Children given as render functions keep their content untouched.
+ */
+function withArcLabel(
+  children: ReactNode,
+  loading: boolean,
+  renderLabel: (content: ReactNode) => ReactNode,
+): ReactNode {
+  const child = Children.only(children)
+  if (!isValidElement<SlottableChildProps>(child)) return child
+  const content = child.props.children
+  const overrides = loading ? { onClick: preventActivation } : undefined
+  const label = typeof content === "function" ? content : renderLabel(content)
+  return cloneElement(child as ReactElement<SlottableChildProps>, overrides, label)
+}
+
 function Button({
   className,
   variant = "default",
   size = "default",
   asChild = false,
+  loading = false,
+  children,
+  onClick,
+  ref,
   ...props
 }: ButtonPrimitive.Props &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
+    /** Shows a spinner, sets `aria-busy` and swallows clicks while keeping keyboard focus. */
+    loading?: boolean
   }) {
-  const Comp = asChild ? Slot.Root : ButtonPrimitive
+  const reduceMotion = usePrefersReducedMotion()
+  const [element, attach] = useAttachedElement<HTMLElement>(ref as Ref<HTMLElement> | undefined)
+  useArcPress(element, !reduceMotion && variant !== "link")
+
+  const renderLabel = (content: ReactNode) => (
+    <ButtonLabel loading={loading} reduceMotion={reduceMotion}>
+      {content}
+    </ButtonLabel>
+  )
+  const sharedProps = {
+    "data-slot": "button",
+    "data-variant": variant,
+    "data-size": size,
+    className: cn(buttonVariants({ variant, size, className })),
+    "aria-busy": loading || undefined,
+    ...props,
+    "aria-disabled": loading || props["aria-disabled"] || undefined,
+    onClick: loading ? preventActivation : onClick,
+  }
+
+  if (asChild) {
+    return (
+      <Slot.Root ref={attach} {...(sharedProps as ComponentProps<typeof Slot.Root>)}>
+        {withArcLabel(children, loading, renderLabel)}
+      </Slot.Root>
+    )
+  }
 
   return (
-    <MotionSlot kind="press"><Comp
-      data-slot="button"
-      data-variant={variant}
-      data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    /></MotionSlot>
+    <ButtonPrimitive ref={attach} {...(sharedProps as ButtonPrimitive.Props)}>
+      {renderLabel(children)}
+    </ButtonPrimitive>
   )
 }
 

@@ -51,6 +51,7 @@ import "./styles.css";
 function MotionExamples() {
   const [message, setMessage] = useState("Lectura sin esperas");
   const [action, setAction] = useState("");
+  const [isDraftSaved, setIsDraftSaved] = useState(false);
   const [isEmailInvalid, setIsEmailInvalid] = useState(false);
   const [isArchivedVisible, setIsArchivedVisible] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<ReadonlySet<string>>(
@@ -79,6 +80,9 @@ function MotionExamples() {
         <section className="controls">
           <Button>Acción principal</Button>
           <Button disabled>Acción deshabilitada</Button>
+          <Button variant="outline" onClick={() => setIsDraftSaved(true)}>
+            {isDraftSaved ? "Borrador guardado en tu cuenta" : "Guardar"}
+          </Button>
           <Checkbox id="motion-choice" />
           <Label htmlFor="motion-choice">Recibir novedades</Label>
         </section>
