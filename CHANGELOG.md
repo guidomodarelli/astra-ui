@@ -12,6 +12,7 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 - El release se inicia automáticamente al subir cambios a `main`, incluidos los cambios de `package.json`, y conserva la ejecución manual desde Actions.
 - El paquete pasa a publicarse en GitHub Packages como `@guidomodarelli/beez-ui`; los consumidores deben actualizar sus dependencias e imports y configurar acceso al registry de GitHub.
+- La ejecución manual del release permite omitir explícitamente un tag pendiente del registro anterior durante una migración; la ejecución automática conserva esa protección.
 
 ### Fixed
 
