@@ -64,11 +64,27 @@ function preventActivation(event: MouseEvent<HTMLElement>) {
   event.preventDefault()
 }
 
-type SlottableChildProps = { children?: ReactNode; onClick?: (event: MouseEvent<HTMLElement>) => void }
+/**
+ * While loading, these handlers are dropped: Radix triggers open their layer from pointer and key
+ * handlers they inject, so swallowing only the click would leave a busy trigger able to open it.
+ * Keyboard focus stays, since nothing here touches focusability.
+ */
+const LOADING_INERT_HANDLERS = {
+  onClick: preventActivation,
+  onPointerDown: undefined,
+  onKeyDown: undefined,
+} as const
+
+type SlottableChildProps = {
+  children?: ReactNode
+  onClick?: (event: MouseEvent<HTMLElement>) => void
+  onPointerDown?: unknown
+  onKeyDown?: unknown
+}
 
 /**
  * Wraps the content of an `asChild` element in the Arc label, so links morph and spin like buttons.
- * While loading, the child's own click handler is replaced too, because Slot runs it before ours.
+ * While loading, the child's own activation handlers are dropped too, because Slot runs them before ours.
  * Children given as render functions keep their content untouched.
  */
 function withArcLabel(
@@ -79,7 +95,7 @@ function withArcLabel(
   const child = Children.only(children)
   if (!isValidElement<SlottableChildProps>(child)) return child
   const content = child.props.children
-  const overrides = loading ? { onClick: preventActivation } : undefined
+  const overrides = loading ? LOADING_INERT_HANDLERS : undefined
   const label = typeof content === "function" ? content : renderLabel(content)
   return cloneElement(child as ReactElement<SlottableChildProps>, overrides, label)
 }
@@ -91,7 +107,6 @@ function Button({
   asChild = false,
   loading = false,
   children,
-  onClick,
   ref,
   ...props
 }: ButtonPrimitive.Props &
@@ -117,7 +132,7 @@ function Button({
     "aria-busy": loading || undefined,
     ...props,
     "aria-disabled": loading || props["aria-disabled"] || undefined,
-    onClick: loading ? preventActivation : onClick,
+    ...(loading ? LOADING_INERT_HANDLERS : undefined),
   }
 
   if (asChild) {

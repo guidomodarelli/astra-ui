@@ -378,9 +378,12 @@ test("should spring the button width to a new label instead of jumping", async (
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/motion.html");
   const button = page.getByRole("button", { name: "Guardar", exact: true });
-  const startWidth = (await button.boundingBox())!.width;
 
-  const widths = await button.evaluate(async (element: HTMLElement) => {
+  // Measure the starting width in the same task as the click, after the first measurement settled.
+  const { startWidth, widths } = await button.evaluate(async (element: HTMLElement) => {
+    await document.fonts.ready;
+    await new Promise(requestAnimationFrame);
+    const startWidth = element.getBoundingClientRect().width;
     const samples: number[] = [];
     element.click();
     const startedAt = performance.now();
@@ -389,7 +392,7 @@ test("should spring the button width to a new label instead of jumping", async (
       await new Promise(requestAnimationFrame);
       samples.push(element.getBoundingClientRect().width);
     }
-    return samples;
+    return { startWidth, widths: samples };
   });
 
   const endWidth = widths.at(-1)!;
@@ -402,16 +405,19 @@ test("should swap a button label without animating its width when motion is redu
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/motion.html");
   const button = page.getByRole("button", { name: "Guardar", exact: true });
-  const startWidth = (await button.boundingBox())!.width;
 
-  const widths = await button.evaluate(async (element: HTMLElement) => {
+  // Measure the starting width in the same task as the click, after the first measurement settled.
+  const { startWidth, widths } = await button.evaluate(async (element: HTMLElement) => {
+    await document.fonts.ready;
+    await new Promise(requestAnimationFrame);
+    const startWidth = element.getBoundingClientRect().width;
     const samples: number[] = [];
     element.click();
     for (let frame = 0; frame < 20; frame += 1) {
       await new Promise(requestAnimationFrame);
       samples.push(element.getBoundingClientRect().width);
     }
-    return samples;
+    return { startWidth, widths: samples };
   });
 
   const endWidth = widths.at(-1)!;

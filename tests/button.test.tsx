@@ -2,7 +2,13 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { Button } from "@guidomodarelli/beez-ui";
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@guidomodarelli/beez-ui";
 
 describe("Button", () => {
   it("renders an accessible button label", () => {
@@ -61,6 +67,61 @@ describe("Button", () => {
 
     expect(handleClick).not.toHaveBeenCalled();
     expect(window.location.hash).not.toBe("#destino");
+  });
+
+  it("should not open a menu from a loading trigger by pointer or keyboard, keeping it focusable", async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button loading>Acciones</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem>Editar</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+    const trigger = screen.getByRole("button", { name: "Acciones" });
+
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+
+    trigger.focus();
+    await user.keyboard("{Enter}");
+    await user.keyboard(" ");
+    await user.keyboard("{ArrowDown}");
+
+    expect(trigger).toHaveFocus();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("should open the menu from the same trigger once loading ends", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button loading>Acciones</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem>Editar</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+    rerender(
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button>Acciones</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem>Editar</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+
+    const trigger = screen.getByRole("button", { name: "Acciones" });
+    await user.click(trigger);
+
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
   });
 
   it("should forward its ref to the rendered element", () => {

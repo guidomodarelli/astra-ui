@@ -6,7 +6,7 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ### Added
 
-- `Button` acepta la prop `loading`: muestra un spinner, marca el botón como ocupado e ignora los clics sin perder el foco.
+- `Button` acepta la prop `loading`: muestra un spinner, marca el botón como ocupado e ignora los clics sin perder el foco; si es el trigger de un menú o popover, tampoco lo abre.
 - Publicación desde GitHub Actions con versión y CHANGELOG calculados desde los commits, usando el token automático del repositorio.
 
 ### Changed
