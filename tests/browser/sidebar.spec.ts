@@ -11,6 +11,22 @@ test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
 });
 
+test("should ignore keydown events without a key while preserving native Control and Meta shortcuts", async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.name));
+  await page.goto("/sidebar.html");
+  const trigger = page.getByRole("button", { name: "Alternar navegación" });
+  await expect(trigger).toBeVisible();
+  const originalExpanded = await trigger.getAttribute("aria-expanded");
+  await page.keyboard.press("Control+b");
+  await expect(trigger).toHaveAttribute("aria-expanded", originalExpanded === "true" ? "false" : "true");
+  await page.keyboard.press("Meta+Shift+B");
+  await expect(trigger).toHaveAttribute("aria-expanded", originalExpanded!);
+  await page.evaluate(() => { window.dispatchEvent(new Event("keydown")); });
+  expect(pageErrors).toEqual([]);
+  await expect(trigger).toHaveAttribute("aria-expanded", originalExpanded!);
+});
+
 test.describe("desktop", () => {
   test.skip(({ isMobile, viewport }) => isMobile || (viewport?.width ?? 0) < 768, "desktop-only layout");
 

@@ -13,6 +13,10 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 - El release se inicia automáticamente al subir cambios a `main`, incluidos los cambios de `package.json`, y conserva la ejecución manual desde Actions.
 - El paquete pasa a publicarse en GitHub Packages como `@guidomodarelli/beez-ui`; los consumidores deben actualizar sus dependencias e imports y configurar acceso al registry de GitHub.
 
+### Fixed
+
+- Los eventos de teclado sin una tecla válida no interrumpen la navegación lateral; se conservan los atajos con Ctrl y Cmd.
+
 ## [0.11.0] - 2026-10-03
 
 - 859b7a6 agrega mejoras al sidebar y persistencia de estado
