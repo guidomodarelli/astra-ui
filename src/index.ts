@@ -4,6 +4,7 @@ export { Link, type LinkProps } from "./components/link.js";
 export { BeezUIProvider, type BeezUIProviderProps } from "./providers/native-provider.js";
 export type { BeezUIComponents, BeezImageProps, BeezLinkProps } from "./providers/beez-ui-provider.js";
 export * from "./components/alert-dialog.js";
+export * from "./components/arc-button.js";
 export * from "./components/avatar.js";
 export * from "./components/badge.js";
 export * from "./components/button.js";

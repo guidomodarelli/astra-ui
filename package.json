@@ -10,6 +10,7 @@
     "dist",
     "README.md",
     "LICENSE.md",
+    "THIRD_PARTY_NOTICES.md",
     "CHANGELOG.md",
     "styles.css",
     "theme.css",
@@ -21,6 +22,11 @@
       "types": "./dist/components/alert-dialog.d.ts",
       "import": "./dist/components/alert-dialog.js",
       "default": "./dist/components/alert-dialog.js"
+    },
+    "./arc-button": {
+      "types": "./dist/components/arc-button.d.ts",
+      "import": "./dist/components/arc-button.js",
+      "default": "./dist/components/arc-button.js"
     },
     "./avatar": {
       "types": "./dist/components/avatar.d.ts",

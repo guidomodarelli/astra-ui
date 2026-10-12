@@ -6,6 +6,7 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ### Added
 
+- Nuevo componente `ArcButton` (también en `@guidomodarelli/beez-ui/arc-button`), adaptado del botón de Arc: variantes `primary`, `secondary`, `ghost` y `danger`, tamaños `sm`, `md` y `lg`, estado `loading` con spinner y animación del ancho cuando cambia el texto. Convive con `Button`, que no cambia.
 - Publicación desde GitHub Actions con versión y CHANGELOG calculados desde los commits, usando el token automático del repositorio.
 
 ### Changed
