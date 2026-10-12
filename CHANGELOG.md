@@ -20,6 +20,8 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 - Los eventos de teclado sin una tecla válida no interrumpen la navegación lateral; se conservan los atajos con Ctrl y Cmd.
 - La preparación del paquete acepta las notas de `[Unreleased]` que conserva el motor de publicación actual, sin exigir que se reescriba el historial.
+- `Button` vuelve a quedar inerte y oculto para tecnologías de asistencia mientras un `AnimatePresence` padre lo retira, también con `asChild`: durante la animación de salida no se puede hacer clic, enfocar ni anunciar.
+- `AnimatedCollapse` marca la región como inerte y oculta para tecnologías de asistencia mientras se cierra, como `PresenceSwap` y `AnimatedListItem`, para que sus controles no sigan activos durante el fundido.
 
 ## [0.11.0] - 2026-10-03
 

@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { useState, type ReactNode } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import {
@@ -9,6 +11,29 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@guidomodarelli/beez-ui";
+
+/** Exit long enough for assertions to run while the leaving content is still mounted. */
+const LEAVING_EXIT_TRANSITION = { duration: 0.2 };
+
+/** Removes its content through a parent exit animation, like a closing panel would. */
+function LeavingPanel({ children }: { children: ReactNode }) {
+  const [isShown, setIsShown] = useState(true);
+
+  return (
+    <>
+      <button type="button" onClick={() => setIsShown(false)}>
+        Cerrar panel
+      </button>
+      <AnimatePresence>
+        {isShown ? (
+          <motion.div key="panel" exit={{ opacity: 0, transition: LEAVING_EXIT_TRANSITION }}>
+            {children}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </>
+  );
+}
 
 describe("Button", () => {
   it("renders an accessible button label", () => {
@@ -122,6 +147,42 @@ describe("Button", () => {
     await user.click(trigger);
 
     expect(trigger).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("should stop being interactive or announced while a parent exit removes it", async () => {
+    const user = userEvent.setup();
+    render(
+      <LeavingPanel>
+        <Button>Voy</Button>
+      </LeavingPanel>,
+    );
+    expect(screen.getByRole("button", { name: "Voy" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cerrar panel" }));
+
+    const leavingButton = screen.getByText("Voy").closest("button");
+    expect(leavingButton).toHaveAttribute("inert");
+    expect(leavingButton).toHaveAttribute("aria-hidden", "true");
+    expect(screen.queryByRole("button", { name: "Voy" })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("Voy")).not.toBeInTheDocument());
+  });
+
+  it("should make an asChild link inert while a parent exit removes it", async () => {
+    const user = userEvent.setup();
+    render(
+      <LeavingPanel>
+        <Button asChild>
+          <a href="/perfil">Ver perfil</a>
+        </Button>
+      </LeavingPanel>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Cerrar panel" }));
+
+    const leavingLink = screen.getByText("Ver perfil").closest("a");
+    expect(leavingLink).toHaveAttribute("inert");
+    expect(leavingLink).toHaveAttribute("aria-hidden", "true");
+    await waitFor(() => expect(screen.queryByText("Ver perfil")).not.toBeInTheDocument());
   });
 
   it("should forward its ref to the rendered element", () => {

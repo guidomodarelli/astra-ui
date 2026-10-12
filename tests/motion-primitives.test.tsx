@@ -300,4 +300,23 @@ describe("motion primitives with reduced motion", () => {
 
     await waitFor(() => expect(screen.queryByText("Contenido expandido")).not.toBeInTheDocument());
   });
+
+  it("hides a closing region from interaction and assistive technology while it fades out", async () => {
+    preferReducedMotion();
+    const user = userEvent.setup();
+    render(<CollapseHarness />);
+
+    await user.click(screen.getByRole("button", { name: "Detalles" }));
+    const region = await screen.findByText("Contenido expandido");
+    const collapse = region.closest("[data-slot='animated-collapse']");
+    expect(collapse).not.toHaveAttribute("inert");
+    expect(collapse).not.toHaveAttribute("aria-hidden");
+
+    await user.click(screen.getByRole("button", { name: "Detalles" }));
+
+    expect(collapse).toBeInTheDocument();
+    expect(collapse).toHaveAttribute("inert");
+    expect(collapse).toHaveAttribute("aria-hidden", "true");
+    await waitFor(() => expect(screen.queryByText("Contenido expandido")).not.toBeInTheDocument());
+  });
 });
