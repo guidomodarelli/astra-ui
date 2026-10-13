@@ -33,7 +33,7 @@ it("should render and filter from the installed archive without Next or a TypeSc
     symlinkSync(join(consumer, "package"), packageLink, "junction");
     const packedMetadata = JSON.parse(readFileSync(join(consumer, "package", "package.json"), "utf8"));
     expect(packedMetadata.name).toBe("@guidomodarelli/beez-ui");
-    expect(packedMetadata.publishConfig.registry).toBe("https://npm.pkg.github.com");
+    expect(packedMetadata.publishConfig.registry).toBe("https://registry.npmjs.org/");
     expect(archive).toBe(`guidomodarelli-beez-ui-${metadata.version}.tgz`);
     const dependencies = new Set([
       ...Object.keys(metadata.dependencies),
