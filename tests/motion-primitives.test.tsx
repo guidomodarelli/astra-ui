@@ -2,7 +2,7 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, MotionGlobalConfig } from "motion/react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AnimatedCollapse, AnimatedCount, AnimatedListItem, BeezUIProvider, Dialog, DialogContent, DialogDescription, DialogTitle, PresenceSwap } from "@guidomodarelli/beez-ui";
 
@@ -312,7 +312,8 @@ describe("motion primitives with reduced motion", () => {
     expect(collapse).not.toHaveAttribute("inert");
     expect(collapse).not.toHaveAttribute("aria-hidden");
 
-    await user.click(screen.getByRole("button", { name: "Detalles" }));
+    // A synchronous click checks the exit state before the fade can finish.
+    fireEvent.click(screen.getByRole("button", { name: "Detalles" }));
 
     expect(collapse).toBeInTheDocument();
     expect(collapse).toHaveAttribute("inert");

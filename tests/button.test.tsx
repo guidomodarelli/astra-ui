@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import {
@@ -150,7 +150,6 @@ describe("Button", () => {
   });
 
   it("should stop being interactive or announced while a parent exit removes it", async () => {
-    const user = userEvent.setup();
     render(
       <LeavingPanel>
         <Button>Voy</Button>
@@ -158,7 +157,8 @@ describe("Button", () => {
     );
     expect(screen.getByRole("button", { name: "Voy" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Cerrar panel" }));
+    // A synchronous click checks the exit state before the exit animation can finish.
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar panel" }));
 
     const leavingButton = screen.getByText("Voy").closest("button");
     expect(leavingButton).toHaveAttribute("inert");
@@ -168,7 +168,6 @@ describe("Button", () => {
   });
 
   it("should make an asChild link inert while a parent exit removes it", async () => {
-    const user = userEvent.setup();
     render(
       <LeavingPanel>
         <Button asChild>
@@ -177,7 +176,8 @@ describe("Button", () => {
       </LeavingPanel>,
     );
 
-    await user.click(screen.getByRole("button", { name: "Cerrar panel" }));
+    // A synchronous click checks the exit state before the exit animation can finish.
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar panel" }));
 
     const leavingLink = screen.getByText("Ver perfil").closest("a");
     expect(leavingLink).toHaveAttribute("inert");
