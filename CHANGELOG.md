@@ -1,8 +1,12 @@
 # Cambios
 
-Todos los cambios relevantes de beez-ui se documentan en este archivo con el formato de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/). Cada cambio agrega sus entradas en `[Unreleased]`; desde la versión minor de beez-rp posterior a 0.7.x, `pnpm create-version` las pasa a la versión publicada con su fecha; con beez-rp 0.7.x el archivo se conserva sin renombrar `[Unreleased]`.
+Todos los cambios relevantes de beez-ui se documentan en este archivo con el formato de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/). Cada cambio agrega sus entradas en `[Unreleased]`; `pnpm create-version` las pasa a la versión publicada con su fecha.
 
 ## [Unreleased]
+
+### Changed
+
+- Cada versión que se publica agrega al CHANGELOG su propia sección con la fecha de publicación.
 
 ### Fixed
 

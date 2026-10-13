@@ -27,12 +27,12 @@ describe("release contracts", () => {
     expect(() => validateReleaseMetadata(PACKAGE, changelog)).not.toThrow();
   });
 
-  it.each(["\n", "\r\n"])("should accept manually maintained unreleased notes when the engine preserves their bytes (%j)", (lineBreak) => {
-    // Arrange: beez-rp 0.7 preserves this document while bumping package.json.
+  it.each(["\n", "\r\n"])("should reject unreleased notes that the version commit did not close into the manifest version (%j)", (lineBreak) => {
+    // Arrange: notes still under [Unreleased] while the manifest already declares 0.1.1.
     const changelog = ["# Cambios", "", "## [Unreleased]", "", "### Fixed", "", "- La navegación conserva los atajos.", "", "## [0.1.0] - 2026-09-01", "", "- Anterior.", ""].join(lineBreak);
 
-    // Act and assert: current notes remain valid without relabeling published history.
-    expect(() => validateReleaseMetadata(PACKAGE, changelog)).not.toThrow();
+    // Act and assert: only a dated block for the manifest version describes the release.
+    expect(() => validateReleaseMetadata(PACKAGE, changelog)).toThrow(/0\.1\.1/);
   });
 
   it("should reject empty or unsupported unreleased notes when they cannot describe the current release", () => {
