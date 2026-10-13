@@ -10,6 +10,7 @@ import type { ComponentProps, MouseEvent, ReactElement, ReactNode, Ref } from "r
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
+import { useIsPresent } from "motion/react"
 
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
 import { cn } from "../lib/utils.js"
@@ -69,6 +70,12 @@ function preventActivation(event: MouseEvent<HTMLElement>) {
  * handlers they inject, so swallowing only the click would leave a busy trigger able to open it.
  * Keyboard focus stays, since nothing here touches focusability.
  */
+/**
+ * Applied while a parent `AnimatePresence` removes the button, so a stale control can be neither
+ * clicked, focused nor announced during the exit animation.
+ */
+const LEAVING_ATTRIBUTES = { inert: true, "aria-hidden": true } as const
+
 const LOADING_INERT_HANDLERS = {
   onClick: preventActivation,
   onPointerDown: undefined,
@@ -116,6 +123,7 @@ function Button({
     loading?: boolean
   }) {
   const reduceMotion = usePrefersReducedMotion()
+  const isPresent = useIsPresent()
   const [element, attach] = useAttachedElement<HTMLElement>(ref as Ref<HTMLElement> | undefined)
   useArcPress(element, !reduceMotion && variant !== "link")
 
@@ -133,6 +141,7 @@ function Button({
     ...props,
     "aria-disabled": loading || props["aria-disabled"] || undefined,
     ...(loading ? LOADING_INERT_HANDLERS : undefined),
+    ...(isPresent ? undefined : LEAVING_ATTRIBUTES),
   }
 
   if (asChild) {
