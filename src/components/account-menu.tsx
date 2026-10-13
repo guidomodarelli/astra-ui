@@ -176,7 +176,7 @@ export function AccountMenu({
       {showsSidebarIdentity ? (
         <>
           <span className={cn("grid min-w-0 flex-1", classNames?.triggerText)}>
-            <span className={cn("truncate text-sm font-semibold", classNames?.triggerName)}>{name}</span>
+            <span className={cn("truncate text-sm font-medium", classNames?.triggerName)}>{name}</span>
             <span className={cn("truncate text-xs text-muted-foreground", classNames?.triggerEmail)}>{email}</span>
           </span>
           <ChevronDownIcon aria-hidden="true" className={cn("size-4 shrink-0 text-muted-foreground", classNames?.triggerChevron)} />
@@ -199,7 +199,7 @@ export function AccountMenu({
         <div className={cn("grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2.5 px-2 py-1.5", classNames?.header)}>
           <AccountAvatar {...avatarProps} isDecorative className={classNames?.headerAvatar} />
           <span className="grid min-w-0 gap-px">
-            <span className="truncate text-sm leading-tight font-semibold">{name}</span>
+            <span className="truncate text-sm leading-tight font-medium">{name}</span>
             <span className="truncate text-xs leading-tight text-muted-foreground">{email}</span>
           </span>
         </div>

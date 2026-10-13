@@ -5,7 +5,7 @@ import { Link, type LinkProps } from "./link.js"
 
 import { GlideSlot } from "../motion/glide-slot.js"
 import { cn } from "../lib/utils.js"
-import { Button } from "./button.js"
+import { ControlButton } from "./control-button.js"
 import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
@@ -40,7 +40,7 @@ function PaginationItem({ ...props }: React.ComponentProps<"li">) {
 
 export type PaginationLinkProps = {
   isActive?: boolean
-} & Pick<React.ComponentProps<typeof Button>, "size"> &
+} & Pick<React.ComponentProps<typeof ControlButton>, "size"> &
   LinkProps
 
 function PaginationLink({
@@ -50,7 +50,7 @@ function PaginationLink({
   ...props
 }: PaginationLinkProps) {
   return (
-    <Button
+    <ControlButton
       asChild
       variant={isActive ? "outline" : "ghost"}
       size={size}
@@ -62,7 +62,7 @@ function PaginationLink({
         data-active={isActive}
         {...props}
       />
-    </Button>
+    </ControlButton>
   )
 }
 

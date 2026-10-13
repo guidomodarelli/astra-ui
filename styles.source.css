@@ -16,18 +16,30 @@
   }
 
   body {
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
+    letter-spacing: var(--tracking-body);
     background-color: var(--background);
     color: var(--foreground);
   }
 }
 
-@custom-variant dark (&:is(.dark *));
+/* Arc applies hover styles only on hover-capable fine pointers, so taps on touch screens never stick in a hover state. */
+@custom-variant hover-fine {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @slot;
+    }
+  }
+}
+
+/* next-themes writes both the class and Arc's data-theme attribute. */
+@custom-variant dark (&:is(.dark *, [data-theme="dark"] *));
 
 @theme inline {
-  --font-sans: var(--font-geist, "Beez Geist", sans-serif);
+  /* Arc typography: Inter for text and controls, Geist for headings 30px and up. */
+  --font-sans: var(--font-inter, "Beez Inter", sans-serif);
   --font-heading: var(--font-geist, "Beez Geist", sans-serif);
-  --font-display: var(--font-poppins, "Beez Poppins", sans-serif);
+  --font-display: var(--font-geist, "Beez Geist", sans-serif);
   --font-mono: var(--font-ibm-plex-mono, "Beez Mono", monospace);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -48,8 +60,9 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
+  /* shadcn's accent is a hover fill; Arc's --accent is the brand accent, exposed through primary. */
+  --color-accent-foreground: var(--foreground);
+  --color-accent: var(--surface-muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -60,11 +73,23 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  /* Arc roles for components restyled with its tokens. */
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-muted: var(--surface-muted);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
+  /* Arc's concentric corners: controls (lg), panels such as menus (xl) and surfaces such as cards (2xl). */
+  --radius-xl: var(--radius-panel);
+  --radius-2xl: var(--radius-surface);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 }

@@ -16,7 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { Button } from "./button.js";
+import { ControlButton } from "./control-button.js";
 import { Input } from "./input.js";
 import {
   Popover,
@@ -880,7 +880,7 @@ export function FilterQueryBar({
             </div>
             <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-0.5">
               {value ? (
-                <Button
+                <ControlButton
                   aria-label={CLEAR_FILTER_ARIA_LABEL}
                   className="active:-translate-y-0"
                   onClick={handleClear}
@@ -889,7 +889,7 @@ export function FilterQueryBar({
                   variant="ghost"
                 >
                   <X aria-hidden="true" />
-                </Button>
+                </ControlButton>
               ) : null}
               {trailingAction}
             </div>

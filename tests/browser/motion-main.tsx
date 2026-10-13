@@ -80,7 +80,7 @@ function MotionExamples() {
         <section className="controls">
           <Button>Acción principal</Button>
           <Button disabled>Acción deshabilitada</Button>
-          <Button variant="outline" onClick={() => setIsDraftSaved(true)}>
+          <Button variant="secondary" onClick={() => setIsDraftSaved(true)}>
             {isDraftSaved ? "Borrador guardado en tu cuenta" : "Guardar"}
           </Button>
           <Checkbox id="motion-choice" />

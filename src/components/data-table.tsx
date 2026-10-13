@@ -28,7 +28,7 @@ import {
 import { cn } from "../lib/utils.js";
 import { matchesColumnFilterValue, normalizeFilterToken } from "../lib/column-filter-value.js";
 import { MotionSlot } from "../motion/motion-slot.js";
-import { Button } from "./button.js";
+import { ControlButton } from "./control-button.js";
 import { Badge } from "./badge.js";
 import { FilterQueryBar } from "./filter-query-bar.js";
 import {
@@ -1155,7 +1155,7 @@ export function DataTable<TData, TValue>({
                   />
                   <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-0.5">
                     {resolvedFilterValue ? (
-                      <Button
+                      <ControlButton
                         aria-label={CLEAR_FILTER_ARIA_LABEL}
                         className="active:-translate-y-0"
                         onClick={handleClearMainFilter}
@@ -1164,10 +1164,10 @@ export function DataTable<TData, TValue>({
                         variant="ghost"
                       >
                         <X aria-hidden="true" />
-                      </Button>
+                      </ControlButton>
                     ) : null}
                     {showExcludeFilterToggle ? (
-                      <Button
+                      <ControlButton
                         aria-expanded={isExcludeFilterInputVisible}
                         aria-label={
                           isExcludeFilterInputVisible
@@ -1201,7 +1201,7 @@ export function DataTable<TData, TValue>({
                             <span className="sr-only">{ACTIVE_EXCLUSIONS_SR_LABEL}</span>
                           </>
                         ) : null}
-                      </Button>
+                      </ControlButton>
                     ) : null}
                   </div>
                 </div>
@@ -1230,7 +1230,7 @@ export function DataTable<TData, TValue>({
                         type="text"
                         value={excludeFilterInputValue}
                       />
-                      <Button
+                      <ControlButton
                         aria-label={CLEAR_ALL_EXCLUSIONS_FROM_INPUT_ARIA_LABEL}
                         className="shrink-0"
                         disabled={!hasActiveExcludeFilterValues}
@@ -1240,7 +1240,7 @@ export function DataTable<TData, TValue>({
                         variant="ghost"
                       >
                         <Eraser aria-hidden="true" />
-                      </Button>
+                      </ControlButton>
                     </div>
                     {excludeFilterErrorMessage ? (
                       <p aria-live="polite" className="text-sm text-destructive">
@@ -1275,7 +1275,7 @@ export function DataTable<TData, TValue>({
                         variant="destructive"
                       >
                         <span>{`${EXCLUDED_ROWS_SUMMARY_LABEL}:`}</span>
-                        <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-destructive/20 px-1.5 text-[10px] leading-4 font-semibold">
+                        <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-destructive/20 px-1.5 text-[10px] leading-4 font-medium">
                           {excludeFilterUniqueRowsCount}
                         </span>
                         <button
@@ -1302,7 +1302,7 @@ export function DataTable<TData, TValue>({
                         {excludedRowsCount != null ? (
                           <span
                             aria-label={`Filas excluidas por ${excludeFilterValue}: ${excludedRowsCount}`}
-                            className="inline-flex min-w-5 items-center justify-center rounded-full bg-destructive/20 px-1.5 text-[10px] leading-4 font-semibold"
+                            className="inline-flex min-w-5 items-center justify-center rounded-full bg-destructive/20 px-1.5 text-[10px] leading-4 font-medium"
                           >
                             {excludedRowsCount}
                           </span>
@@ -1331,7 +1331,7 @@ export function DataTable<TData, TValue>({
                 {shouldShowColumnVisibilityToggle ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
+                      <ControlButton
                         aria-label={columnVisibilityButtonLabel}
                         className="relative aria-expanded:*:data-[slot=data-table-columns-chevron]:rotate-180"
                         type="button"
@@ -1350,7 +1350,7 @@ export function DataTable<TData, TValue>({
                             <span className="sr-only">Columnas modificadas</span>
                           </>
                         ) : null}
-                      </Button>
+                      </ControlButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       {columnVisibilityMenuExtraContent ? (

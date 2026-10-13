@@ -58,7 +58,7 @@ const meta = {
           return (
             <Popover open={open} onOpenChange={(open) => setOpen(open)}>
               <PopoverTrigger asChild>
-                <Button variant="outline">Ver detalle</Button>
+                <Button variant="secondary">Ver detalle</Button>
               </PopoverTrigger>
               <PopoverContent side={args.side} align={args.align}>
                 <PopoverHeader>

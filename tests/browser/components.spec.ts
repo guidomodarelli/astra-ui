@@ -8,11 +8,13 @@ test("preserves the default theme and shared interactions", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "Componentes compartidos" })).toBeVisible();
   await expect(page.getByRole("img", { name: "Avatar nativo" })).toBeVisible();
   const button = page.getByRole("button", { name: "Notificar" });
-  await expect(button).toHaveCSS("border-radius", "10px");
+  // Arc's --radius-control.
+  await expect(button).toHaveCSS("border-radius", "18px");
   const lightBackground = await page.locator("body").evaluate(element => getComputedStyle(element).backgroundColor);
   await page.getByRole("button", { name: "Alternar tema" }).click();
   await page.getByRole("menuitemradio", { name: "Oscuro" }).click();
   await expect(page.locator("html")).toHaveClass(/dark/);
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect.poll(() => page.locator("body").evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe(lightBackground);
   await page.getByRole("combobox", { name: "Filtrar filas" }).fill("Luz");
   await expect(page.getByRole("cell", { name: "Luz", exact: true })).toBeVisible();

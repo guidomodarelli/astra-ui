@@ -16,18 +16,18 @@ function MotionPrimitivesExample() {
   return (
     <div className="grid max-w-md gap-4">
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={() => setCount(count - 1)}>
+        <Button variant="secondary" size="sm" onClick={() => setCount(count - 1)}>
           Restar
         </Button>
         <output aria-label="Contador" className="text-lg font-semibold">
           <AnimatedCount value={count} />
         </output>
-        <Button variant="outline" size="sm" onClick={() => setCount(count + 1)}>
+        <Button variant="secondary" size="sm" onClick={() => setCount(count + 1)}>
           Sumar
         </Button>
       </div>
       <div className="grid gap-2">
-        <Button variant="outline" aria-expanded={isOpen} onClick={() => setIsOpen(!isOpen)}>
+        <Button variant="secondary" aria-expanded={isOpen} onClick={() => setIsOpen(!isOpen)}>
           Detalles
         </Button>
         <AnimatedCollapse isOpen={isOpen}>
@@ -39,7 +39,7 @@ function MotionPrimitivesExample() {
           <Button size="sm" disabled={members.length === MEMBER_NAMES.length} onClick={() => setMembers(MEMBER_NAMES.slice(0, members.length + 1))}>
             Agregar
           </Button>
-          <Button size="sm" variant="outline" disabled={members.length === 0} onClick={() => setMembers(members.slice(1))}>
+          <Button size="sm" variant="secondary" disabled={members.length === 0} onClick={() => setMembers(members.slice(1))}>
             Quitar primero
           </Button>
         </div>

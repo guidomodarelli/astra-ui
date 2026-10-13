@@ -17,6 +17,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   localStorage.clear();
   document.documentElement.classList.remove("dark", "light");
+  document.documentElement.removeAttribute("data-theme");
   act(() => { toast.dismiss(); });
 });
 
@@ -27,6 +28,17 @@ describe("provider theme", () => {
     await userEvent.click(screen.getByRole("menuitemradio", { name: "Oscuro" }));
     await waitFor(() => expect(document.documentElement).toHaveClass("dark"));
     expect(localStorage.getItem("theme")).toBe("dark");
+  });
+
+  it("should mark the document with Arc's data-theme attribute alongside the theme class", async () => {
+    render(<BeezUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><AnimatedThemeToggler /></BeezUIProvider>);
+    await waitFor(() => expect(document.documentElement).toHaveAttribute("data-theme", "light"));
+
+    await userEvent.click(screen.getByRole("button", { name: "Alternar tema" }));
+    await userEvent.click(screen.getByRole("menuitemradio", { name: "Oscuro" }));
+
+    await waitFor(() => expect(document.documentElement).toHaveAttribute("data-theme", "dark"));
+    expect(document.documentElement).toHaveClass("dark");
   });
 
   it("should not render an inert theme script on client-only renders", () => {

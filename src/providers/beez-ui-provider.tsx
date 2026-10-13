@@ -22,9 +22,15 @@ export interface BeezUIComponents {
 export interface BeezUIProviderProps {
   children: ReactNode;
   components?: BeezUIComponents;
-  /** Shares light/dark/system behavior while keeping the library's class-based theme contract. */
+  /** Shares light/dark/system behavior; the theme is written as a class and as Arc's `data-theme` attribute. */
   themeOptions?: Omit<ThemeProviderProps, "children" | "attribute">;
 }
+
+/**
+ * Arc's foundation selects dark tokens with `data-theme`; the class keeps Tailwind's `dark` variant and
+ * consumer styles written for it.
+ */
+const THEME_ATTRIBUTES: ThemeProviderProps["attribute"] = ["class", "data-theme"];
 
 /**
  * next-themes renders an inline script that applies the stored theme before hydration. It only
@@ -56,7 +62,7 @@ export function BeezUIProvider({ children, components = EMPTY_COMPONENTS, themeO
   const scriptProps = isClientOnlyRender
     ? { ...CLIENT_RENDER_THEME_SCRIPT_PROPS, ...themeOptions?.scriptProps }
     : themeOptions?.scriptProps;
-  return <ThemeProvider attribute="class" {...themeOptions} scriptProps={scriptProps}><MotionConfig reducedMotion="user"><AdapterContext.Provider value={value}>{children}</AdapterContext.Provider></MotionConfig></ThemeProvider>;
+  return <ThemeProvider attribute={THEME_ATTRIBUTES} {...themeOptions} scriptProps={scriptProps}><MotionConfig reducedMotion="user"><AdapterContext.Provider value={value}>{children}</AdapterContext.Provider></MotionConfig></ThemeProvider>;
 }
 
 /** Reads adapters internally; native components work without a provider. */

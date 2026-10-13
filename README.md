@@ -64,9 +64,9 @@ La utilidad `cn`, también exportada desde `@guidomodarelli/beez-ui`, usa el paq
 @import "@guidomodarelli/beez-ui/styles.css";
 ```
 
-`@guidomodarelli/beez-ui/styles.css` es CSS listo para el navegador: incluye reset, utilidades, tema claro/oscuro, radios y fuentes locales Geist, Poppins e IBM Plex Mono. No requiere Tailwind, plugins PostCSS ni declaraciones `@source` en el consumidor. Las clases se compilan en el build de la biblioteca y se publican en `dist/styles.css`; `styles.source.css` es la entrada de desarrollo y no se distribuye.
+`@guidomodarelli/beez-ui/styles.css` es CSS listo para el navegador: incluye reset, utilidades, el foundation de [Arc](https://uiarc.dev) (colores, superficies, radios concéntricos, alturas de control, sombras y foco por teclado) con modo claro y oscuro, y las fuentes locales Inter, Geist e IBM Plex Mono. No requiere Tailwind, plugins PostCSS ni declaraciones `@source` en el consumidor. Las clases se compilan en el build de la biblioteca y se publican en `dist/styles.css`; `styles.source.css` es la entrada de desarrollo y no se distribuye.
 
-Los consumidores pueden sobrescribir tokens mediante CSS normal. Poppins se reserva para títulos grandes mediante `--font-display`; las licencias se incluyen en `assets/fonts`. Si la aplicación usa Tailwind para sus propios estilos puede mantenerlo, pero ya no necesita escanear beez-ui.
+El modo oscuro se activa con `data-theme="dark"` o la clase `dark` en `<html>`; `BeezUIProvider` escribe ambos. El acento por defecto es el azul de Arc y se cambia con `data-accent` (`neutral`, `violet`, `blue`, `green`, `amber`, `orange`, `coral` o `rose`) en `<html>`. Los nombres de tokens de shadcn (`--primary`, `--muted`, `--card`…) siguen disponibles como alias de los roles de Arc; `--accent` es el acento de Arc, no el gris de hover de shadcn. Inter se usa para texto y controles y Geist para títulos grandes mediante `--font-display`; las licencias se incluyen en `assets/fonts`. Los consumidores pueden sobrescribir tokens mediante CSS normal. Si la aplicación usa Tailwind para sus propios estilos puede mantenerlo, pero ya no necesita escanear beez-ui.
 
 `DropdownMenuContent` toma el ancho natural de sus opciones, con un mínimo de 12 rem y un máximo limitado por el espacio disponible. No hereda el ancho del botón disparador: los menús abiertos desde un icono deben mantener sus etiquetas legibles. Para un ancho específico, usar `className` y ajustar también el mínimo cuando se necesite un menú más pequeño.
 
@@ -85,9 +85,9 @@ retienen los overlays durante su salida. Los presets y tiempos viven en
 sin agregar wrappers al DOM ni reemplazar sus handlers. Las curvas y springs
 siguen los tokens de [beui motion](https://beui.dev/components/motion):
 
-- `Button` se comprime con spring a 0.93 y se eleva a 1.02 al hover, solo en
-  dispositivos con hover real (`(hover: hover) and (pointer: fine)`); los ítems de
-  `Sidebar` y `Tabs` se comprimen a 0.98.
+- `Button` usa la presión de Arc: se comprime a 0.97 con un spring rápido (un poco más en
+  botones de solo ícono y menos en los anchos), sin escalar los disparadores de menús; su
+  texto cambia de ancho con un spring. Los ítems de `Sidebar` y `Tabs` se comprimen a 0.98.
 - `Checkbox` y `RadioGroup` se comprimen a 0.92. La marca del checkbox aparece
   con pop y trazo (`pathLength`) y sale con blur; el punto del radio aparece con spring.
 - El thumb de `Switch` viaja con un spring pesado y se aplasta mientras se presiona.
@@ -192,7 +192,7 @@ Next y TanStack Router son peers opcionales aislados en sus entrypoints. El prov
 
 La tabla conserva agrupación estable, columnas configurables, memoización, exclusiones y sincronización de qualifiers por identificadores. La barra conserva navegación por teclado, autocompletado y filtros de texto, rangos, fechas, presencia y carpetas. `Calendar` usa español por defecto y acepta otra locale. Los textos y configuraciones de filtros se pueden personalizar por props.
 
-Los componentes compartidos conservan el tema de LaTribu. Se incorporaron atributos `data-variant`/`data-size` del botón, scroll para paneles largos y persistencia opcional del sidebar. Se mantienen `Button.asChild`, estados deshabilitados y skeletons deterministas. `AvatarImage` delega carga y fallback a Base UI; conserva carga diferida y recuperación al cambiar `src`. El export original `Toaster` permanece disponible; `ThemedToaster` agrega los estilos e iconos compartidos.
+Los componentes compartidos conservan el tema de LaTribu. Se incorporaron atributos `data-variant`/`data-size` del botón, scroll para paneles largos y persistencia opcional del sidebar. `Button` sigue la API de Arc: `variant` `primary`, `secondary`, `ghost` o `danger`, `size` `sm`, `md` o `lg` y `loading`; renderiza un `<button>` nativo con `type="button"` por defecto y no admite `asChild`: un link con aspecto de botón se estiliza como link. Se mantienen los estados deshabilitados y los skeletons deterministas. `AvatarImage` delega carga y fallback a Base UI; conserva carga diferida y recuperación al cambiar `src`. El export original `Toaster` permanece disponible; `ThemedToaster` agrega los estilos e iconos compartidos.
 
 ## Componentes de producto reutilizables
 

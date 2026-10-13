@@ -12,7 +12,7 @@ import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
 import { cn } from "../lib/utils.js";
 import { MOTION_EASE, MOTION_TIMING } from "../motion/tokens.js";
 import { AnimatedCount } from "./animated-count.js";
-import { Button } from "./button.js";
+import { ControlButton } from "./control-button.js";
 
 /** Peak scale the icon reaches while popping into the active state. */
 const REACTION_ICON_POP_SCALE = 1.28;
@@ -69,7 +69,7 @@ export function ReactionButton({
   const activeColorStyle: ReactionButtonStyle | undefined = activeColor ? { "--beez-reaction-active-color": activeColor } : undefined;
 
   return (
-    <Button
+    <ControlButton
       data-slot="reaction-button"
       data-active={isActive || undefined}
       aria-label={ariaLabel}
@@ -91,6 +91,6 @@ export function ReactionButton({
         <Icon className="size-4 transition-[fill,color] group-data-active/reaction:fill-current group-data-active/reaction:text-[var(--beez-reaction-active-color,var(--destructive))]" />
       </motion.span>
       <AnimatedCount className="min-w-[1ch]" value={count} format={formatCount} />
-    </Button>
+    </ControlButton>
   );
 }

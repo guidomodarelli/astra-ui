@@ -6,15 +6,29 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ### Added
 
+- El tema adopta el foundation de Arc: colores, superficies, textos y bordes por rol, radios concéntricos (controles 18 px, paneles 26 px, superficies 34 px), alturas de control de 36, 44 y 50 px, sombras, curvas y foco visible solo con teclado, en claro y oscuro.
+- El acento por defecto es el azul de Arc y se puede cambiar con `data-accent` en `<html>` (`neutral`, `violet`, `blue`, `green`, `amber`, `orange`, `coral` o `rose`).
+- La fuente Inter se incluye como fuente local para texto y controles.
 - `Button` acepta la prop `loading`: muestra un spinner, marca el botón como ocupado e ignora los clics sin perder el foco; si es el trigger de un menú o popover, tampoco lo abre.
 - Publicación desde GitHub Actions con versión calculada y CHANGELOG mantenido manualmente, usando el token automático del repositorio.
 
 ### Changed
 
+- **Incompatible:** `Button` sigue la API de Arc: `variant` pasa a `primary`, `secondary`, `ghost` o `danger` (antes `default`, `outline`, `secondary`, `ghost`, `destructive` y `link`) y `size` a `sm`, `md` o `lg` (antes `default`, `xs`, `sm`, `lg` y los tamaños `icon`). Renderiza un `<button>` nativo, con `type="button"` por defecto, y toma el radio, las alturas, los colores y el hover solo con puntero fino de Arc.
+- **Incompatible:** `AlertDialogAction` y `AlertDialogCancel` usan las variantes y tamaños de Arc; por defecto, `primary` y `secondary`.
+- `BeezUIProvider` escribe el tema como clase y como atributo `data-theme` en `<html>`.
+- Los títulos grandes (`--font-display`) usan Geist en lugar de Poppins, y el texto usa Inter en lugar de Geist.
+- El fondo de la página deja de usar degradados decorativos: `--body-background-image` vale `none`.
 - `Button` adopta el estilo y la animación de Arc: nuevos colores por variante (`default` pasa a usar `foreground` en lugar de `primary`), presión según el ancho del botón y animación del ancho cuando cambia el texto. También aplica a los botones con `asChild`. Los triggers de menús y popovers no se achican al presionarlos.
 - El release se inicia automáticamente al subir cambios a `main`, incluidos los cambios de `package.json`, y conserva la ejecución manual desde Actions.
 - El paquete pasa a publicarse en GitHub Packages como `@guidomodarelli/beez-ui`; los consumidores deben actualizar sus dependencias e imports y configurar acceso al registry de GitHub.
 - La ejecución manual del release permite omitir explícitamente un tag pendiente del registro anterior durante una migración; la ejecución automática conserva esa protección.
+
+### Removed
+
+- **Incompatible:** `Button` ya no admite `asChild`: un link con aspecto de botón se estiliza como link.
+- **Incompatible:** se retira el export `buttonVariants`.
+- Se retira la fuente Poppins.
 
 ### Fixed
 

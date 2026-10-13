@@ -8,7 +8,7 @@ import { useId, useState } from "react";
 import { Bookmark, Pencil, X } from "lucide-react";
 
 import { cn } from "../lib/utils.js";
-import { Button } from "./button.js";
+import { ControlButton } from "./control-button.js";
 import { FilterQueryBar } from "./filter-query-bar.js";
 import type { FilterQualifierConfig } from "./filter-query-grammar.js";
 import { Input } from "./input.js";
@@ -150,7 +150,7 @@ export function FilterPresetSaveButton({ canSaveCurrentQuery, onSaveCurrentQuery
       <Tooltip>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
-            <Button
+            <ControlButton
               data-slot="filter-preset-save-button"
               aria-label={resolvedLabels.saveAction}
               className={className}
@@ -160,7 +160,7 @@ export function FilterPresetSaveButton({ canSaveCurrentQuery, onSaveCurrentQuery
               variant="ghost"
             >
               <Bookmark aria-hidden="true" />
-            </Button>
+            </ControlButton>
           </PopoverTrigger>
         </TooltipTrigger>
         <TooltipContent>{resolvedLabels.saveAction}</TooltipContent>
@@ -187,9 +187,9 @@ export function FilterPresetSaveButton({ canSaveCurrentQuery, onSaveCurrentQuery
             {error}
           </p>
         ) : null}
-        <Button aria-label={resolvedLabels.saveConfirmAriaLabel} onClick={handleConfirmSave} size="sm" type="button">
+        <ControlButton aria-label={resolvedLabels.saveConfirmAriaLabel} onClick={handleConfirmSave} size="sm" type="button">
           {resolvedLabels.saveConfirm}
-        </Button>
+        </ControlButton>
       </PopoverContent>
     </Popover>
   );
@@ -332,9 +332,9 @@ export function FilterPresetsBar({
                   {editError}
                 </p>
               ) : null}
-              <Button aria-label={resolvedLabels.editConfirmAriaLabel} onClick={handleConfirmEdit} size="sm" type="button">
+              <ControlButton aria-label={resolvedLabels.editConfirmAriaLabel} onClick={handleConfirmEdit} size="sm" type="button">
                 {resolvedLabels.saveConfirm}
-              </Button>
+              </ControlButton>
             </PopoverContent>
           </Popover>
           <Popover
@@ -353,10 +353,10 @@ export function FilterPresetsBar({
             <PopoverContent align="start" className="grid w-68 gap-3">
               <p className="m-0 text-sm">{resolvedLabels.deleteConfirmation(preset.name)}</p>
               <div className="flex justify-end gap-2">
-                <Button onClick={() => setDeletingPresetName(null)} size="sm" type="button" variant="outline">
+                <ControlButton onClick={() => setDeletingPresetName(null)} size="sm" type="button" variant="outline">
                   {resolvedLabels.cancel}
-                </Button>
-                <Button
+                </ControlButton>
+                <ControlButton
                   onClick={() => {
                     setDeletingPresetName(null);
                     onDeletePreset(preset.name);
@@ -366,7 +366,7 @@ export function FilterPresetsBar({
                   variant="destructive"
                 >
                   {resolvedLabels.delete}
-                </Button>
+                </ControlButton>
               </div>
             </PopoverContent>
           </Popover>

@@ -50,27 +50,6 @@ test("should ignore pointer and keyboard on a Button while a parent exit removes
   await expect(leavingButton).toBeAttached();
 });
 
-test("should ignore pointer and keyboard on an asChild link while a parent exit removes it", async ({ page }) => {
-  await page.goto("/exit-inert.html");
-  const link = page.getByRole("link", { name: "Ver perfil" });
-  const activations = page.getByLabel("Activaciones del enlace");
-  await link.click();
-  await expect(activations).toHaveText("1");
-  const box = await boxOf(link);
-
-  const closePanel = page.getByRole("button", { name: "Cerrar panel" });
-  await closePanel.click();
-  const leavingLink = page.locator("a", { hasText: "Ver perfil" });
-  await expect(leavingLink).toHaveAttribute("inert", "");
-  await expect(page.getByRole("link", { name: "Ver perfil" })).toHaveCount(0);
-
-  await clickAt(page, box);
-  await expectTabSkips(page, closePanel, leavingLink);
-
-  await expect(activations).toHaveText("1");
-  await expect(leavingLink).toBeAttached();
-});
-
 test("should ignore pointer and keyboard inside an AnimatedCollapse while it closes", async ({ page }) => {
   // The collapse exit lasts a fraction of a second; a fake clock freezes its frame loop so the
   // interactions below provably happen while the region is still mounted and leaving.

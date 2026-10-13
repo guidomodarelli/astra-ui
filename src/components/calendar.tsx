@@ -14,7 +14,7 @@ import { animate, frame } from "motion/react"
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
 import { MOTION_EASE, MOTION_MONTH_DISTANCE, MOTION_TIMING } from "../motion/tokens.js"
 import { cn } from "../lib/utils.js"
-import { Button, buttonVariants } from "./button.js"
+import { ControlButton, controlButtonVariants } from "./control-button.js"
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react"
 
 function Calendar({
@@ -28,7 +28,7 @@ function Calendar({
   components,
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
-  buttonVariant?: React.ComponentProps<typeof Button>["variant"]
+  buttonVariant?: React.ComponentProps<typeof ControlButton>["variant"]
 }) {
   const defaultClassNames = getDefaultClassNames()
 
@@ -60,12 +60,12 @@ function Calendar({
           defaultClassNames.nav
         ),
         button_previous: cn(
-          buttonVariants({ variant: buttonVariant }),
+          controlButtonVariants({ variant: buttonVariant }),
           "size-(--cell-size) p-0 select-none aria-disabled:opacity-50",
           defaultClassNames.button_previous
         ),
         button_next: cn(
-          buttonVariants({ variant: buttonVariant }),
+          controlButtonVariants({ variant: buttonVariant }),
           "size-(--cell-size) p-0 select-none aria-disabled:opacity-50",
           defaultClassNames.button_next
         ),
@@ -266,7 +266,7 @@ function CalendarDayButton({
   }, [modifiers.focused])
 
   return (
-    <Button
+    <ControlButton
       ref={ref}
       variant="ghost"
       size="icon"

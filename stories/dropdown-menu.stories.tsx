@@ -66,7 +66,7 @@ const meta = {
               onOpenChange={(open) => setOpen(open)}
             >
               <DropdownMenuTrigger asChild>
-                <Button variant="outline">Abrir acciones</Button>
+                <Button variant="secondary">Abrir acciones</Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align={args.align}>
                 <DropdownMenuLabel>Registro</DropdownMenuLabel>

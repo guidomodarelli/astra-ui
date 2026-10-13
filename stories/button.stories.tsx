@@ -6,10 +6,9 @@ import { fn } from "storybook/test";
 /** Editable inputs specific to this example. */
 type Args = {
   children: string;
-  variant:
-    "default" | "outline" | "secondary" | "ghost" | "destructive" | "link";
-  size:
-    "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg";
+  variant: "primary" | "secondary" | "ghost" | "danger";
+  size: "sm" | "md" | "lg";
+  iconOnly: boolean;
   loading: boolean;
   disabled: boolean;
 };
@@ -18,8 +17,9 @@ const meta = {
   title: "Components/Button",
   args: {
     children: "Guardar cambios",
-    variant: "default",
-    size: "default",
+    variant: "primary",
+    size: "md",
+    iconOnly: false,
     loading: false,
     disabled: false,
   },
@@ -29,27 +29,14 @@ const meta = {
     },
     variant: {
       control: "select",
-      options: [
-        "default",
-        "outline",
-        "secondary",
-        "ghost",
-        "destructive",
-        "link",
-      ],
+      options: ["primary", "secondary", "ghost", "danger"],
     },
     size: {
       control: "select",
-      options: [
-        "default",
-        "xs",
-        "sm",
-        "lg",
-        "icon",
-        "icon-xs",
-        "icon-sm",
-        "icon-lg",
-      ],
+      options: ["sm", "md", "lg"],
+    },
+    iconOnly: {
+      control: "boolean",
     },
     loading: {
       control: "boolean",
@@ -59,11 +46,11 @@ const meta = {
     },
   },
   parameters: {
-    controls: { include: ["children", "variant", "size", "loading", "disabled"] },
+    controls: { include: ["children", "variant", "size", "iconOnly", "loading", "disabled"] },
   },
-  render: ({ children, ...args }) => (
-    <Button {...args} aria-label={children} onClick={fn()}>
-      {args.size.startsWith("icon") ? <Save aria-hidden="true" /> : children}
+  render: ({ children, iconOnly, ...args }) => (
+    <Button {...args} aria-label={iconOnly ? children : undefined} onClick={fn()}>
+      {iconOnly ? <Save aria-hidden="true" /> : children}
     </Button>
   ),
 } satisfies Meta<Args>;

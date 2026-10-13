@@ -60,7 +60,7 @@ const meta = {
   render: ({ name, bio, openDelay, closeDelay, side }) => (
     <HoverCard openDelay={openDelay} closeDelay={closeDelay}>
       <HoverCardTrigger asChild>
-        <Button variant="link">@{name}</Button>
+        <Button variant="ghost">@{name}</Button>
       </HoverCardTrigger>
       <HoverCardContent side={side}>
         <div className="StoryRow">

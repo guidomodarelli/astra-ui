@@ -44,6 +44,38 @@ describe("Button", () => {
     ).toBeInTheDocument();
   });
 
+  it("should render Arc's primary medium button unless another variant and size are chosen", () => {
+    render(
+      <>
+        <Button>Guardar</Button>
+        <Button variant="danger" size="lg">Eliminar</Button>
+      </>,
+    );
+
+    const primary = screen.getByRole("button", { name: "Guardar" });
+    expect(primary).toHaveAttribute("data-variant", "primary");
+    expect(primary).toHaveAttribute("data-size", "md");
+    const danger = screen.getByRole("button", { name: "Eliminar" });
+    expect(danger).toHaveAttribute("data-variant", "danger");
+    expect(danger).toHaveAttribute("data-size", "lg");
+  });
+
+  it("should not submit a surrounding form unless its type is submit", async () => {
+    const handleSubmit = vi.fn((event: SubmitEvent) => event.preventDefault());
+    render(
+      <form onSubmit={(event) => handleSubmit(event.nativeEvent as SubmitEvent)}>
+        <Button>Agregar fila</Button>
+        <Button type="submit">Enviar</Button>
+      </form>,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Agregar fila" }));
+    expect(handleSubmit).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: "Enviar" }));
+    expect(handleSubmit).toHaveBeenCalledTimes(1);
+  });
+
   it("should run the click handler when pressed", async () => {
     const handleClick = vi.fn();
     render(<Button onClick={handleClick}>Guardar cambios</Button>);
@@ -65,33 +97,6 @@ describe("Button", () => {
     expect(button).toHaveAttribute("aria-disabled", "true");
     expect(button).toBeEnabled();
     expect(button).toHaveFocus();
-  });
-
-  it("should keep an asChild link as the only interactive element with its label", () => {
-    render(
-      <Button asChild variant="outline">
-        <a href="/perfil">Ver perfil</a>
-      </Button>,
-    );
-
-    const link = screen.getByRole("link", { name: "Ver perfil" });
-    expect(link).toHaveAttribute("href", "/perfil");
-    expect(link).toHaveAttribute("data-variant", "outline");
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
-  });
-
-  it("should stop an asChild link from navigating while loading", async () => {
-    const handleClick = vi.fn();
-    render(
-      <Button asChild loading>
-        <a href="#destino" onClick={handleClick}>Continuar</a>
-      </Button>,
-    );
-
-    await userEvent.click(screen.getByRole("link", { name: "Continuar" }));
-
-    expect(handleClick).not.toHaveBeenCalled();
-    expect(window.location.hash).not.toBe("#destino");
   });
 
   it("should not open a menu from a loading trigger by pointer or keyboard, keeping it focusable", async () => {
@@ -165,24 +170,6 @@ describe("Button", () => {
     expect(leavingButton).toHaveAttribute("aria-hidden", "true");
     expect(screen.queryByRole("button", { name: "Voy" })).not.toBeInTheDocument();
     await waitFor(() => expect(screen.queryByText("Voy")).not.toBeInTheDocument());
-  });
-
-  it("should make an asChild link inert while a parent exit removes it", async () => {
-    render(
-      <LeavingPanel>
-        <Button asChild>
-          <a href="/perfil">Ver perfil</a>
-        </Button>
-      </LeavingPanel>,
-    );
-
-    // A synchronous click checks the exit state before the exit animation can finish.
-    fireEvent.click(screen.getByRole("button", { name: "Cerrar panel" }));
-
-    const leavingLink = screen.getByText("Ver perfil").closest("a");
-    expect(leavingLink).toHaveAttribute("inert");
-    expect(leavingLink).toHaveAttribute("aria-hidden", "true");
-    await waitFor(() => expect(screen.queryByText("Ver perfil")).not.toBeInTheDocument());
   });
 
   it("should forward its ref to the rendered element", () => {

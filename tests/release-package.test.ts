@@ -64,7 +64,7 @@ assert.equal(parseYearMonthFilterInput("09/2026"), 202609);
     writeFileSync(join(consumer, "consumer.ts"), `
 import { Button, parseFilterQuery, type BeezUIComponents } from "@guidomodarelli/beez-ui";
 import type { ComponentProps } from "react";
-const button: ComponentProps<typeof Button> = { variant: "outline", children: "Guardar" };
+const button: ComponentProps<typeof Button> = { variant: "secondary", children: "Guardar" };
 const components: BeezUIComponents = {};
 const result: string = parseFilterQuery("luz", []).descriptionFilter;
 void [button, components, result];
