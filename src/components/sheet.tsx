@@ -6,7 +6,7 @@ import { Dialog as SheetPrimitive } from "radix-ui"
 import { MotionSlot } from "../motion/motion-slot.js"
 import { MotionPresence, MotionOpenProvider, useMotionOpenState } from "../motion/presence.js"
 import { cn } from "../lib/utils.js"
-import { Button } from "./button.js"
+import { ControlButton } from "./control-button.js"
 import { XIcon } from "lucide-react"
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
@@ -79,7 +79,7 @@ function SheetContent({
         {children}
         {showCloseButton && (
           <SheetPrimitive.Close data-slot="sheet-close" asChild>
-            <MotionSlot kind="delayed-pop"><Button
+            <MotionSlot kind="delayed-pop"><ControlButton
               variant="ghost"
               className="absolute top-4 right-4"
               size="icon-sm"
@@ -87,7 +87,7 @@ function SheetContent({
               <XIcon
               />
               <span className="sr-only">Close</span>
-            </Button></MotionSlot>
+            </ControlButton></MotionSlot>
           </SheetPrimitive.Close>
         )}
       </SheetPrimitive.Content></MotionSlot>

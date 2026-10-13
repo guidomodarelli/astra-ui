@@ -7,7 +7,7 @@ import useEmblaCarousel, {
 
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
 import { cn } from "../lib/utils.js"
-import { Button } from "./button.js"
+import { ControlButton } from "./control-button.js"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 
 type CarouselApi = UseEmblaCarouselType[1]
@@ -194,11 +194,11 @@ function CarouselPrevious({
   variant = "outline",
   size = "icon-sm",
   ...props
-}: React.ComponentProps<typeof Button>) {
+}: React.ComponentProps<typeof ControlButton>) {
   const { orientation, scrollPrev, canScrollPrev } = useCarousel()
 
   return (
-    <Button
+    <ControlButton
       data-slot="carousel-previous"
       variant={variant}
       size={size}
@@ -215,7 +215,7 @@ function CarouselPrevious({
     >
       <ChevronLeftIcon />
       <span className="sr-only">Previous slide</span>
-    </Button>
+    </ControlButton>
   )
 }
 
@@ -224,11 +224,11 @@ function CarouselNext({
   variant = "outline",
   size = "icon-sm",
   ...props
-}: React.ComponentProps<typeof Button>) {
+}: React.ComponentProps<typeof ControlButton>) {
   const { orientation, scrollNext, canScrollNext } = useCarousel()
 
   return (
-    <Button
+    <ControlButton
       data-slot="carousel-next"
       variant={variant}
       size={size}
@@ -245,7 +245,7 @@ function CarouselNext({
     >
       <ChevronRightIcon />
       <span className="sr-only">Next slide</span>
-    </Button>
+    </ControlButton>
   )
 }
 

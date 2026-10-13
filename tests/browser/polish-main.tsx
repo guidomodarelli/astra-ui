@@ -142,7 +142,7 @@ function PolishExamples() {
             </CardHeader>
             <CardContent>Total: $ 184.200</CardContent>
             <CardFooter>
-              <Button variant="outline">Ver detalle</Button>
+              <Button variant="secondary">Ver detalle</Button>
             </CardFooter>
           </Card>
         </section>

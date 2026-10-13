@@ -119,7 +119,7 @@ function PreferencesForm() {
       <div className="StoryRow">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" type="button">
+            <Button variant="secondary" type="button">
               <CalendarDays data-icon="inline-start" />
               {date ? date.toLocaleDateString("es-AR") : "Fecha de cierre"}
             </Button>

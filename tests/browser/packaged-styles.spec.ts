@@ -61,14 +61,16 @@ test("should style the installed package without consumer compilation", async ({
   await page.goto(origin);
   const button = page.getByRole("button", { name: "Guardar" });
   await expect(button).toHaveCSS("display", "inline-flex");
-  await expect(button).toHaveCSS("height", "32px");
-  await expect(button).toHaveCSS("border-radius", "10px");
+  // Arc's medium control height and control radius.
+  await expect(button).toHaveCSS("height", "44px");
+  await expect(button).toHaveCSS("border-radius", "18px");
   await expect(page.locator(".sr-only")).toHaveCSS("position", "absolute");
   await expect(page.locator(".sr-only")).toHaveCSS("width", "1px");
   await expect(page.locator('[data-slot="avatar"]')).toHaveCSS("width", "32px");
   await expect(page.getByRole("button", { name: "Toggle sidebar" })).toHaveCSS("width", "40px");
   expect(await page.evaluate(async () => {
-    const loaded = await document.fonts.load('16px "Beez Geist"');
-    return loaded.length > 0 && loaded.every((font) => font.status === "loaded");
+    const families = ['16px "Beez Inter"', '16px "Beez Geist"'];
+    const loaded = (await Promise.all(families.map((family) => document.fonts.load(family)))).flat();
+    return loaded.length >= families.length && loaded.every((font) => font.status === "loaded");
   })).toBe(true);
 });

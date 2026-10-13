@@ -36,7 +36,7 @@ export function RichTextContent({ content, onLinkClick, linkClassName }: RichTex
         segment.type === RICH_TEXT_SEGMENT_TYPE.link ? (
           <a
             data-slot="rich-text-link"
-            className={cn(RICH_TEXT_LINK_CLASS_NAME, "font-bold decoration-[0.08em]", linkClassName)}
+            className={cn(RICH_TEXT_LINK_CLASS_NAME, "font-medium decoration-[0.08em]", linkClassName)}
             href={segment.url}
             key={segment.type + String(segmentIndex)}
             onClick={onLinkClick}

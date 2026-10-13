@@ -799,7 +799,7 @@ function SidebarBrandButton({
       type={type}
       data-slot="sidebar-brand-button"
       className={cn(
-        "flex min-h-10 w-full min-w-0 items-center gap-3 rounded-xl px-2 py-1.5 text-left text-sm font-semibold text-sidebar-foreground outline-none transition-colors",
+        "flex min-h-10 w-full min-w-0 items-center gap-3 rounded-xl px-2 py-1.5 text-left text-sm font-medium text-sidebar-foreground outline-none transition-colors",
         "hover:bg-sidebar-accent/70 focus-visible:bg-sidebar-accent/70 focus-visible:ring-2 focus-visible:ring-sidebar-ring data-[state=open]:bg-sidebar-accent/70",
         "disabled:cursor-not-allowed disabled:opacity-40",
         className,
@@ -849,7 +849,7 @@ function SidebarGroupLabel({ className, ...props }: React.ComponentProps<"div">)
       aria-hidden={collapsed}
       data-slot="sidebar-group-label"
       className={cn(
-        "mb-1 h-7 overflow-hidden px-2 text-[10px] font-medium tracking-[0.14em] text-sidebar-foreground/70 uppercase transition-opacity",
+        "mb-1 h-7 overflow-hidden px-2 text-xs font-medium text-sidebar-foreground/70 transition-opacity",
         collapsed ? "opacity-0" : "opacity-100",
         className,
       )}

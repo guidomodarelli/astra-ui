@@ -18,7 +18,7 @@ function BrowserExample() {
     <div className="controls"><AnimatedThemeToggler /><Button onClick={() => toast.success("Cambios guardados")}>Notificar</Button><Avatar><AvatarImage src="/missing-avatar.png" alt="Perfil de prueba" /></Avatar></div>
     <section>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild><Button size="icon-sm" aria-label="Acciones de envío">⋮</Button></DropdownMenuTrigger>
+        <DropdownMenuTrigger asChild><Button size="sm" aria-label="Acciones de envío">⋮</Button></DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onSelect={() => setSelectedAction("Editar datos de envío")}><Pencil /><span>Editar datos de envío</span></DropdownMenuItem>
           <DropdownMenuItem variant="destructive"><Trash2 /><span>Eliminar datos de envío</span></DropdownMenuItem>

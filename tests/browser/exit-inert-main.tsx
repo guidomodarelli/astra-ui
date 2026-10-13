@@ -31,7 +31,6 @@ function LeavingPanel({ children }: { children: ReactNode }) {
 /** Counts activations of controls that should stop responding once their exit starts. */
 function ExitInertExamples() {
   const [buttonActivations, setButtonActivations] = useState(0);
-  const [linkActivations, setLinkActivations] = useState(0);
   const [regionActivations, setRegionActivations] = useState(0);
   const [isCollapseOpen, setIsCollapseOpen] = useState(false);
 
@@ -40,21 +39,9 @@ function ExitInertExamples() {
       <main>
         <h1>Salidas inertes</h1>
         <output aria-label="Activaciones del botón">{buttonActivations}</output>
-        <output aria-label="Activaciones del enlace">{linkActivations}</output>
         <output aria-label="Activaciones de la región">{regionActivations}</output>
         <LeavingPanel>
           <Button onClick={() => setButtonActivations((count) => count + 1)}>Confirmar</Button>
-          <Button asChild>
-            <a
-              href="#perfil"
-              onClick={(event) => {
-                event.preventDefault();
-                setLinkActivations((count) => count + 1);
-              }}
-            >
-              Ver perfil
-            </a>
-          </Button>
         </LeavingPanel>
         <section aria-label="Región colapsable">
           <button type="button" aria-expanded={isCollapseOpen} onClick={() => setIsCollapseOpen((isOpen) => !isOpen)}>

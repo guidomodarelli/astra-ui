@@ -7,12 +7,6 @@ import { Button, Avatar, AvatarImage, AvatarFallback, Checkbox } from "@guidomod
 
 
 describe("beez-ui consumer contract", () => {
-  it("should preserve asChild navigation without nesting a button", () => {
-    render(<Button asChild><a href="/courses">Cursos</a></Button>);
-    expect(screen.getByRole("link", { name: "Cursos" })).toHaveAttribute("href", "/courses");
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
-  });
-
   it("should prevent actions when disabled", async () => {
     const onClick = vi.fn();
     render(<Button disabled onClick={onClick}>Guardar</Button>);

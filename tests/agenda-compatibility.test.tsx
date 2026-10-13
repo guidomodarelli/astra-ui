@@ -2,7 +2,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { SidebarProvider, SidebarTrigger, Button, useSidebar, SIDEBAR_COOKIE_NAME } from "@guidomodarelli/beez-ui";
+import { SidebarProvider, SidebarTrigger, useSidebar, SIDEBAR_COOKIE_NAME } from "@guidomodarelli/beez-ui";
 
 /** Displays the actual provider state used by consumers. */
 function SidebarState() {
@@ -12,12 +12,6 @@ function SidebarState() {
 afterEach(() => localStorage.clear());
 
 describe("Agenda compatibility", () => {
-  it("should expose button variant and size without replacing its accessible primitive", () => {
-    render(<Button variant="outline" size="lg">Guardar</Button>);
-    expect(screen.getByRole("button", { name: "Guardar" })).toHaveAttribute("data-variant", "outline");
-    expect(screen.getByRole("button", { name: "Guardar" })).toHaveAttribute("data-size", "lg");
-  });
-
   it("should restore optional local preferences and keep the LaTribu cookie contract", async () => {
     localStorage.setItem("test.sidebar", "false");
     render(<SidebarProvider storageKey="test.sidebar"><SidebarState /><SidebarTrigger /></SidebarProvider>);

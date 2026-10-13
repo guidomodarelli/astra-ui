@@ -1,15 +1,12 @@
 "use client"
 
 /**
- * Button with Arc's look and motion (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md):
- * width-aware press feedback, a label that springs to its new width and a loading spinner, behind
- * beez-ui's variant, size and `asChild` contract.
+ * Arc's Button (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): its variants, sizes, tokens and motion,
+ * with width-aware press feedback, a label that springs to its new width and a loading spinner. It renders a native
+ * button; style links as links instead. Composite components that need icon sizes use the internal `ControlButton`.
  */
-import { Children, cloneElement, isValidElement } from "react"
-import type { ComponentProps, MouseEvent, ReactElement, ReactNode, Ref } from "react"
-import { Button as ButtonPrimitive } from "@base-ui/react/button"
-import { cva, type VariantProps } from "class-variance-authority"
-import { Slot } from "radix-ui"
+import type { ComponentProps, Ref } from "react"
+import { cva } from "class-variance-authority"
 import { useIsPresent } from "motion/react"
 
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
@@ -17,146 +14,92 @@ import { cn } from "../lib/utils.js"
 import { useArcPress } from "../motion/arc-press.js"
 import { useAttachedElement } from "../motion/use-attached-element.js"
 import { ButtonLabel } from "./button-label.js"
+import { LEAVING_ATTRIBUTES, LOADING_INERT_HANDLERS } from "./button-interaction.js"
+
+/** Visual weight, as in Arc: one primary action per surface. */
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger"
+
+/** Height and padding, from Arc's control heights. */
+export type ButtonSize = "sm" | "md" | "lg"
 
 /**
- * Class recipe. Press scale is driven by Motion alone, so `transform` never gets a CSS transition,
- * and anchors of floating layers never scale because Radix measures them on pointerdown.
+ * Arc's button recipe on its tokens. Press scale is driven by Motion alone, so `transform` never gets a CSS
+ * transition, and anchors of floating layers never scale because Radix measures them on pointerdown. Keyboard focus
+ * uses the foundation's shared outline; pointer focus draws no ring.
  */
 const buttonVariants = cva(
-  "group/button relative inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap outline-none select-none [-webkit-tap-highlight-color:transparent] transition-[color,background-color,border-color,opacity,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-busy:cursor-progress aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 motion-reduce:transition-none dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&:is([aria-haspopup]:not([aria-haspopup=false]),[data-state],[role=combobox])]:transform-none! [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-(--radius-control) border border-transparent px-4 font-sans text-sm leading-(--leading-body) font-medium whitespace-nowrap select-none [-webkit-tap-highlight-color:transparent] transition-[color,background-color,border-color,opacity,box-shadow] duration-(--duration-fast) ease-(--ease-standard) disabled:cursor-not-allowed disabled:opacity-[.52] aria-busy:cursor-progress motion-reduce:transition-none [&:is([aria-haspopup]:not([aria-haspopup=false]),[data-state],[role=combobox])]:transform-none! [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default:
-          "border-foreground bg-foreground text-background hover:not-disabled:opacity-90 hover:not-disabled:shadow-xs active:not-disabled:opacity-85",
-        outline:
-          "border-border bg-background text-foreground hover:not-disabled:bg-muted hover:not-disabled:shadow-xs active:not-disabled:bg-muted aria-expanded:bg-muted disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100",
+        primary:
+          "border-foreground bg-foreground text-background hover-fine:not-disabled:opacity-[.91] hover-fine:not-disabled:shadow-(--shadow-resting) active:not-disabled:opacity-[.84]",
         secondary:
-          "bg-muted text-foreground hover:not-disabled:bg-muted/70 active:not-disabled:bg-muted/70 aria-expanded:bg-muted/70",
+          "border-border bg-surface text-foreground hover-fine:not-disabled:bg-surface-muted hover-fine:not-disabled:shadow-(--shadow-resting) active:not-disabled:bg-surface-muted disabled:bg-surface-muted disabled:text-text-muted disabled:opacity-100",
         ghost:
-          "text-muted-foreground hover:not-disabled:bg-muted hover:not-disabled:text-foreground active:not-disabled:bg-muted active:not-disabled:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground disabled:text-muted-foreground/60 disabled:opacity-100",
-        destructive:
-          "border-border bg-background text-destructive hover:not-disabled:border-destructive hover:not-disabled:bg-muted active:not-disabled:border-destructive active:not-disabled:bg-muted focus-visible:border-destructive/40 focus-visible:ring-destructive/20 disabled:bg-muted disabled:text-destructive/55 disabled:opacity-100 dark:focus-visible:ring-destructive/40",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-transparent text-text-secondary hover-fine:not-disabled:bg-surface-muted hover-fine:not-disabled:text-foreground active:not-disabled:bg-surface-muted active:not-disabled:text-foreground disabled:text-text-muted disabled:opacity-100",
+        danger:
+          "border-border bg-surface text-danger hover-fine:not-disabled:border-danger hover-fine:not-disabled:bg-surface-muted active:not-disabled:border-danger active:not-disabled:bg-surface-muted disabled:bg-surface-muted disabled:text-[color-mix(in_oklab,var(--danger)_55%,var(--surface-muted))] disabled:opacity-100",
       },
       size: {
-        default:
-          "h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
-        icon: "size-8",
-        "icon-xs":
-          "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm":
-          "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
-        "icon-lg": "size-9",
+        sm: "min-h-(--control-height-sm) px-3",
+        md: "min-h-(--control-height-md)",
+        lg: "min-h-(--control-height-lg) px-5",
       },
     },
     defaultVariants: {
-      variant: "default",
-      size: "default",
+      variant: "primary",
+      size: "md",
     },
   }
 )
 
-/** Swallows activation while loading, keeping the button focusable instead of disabling it. */
-function preventActivation(event: MouseEvent<HTMLElement>) {
-  event.preventDefault()
+export type ButtonProps = ComponentProps<"button"> & {
+  variant?: ButtonVariant
+  size?: ButtonSize
+  /** Shows a spinner, sets `aria-busy` and swallows clicks while keeping keyboard focus. */
+  loading?: boolean
 }
 
 /**
- * While loading, these handlers are dropped: Radix triggers open their layer from pointer and key
- * handlers they inject, so swallowing only the click would leave a busy trigger able to open it.
- * Keyboard focus stays, since nothing here touches focusability.
+ * A single action on a page, form or dialog. Defaults to `type="button"`, so it only submits a form when asked to.
+ * @param props - Variant, size, loading state and native button attributes, including `ref`.
+ * @returns The native button.
  */
-/**
- * Applied while a parent `AnimatePresence` removes the button, so a stale control can be neither
- * clicked, focused nor announced during the exit animation.
- */
-const LEAVING_ATTRIBUTES = { inert: true, "aria-hidden": true } as const
-
-const LOADING_INERT_HANDLERS = {
-  onClick: preventActivation,
-  onPointerDown: undefined,
-  onKeyDown: undefined,
-} as const
-
-type SlottableChildProps = {
-  children?: ReactNode
-  onClick?: (event: MouseEvent<HTMLElement>) => void
-  onPointerDown?: unknown
-  onKeyDown?: unknown
-}
-
-/**
- * Wraps the content of an `asChild` element in the Arc label, so links morph and spin like buttons.
- * While loading, the child's own activation handlers are dropped too, because Slot runs them before ours.
- * Children given as render functions keep their content untouched.
- */
-function withArcLabel(
-  children: ReactNode,
-  loading: boolean,
-  renderLabel: (content: ReactNode) => ReactNode,
-): ReactNode {
-  const child = Children.only(children)
-  if (!isValidElement<SlottableChildProps>(child)) return child
-  const content = child.props.children
-  const overrides = loading ? LOADING_INERT_HANDLERS : undefined
-  const label = typeof content === "function" ? content : renderLabel(content)
-  return cloneElement(child as ReactElement<SlottableChildProps>, overrides, label)
-}
-
 function Button({
   className,
-  variant = "default",
-  size = "default",
-  asChild = false,
+  variant = "primary",
+  size = "md",
   loading = false,
+  type = "button",
   children,
   ref,
   ...props
-}: ButtonPrimitive.Props &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-    /** Shows a spinner, sets `aria-busy` and swallows clicks while keeping keyboard focus. */
-    loading?: boolean
-  }) {
+}: ButtonProps) {
   const reduceMotion = usePrefersReducedMotion()
   const isPresent = useIsPresent()
-  const [element, attach] = useAttachedElement<HTMLElement>(ref as Ref<HTMLElement> | undefined)
-  useArcPress(element, !reduceMotion && variant !== "link")
-
-  const renderLabel = (content: ReactNode) => (
-    <ButtonLabel loading={loading} reduceMotion={reduceMotion}>
-      {content}
-    </ButtonLabel>
-  )
-  const sharedProps = {
-    "data-slot": "button",
-    "data-variant": variant,
-    "data-size": size,
-    className: cn(buttonVariants({ variant, size, className })),
-    "aria-busy": loading || undefined,
-    ...props,
-    "aria-disabled": loading || props["aria-disabled"] || undefined,
-    ...(loading ? LOADING_INERT_HANDLERS : undefined),
-    ...(isPresent ? undefined : LEAVING_ATTRIBUTES),
-  }
-
-  if (asChild) {
-    return (
-      <Slot.Root ref={attach} {...(sharedProps as ComponentProps<typeof Slot.Root>)}>
-        {withArcLabel(children, loading, renderLabel)}
-      </Slot.Root>
-    )
-  }
+  const [element, attach] = useAttachedElement<HTMLButtonElement>(ref as Ref<HTMLButtonElement> | undefined)
+  useArcPress(element, !reduceMotion)
 
   return (
-    <ButtonPrimitive ref={attach} {...(sharedProps as ButtonPrimitive.Props)}>
-      {renderLabel(children)}
-    </ButtonPrimitive>
+    <button
+      ref={attach}
+      type={type}
+      data-slot="button"
+      data-variant={variant}
+      data-size={size}
+      className={cn(buttonVariants({ variant, size, className }))}
+      aria-busy={loading || undefined}
+      {...props}
+      aria-disabled={loading || props["aria-disabled"] || undefined}
+      {...(loading ? LOADING_INERT_HANDLERS : undefined)}
+      {...(isPresent ? undefined : LEAVING_ATTRIBUTES)}
+    >
+      <ButtonLabel loading={loading} reduceMotion={reduceMotion}>
+        {children}
+      </ButtonLabel>
+    </button>
   )
 }
 
-export { Button, buttonVariants }
+export { Button }

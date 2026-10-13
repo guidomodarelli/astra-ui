@@ -7,6 +7,7 @@ import { MotionSlot } from "../motion/motion-slot.js"
 import { MotionPresence, MotionOpenProvider, useMotionOpenState } from "../motion/presence.js"
 import { cn } from "../lib/utils.js"
 import { Button } from "./button.js"
+import { ControlButton } from "./control-button.js"
 import { XIcon } from "lucide-react"
 
 function Dialog({
@@ -78,7 +79,7 @@ function DialogContent({
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
-            <MotionSlot kind="delayed-pop"><Button
+            <MotionSlot kind="delayed-pop"><ControlButton
               variant="ghost"
               className="absolute top-2 right-2"
               size="icon-sm"
@@ -86,7 +87,7 @@ function DialogContent({
               <XIcon
               />
               <span className="sr-only">Cerrar</span>
-            </Button></MotionSlot>
+            </ControlButton></MotionSlot>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Content></MotionSlot>
@@ -129,7 +130,7 @@ function DialogFooter({
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close asChild>
-          <Button variant="outline">Cerrar</Button>
+          <Button variant="secondary">Cerrar</Button>
         </DialogPrimitive.Close>
       )}
     </div>

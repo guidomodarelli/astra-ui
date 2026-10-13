@@ -280,7 +280,7 @@ export function TypingAnimation({
       data-slot="typing-animation"
       className={cn(
         "tracking-[-0.02em]",
-        Component === "h1" && "text-3xl font-bold leading-tight md:text-4xl",
+        Component === "h1" && "text-3xl font-medium leading-tight md:text-4xl",
         Component === "span" && "inline-block",
         className
       )}

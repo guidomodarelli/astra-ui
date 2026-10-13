@@ -10,7 +10,7 @@ import {
   RICH_TEXT_SEGMENT_TYPE,
 } from "../lib/rich-text/link-markdown-constants.js";
 import type { RichLinkEditorController } from "../hooks/use-rich-link-editor.js";
-import { Button } from "./button.js";
+import { ControlButton } from "./control-button.js";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover.js";
 
 const BUTTON_TYPE = "button";
@@ -31,11 +31,11 @@ const RICH_LINK_EDITOR_CLASS_NAMES = {
     "min-h-28 w-full cursor-text border-0 bg-background p-0 leading-[1.65] whitespace-pre-wrap text-foreground [font:inherit] [overflow-wrap:anywhere] focus:outline-0 empty:before:pointer-events-none empty:before:text-muted-foreground/75 empty:before:content-[attr(data-placeholder)] max-md:text-base",
   editorInvalid: "rounded-[0.35rem] shadow-[inset_0_-2px_0_var(--destructive)] outline-0",
   editorLink:
-    "cursor-pointer rounded-[0.2rem] font-bold text-primary underline decoration-[0.08em] underline-offset-[0.18em] transition-colors hover:text-[color-mix(in_oklab,var(--primary)_72%,var(--foreground))] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+    "cursor-pointer rounded-[0.2rem] font-medium text-primary underline decoration-[0.08em] underline-offset-[0.18em] transition-colors hover:text-[color-mix(in_oklab,var(--primary)_72%,var(--foreground))] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
   popover: "gap-3",
   editForm: "grid gap-3 animate-in fade-in slide-in-from-bottom-1 duration-200",
   actions: "flex flex-wrap items-center gap-2",
-  label: "grid gap-[0.35rem] text-[0.85rem] font-bold text-muted-foreground",
+  label: "grid gap-[0.35rem] text-[0.85rem] font-medium text-muted-foreground",
   input:
     "min-h-8 rounded-lg border border-border/80 bg-background px-[0.65rem] font-normal text-foreground outline-0 transition-[border-color,box-shadow] [font:inherit] focus-visible:border-ring focus-visible:shadow-[0_0_0_3px_color-mix(in_oklab,var(--ring)_35%,transparent)] aria-invalid:border-destructive aria-invalid:focus-visible:shadow-[0_0_0_3px_color-mix(in_oklab,var(--destructive)_25%,transparent)] max-md:text-base",
 } as const;
@@ -224,7 +224,7 @@ export function RichLinkEditor({
                 >
                   {popoverMode === RICH_LINK_POPOVER_MODE.actions ? (
                     <div className={RICH_LINK_EDITOR_CLASS_NAMES.actions}>
-                      <Button
+                      <ControlButton
                         onClick={() => {
                           setPopoverMode(RICH_LINK_POPOVER_MODE.edit);
                         }}
@@ -232,8 +232,8 @@ export function RichLinkEditor({
                         variant={BUTTON_VARIANT.ghost}
                       >
                         {copy.editAction}
-                      </Button>
-                      <Button
+                      </ControlButton>
+                      <ControlButton
                         onClick={() => {
                           removeLink(segment);
                         }}
@@ -241,7 +241,7 @@ export function RichLinkEditor({
                         variant={BUTTON_VARIANT.ghost}
                       >
                         {copy.removeAction}
-                      </Button>
+                      </ControlButton>
                     </div>
                   ) : (
                     <div className={RICH_LINK_EDITOR_CLASS_NAMES.editForm}>
@@ -271,7 +271,7 @@ export function RichLinkEditor({
                         />
                       </label>
                       <div className={RICH_LINK_EDITOR_CLASS_NAMES.actions}>
-                        <Button
+                        <ControlButton
                           disabled={!isLinkEditValid}
                           onClick={() => {
                             if (activeLink) {
@@ -281,14 +281,14 @@ export function RichLinkEditor({
                           type={BUTTON_TYPE}
                         >
                           {copy.editSave}
-                        </Button>
-                        <Button
+                        </ControlButton>
+                        <ControlButton
                           onClick={closeLinkPopover}
                           type={BUTTON_TYPE}
                           variant={BUTTON_VARIANT.outline}
                         >
                           {copy.editCancel}
-                        </Button>
+                        </ControlButton>
                       </div>
                     </div>
                   )}

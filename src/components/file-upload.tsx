@@ -12,7 +12,7 @@ import { cn } from "../lib/utils.js";
 import { classifyFiles } from "../lib/file-acceptance.js";
 import { formatFileSize } from "../lib/format-file-size.js";
 import { AnimatedListItem } from "./animated-list-item.js";
-import { Button } from "./button.js";
+import { ControlButton } from "./control-button.js";
 
 const COMPLETE_PROGRESS = 100;
 
@@ -139,8 +139,8 @@ export function FileUploadDropZone({
             onChange={(event: ChangeEvent<HTMLInputElement>) => processFiles(Array.from(event.target.files ?? []))}
             onClick={(event) => event.stopPropagation()}
           />
-          <Button
-            className="h-auto p-0 font-semibold"
+          <ControlButton
+            className="h-auto p-0 font-medium"
             disabled={isDisabled}
             type="button"
             variant="link"
@@ -156,7 +156,7 @@ export function FileUploadDropZone({
                 <span className="md:hidden">{resolvedLabels.uploadActionMobileSuffix}</span>
               </>
             ) : null}
-          </Button>
+          </ControlButton>
           <span className="text-sm max-md:hidden">{resolvedLabels.dragAndDrop}</span>
         </div>
         {hint ? (
@@ -298,7 +298,7 @@ export function FileUploadItem({
             </div>
           </div>
           {onDelete ? (
-            <Button
+            <ControlButton
               aria-label={`${resolvedLabels.delete} ${name}`}
               className="-mt-2 -mr-2 self-start text-muted-foreground"
               disabled={isDeleteDisabled}
@@ -308,14 +308,14 @@ export function FileUploadItem({
               onClick={onDelete}
             >
               <Trash2Icon aria-hidden />
-            </Button>
+            </ControlButton>
           ) : null}
         </div>
         {failed ? (
           onRetry ? (
-            <Button className="mt-1.5 h-auto p-0 text-destructive" size="sm" type="button" variant="link" onClick={onRetry}>
+            <ControlButton className="mt-1.5 h-auto p-0 text-destructive" size="sm" type="button" variant="link" onClick={onRetry}>
               {resolvedLabels.retry}
-            </Button>
+            </ControlButton>
           ) : null
         ) : isFillVariant ? null : (
           <div className="mt-1 flex w-full items-center gap-3">

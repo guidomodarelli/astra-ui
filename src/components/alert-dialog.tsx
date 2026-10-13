@@ -176,39 +176,39 @@ function AlertDialogDescription({
   )
 }
 
+/** Confirms the dialog with an Arc `Button`; Radix merges its behavior onto the button through `asChild`. */
 function AlertDialogAction({
   className,
-  variant = "default",
-  size = "default",
+  variant = "primary",
+  size = "md",
+  children,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Action> &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
   return (
-    <Button variant={variant} size={size} asChild>
-      <AlertDialogPrimitive.Action
-        data-slot="alert-dialog-action"
-        className={cn(className)}
-        {...props}
-      />
-    </Button>
+    <AlertDialogPrimitive.Action data-slot="alert-dialog-action" asChild {...props}>
+      <Button variant={variant} size={size} className={cn(className)}>
+        {children}
+      </Button>
+    </AlertDialogPrimitive.Action>
   )
 }
 
+/** Dismisses the dialog with an Arc secondary `Button` by default. */
 function AlertDialogCancel({
   className,
-  variant = "outline",
-  size = "default",
+  variant = "secondary",
+  size = "md",
+  children,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Cancel> &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
   return (
-    <Button variant={variant} size={size} asChild>
-      <AlertDialogPrimitive.Cancel
-        data-slot="alert-dialog-cancel"
-        className={cn(className)}
-        {...props}
-      />
-    </Button>
+    <AlertDialogPrimitive.Cancel data-slot="alert-dialog-cancel" asChild {...props}>
+      <Button variant={variant} size={size} className={cn(className)}>
+        {children}
+      </Button>
+    </AlertDialogPrimitive.Cancel>
   )
 }
 

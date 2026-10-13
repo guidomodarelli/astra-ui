@@ -36,7 +36,7 @@ const meta = {
   render: ({ content, side, sideOffset }) => (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="outline">Pasá el cursor o enfocá</Button>
+        <Button variant="secondary">Pasá el cursor o enfocá</Button>
       </TooltipTrigger>
       <TooltipContent side={side} sideOffset={sideOffset}>
         {content}

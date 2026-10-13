@@ -65,7 +65,7 @@ const meta = {
               onOpenChange={(open) => setOpen(open)}
             >
               <AlertDialogTrigger asChild>
-                <Button variant="outline">Abrir confirmación</Button>
+                <Button variant="secondary">Abrir confirmación</Button>
               </AlertDialogTrigger>
               <AlertDialogContent size={args.size}>
                 <AlertDialogHeader>
@@ -75,7 +75,7 @@ const meta = {
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction
-                    variant={args.destructive ? "destructive" : "default"}
+                    variant={args.destructive ? "danger" : "primary"}
                   >
                     Confirmar
                   </AlertDialogAction>
