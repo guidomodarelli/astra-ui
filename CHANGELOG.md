@@ -4,26 +4,27 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-13
+
+### Changed
+
+- **Incompatible:** el paquete vuelve a publicarse en npm como `beez-ui` (sin scope), desde GitHub Actions con trusted publishing. Quienes usan `@guidomodarelli/beez-ui` desde GitHub Packages tienen que reemplazar la dependencia y todos los imports, incluidos los subpaths y el CSS, por `beez-ui`; ya no hace falta mapear el scope ni un token para instalarlo. Las versiones 1.0.0 y 1.1.0 no se publicaron en npm.
+
+## [1.0.0] - 2026-10-13
+
 ### Added
 
 - El tema adopta el foundation de Arc: colores, superficies, textos y bordes por rol, radios concéntricos (controles 18 px, paneles 26 px, superficies 34 px), alturas de control de 36, 44 y 50 px, sombras, curvas y foco visible solo con teclado, en claro y oscuro.
 - El acento por defecto es el azul de Arc y se puede cambiar con `data-accent` en `<html>` (`neutral`, `violet`, `blue`, `green`, `amber`, `orange`, `coral` o `rose`).
 - La fuente Inter se incluye como fuente local para texto y controles.
-- `Button` acepta la prop `loading`: muestra un spinner, marca el botón como ocupado e ignora los clics sin perder el foco; si es el trigger de un menú o popover, tampoco lo abre.
-- Publicación desde GitHub Actions con versión calculada y CHANGELOG mantenido manualmente, usando el token automático del repositorio.
 
 ### Changed
 
-- **Incompatible:** el paquete vuelve a publicarse en npm como `beez-ui` (sin scope), desde GitHub Actions con trusted publishing. Quienes usan `@guidomodarelli/beez-ui` desde GitHub Packages tienen que reemplazar la dependencia y todos los imports, incluidos los subpaths y el CSS, por `beez-ui`; ya no hace falta mapear el scope ni un token para instalarlo. Las versiones 1.0.0 y 1.1.0 no se publicaron en npm.
 - **Incompatible:** `Button` sigue la API de Arc: `variant` pasa a `primary`, `secondary`, `ghost` o `danger` (antes `default`, `outline`, `secondary`, `ghost`, `destructive` y `link`) y `size` a `sm`, `md` o `lg` (antes `default`, `xs`, `sm`, `lg` y los tamaños `icon`). Renderiza un `<button>` nativo, con `type="button"` por defecto, y toma el radio, las alturas, los colores y el hover solo con puntero fino de Arc.
 - **Incompatible:** `AlertDialogAction` y `AlertDialogCancel` usan las variantes y tamaños de Arc; por defecto, `primary` y `secondary`.
 - `BeezUIProvider` escribe el tema como clase y como atributo `data-theme` en `<html>`.
 - Los títulos grandes (`--font-display`) usan Geist en lugar de Poppins, y el texto usa Inter en lugar de Geist.
 - El fondo de la página deja de usar degradados decorativos: `--body-background-image` vale `none`.
-- `Button` adopta el estilo y la animación de Arc: nuevos colores por variante (`default` pasa a usar `foreground` en lugar de `primary`), presión según el ancho del botón y animación del ancho cuando cambia el texto. También aplica a los botones con `asChild`. Los triggers de menús y popovers no se achican al presionarlos.
-- El release se inicia automáticamente al subir cambios a `main`, incluidos los cambios de `package.json`, y conserva la ejecución manual desde Actions.
-- El paquete pasa a publicarse en GitHub Packages como `@guidomodarelli/beez-ui`; los consumidores deben actualizar sus dependencias e imports y configurar acceso al registry de GitHub.
-- La ejecución manual del release permite omitir explícitamente un tag pendiente del registro anterior durante una migración; la ejecución automática conserva esa protección.
 
 ### Removed
 
@@ -31,13 +32,67 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 - **Incompatible:** se retira el export `buttonVariants`.
 - Se retira la fuente Poppins.
 
+## [0.16.0] - 2026-10-13
+
+### Added
+
+- El tema adopta el foundation de Arc: colores, superficies, textos y bordes por rol, radios concéntricos (controles 18 px, paneles 26 px, superficies 34 px), alturas de control de 36, 44 y 50 px, sombras, curvas y foco visible solo con teclado, en claro y oscuro.
+- El acento por defecto es el azul de Arc y se puede cambiar con `data-accent` en `<html>` (`neutral`, `violet`, `blue`, `green`, `amber`, `orange`, `coral` o `rose`).
+- La fuente Inter se incluye como fuente local para texto y controles.
+
+### Changed
+
+- **Incompatible:** `Button` sigue la API de Arc: `variant` pasa a `primary`, `secondary`, `ghost` o `danger` (antes `default`, `outline`, `secondary`, `ghost`, `destructive` y `link`) y `size` a `sm`, `md` o `lg` (antes `default`, `xs`, `sm`, `lg` y los tamaños `icon`). Renderiza un `<button>` nativo, con `type="button"` por defecto, y toma el radio, las alturas, los colores y el hover solo con puntero fino de Arc.
+- **Incompatible:** `AlertDialogAction` y `AlertDialogCancel` usan las variantes y tamaños de Arc; por defecto, `primary` y `secondary`.
+- `BeezUIProvider` escribe el tema como clase y como atributo `data-theme` en `<html>`.
+- Los títulos grandes (`--font-display`) usan Geist en lugar de Poppins, y el texto usa Inter en lugar de Geist.
+- El fondo de la página deja de usar degradados decorativos: `--body-background-image` vale `none`.
+
+### Removed
+
+- **Incompatible:** `Button` ya no admite `asChild`: un link con aspecto de botón se estiliza como link.
+- **Incompatible:** se retira el export `buttonVariants`.
+- Se retira la fuente Poppins.
+
+## [0.15.0] - 2026-10-13
+
+### Fixed
+
+- La preparación del release lee y extrae el tarball también en Windows con el `tar` de Git Bash, que rechazaba las rutas absolutas con letra de unidad.
+
+## [0.14.0] - 2026-10-13
+
+### Fixed
+
+- `Button` vuelve a quedar inerte y oculto para tecnologías de asistencia mientras un `AnimatePresence` padre lo retira, también con `asChild`: durante la animación de salida no se puede hacer clic, enfocar ni anunciar.
+- `AnimatedCollapse` marca la región como inerte y oculta para tecnologías de asistencia mientras se cierra, como `PresenceSwap` y `AnimatedListItem`, para que sus controles no sigan activos durante el fundido.
+
+## [0.13.0] - 2026-10-12
+
+### Added
+
+- `Button` acepta la prop `loading`: muestra un spinner, marca el botón como ocupado e ignora los clics sin perder el foco; si es el trigger de un menú o popover, tampoco lo abre.
+
+### Changed
+
+- `Button` adopta el estilo y la animación de Arc: nuevos colores por variante (`default` pasa a usar `foreground` en lugar de `primary`), presión según el ancho del botón y animación del ancho cuando cambia el texto. También aplica a los botones con `asChild`. Los triggers de menús y popovers no se achican al presionarlos.
+
+## [0.12.0] - 2026-10-12
+
+### Added
+
+- Publicación desde GitHub Actions con versión calculada y CHANGELOG mantenido manualmente, usando el token automático del repositorio.
+
+### Changed
+
+- El release se inicia automáticamente al subir cambios a `main`, incluidos los cambios de `package.json`, y conserva la ejecución manual desde Actions.
+- El paquete pasa a publicarse en GitHub Packages como `@guidomodarelli/beez-ui`; los consumidores deben actualizar sus dependencias e imports y configurar acceso al registry de GitHub.
+- La ejecución manual del release permite omitir explícitamente un tag pendiente del registro anterior durante una migración; la ejecución automática conserva esa protección.
+
 ### Fixed
 
 - Los eventos de teclado sin una tecla válida no interrumpen la navegación lateral; se conservan los atajos con Ctrl y Cmd.
 - La preparación del paquete acepta las notas de `[Unreleased]` que conserva el motor de publicación actual, sin exigir que se reescriba el historial.
-- `Button` vuelve a quedar inerte y oculto para tecnologías de asistencia mientras un `AnimatePresence` padre lo retira, también con `asChild`: durante la animación de salida no se puede hacer clic, enfocar ni anunciar.
-- `AnimatedCollapse` marca la región como inerte y oculta para tecnologías de asistencia mientras se cierra, como `PresenceSwap` y `AnimatedListItem`, para que sus controles no sigan activos durante el fundido.
-- La preparación del release lee y extrae el tarball también en Windows con el `tar` de Git Bash, que rechazaba las rutas absolutas con letra de unidad.
 
 ## [0.11.0] - 2026-10-03
 
