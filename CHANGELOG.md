@@ -4,6 +4,10 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+### Fixed
+
+- El CHANGELOG publicado vuelve a tener una sección propia, con su fecha, para cada versión publicada de 0.12.0 a 2.0.0, en lugar de mezclar sus cambios en un solo bloque.
+
 ## [2.0.0] - 2026-10-13
 
 ### Changed
