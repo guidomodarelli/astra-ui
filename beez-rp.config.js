@@ -2,8 +2,8 @@
  * @file Configuration of `beez-rp create-version` (`pnpm create-version`, alias `pnpm cv`) for beez-ui.
  *
  * The shared command diagnoses the repository, requires hand-written entries in
- * the changelog `[Unreleased]` block, bumps the version (commit `X.Y.Z` + annotated tag `vX.Y.Z`;
- * beez-rp releases after 0.7.x also rename `[Unreleased]` to the dated version in that commit),
+ * the changelog `[Unreleased]` block, bumps the version (commit `X.Y.Z` + annotated tag `vX.Y.Z`,
+ * renaming `[Unreleased]` to the dated version in that commit),
  * prepares, pushes `main` and the tag atomically and publishes. beez-ui
  * prepares a checksum-addressed tarball through `scripts/release-hooks.js`;
  * the engine verifies that exact tarball (SHA-256 and contents) and publishes

@@ -10,11 +10,11 @@
 ## CHANGELOG
 
 - Todo cambio que modifique el comportamiento, la API pública, los estilos, las dependencias publicadas o el proceso de release debe actualizar `CHANGELOG.md` en el mismo commit.
-- Las entradas van siempre dentro del bloque `## [Unreleased]`, nunca en una versión ya publicada. No escribir la versión ni la fecha a mano: desde la versión minor de beez-rp posterior a 0.7.x, `pnpm create-version` renombra `[Unreleased]` a `## [X.Y.Z] - AAAA-MM-DD` en el commit de versión y deja un `## [Unreleased]` vacío arriba. Con beez-rp 0.7.x el comando conserva los bytes del CHANGELOG sin renombrar la sección.
+- Las entradas van siempre dentro del bloque `## [Unreleased]`, nunca en una versión ya publicada. No escribir la versión ni la fecha a mano: `pnpm create-version` (beez-rp 0.8.0) renombra `[Unreleased]` a `## [X.Y.Z] - AAAA-MM-DD` en el commit de versión y deja un `## [Unreleased]` vacío arriba.
 - Agrupar las entradas con el formato de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), usando solo estas secciones y en este orden: `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed`, `### Security`. Omitir las secciones vacías.
 - Una línea `- ` por cambio, en español, escrita para quien consume el paquete (qué cambia para él), sin detalles internos de implementación.
 - Cambios que no afectan a quien consume el paquete (tests, refactors internos sin efecto visible, tooling local) no necesitan entrada.
-- Antes de publicar, escribir a mano en `[Unreleased]` los cambios del release: beez-rp no genera notas y bloquea el release si `[Unreleased]` no existe o no tiene entradas. No cerrar la sección a mano ni desde los hooks (por ejemplo con `releaseUnreleased`): la cierra beez-rp. En el commit de versión, `release:prepare` acepta el bloque fechado que coincide con la versión del manifiesto o, con beez-rp 0.7.x, las entradas conservadas en `[Unreleased]`.
+- Antes de publicar, escribir a mano en `[Unreleased]` los cambios del release: beez-rp no genera notas y bloquea el release si `[Unreleased]` no existe o no tiene entradas. No cerrar la sección a mano ni desde los hooks (por ejemplo con `releaseUnreleased`): la cierra beez-rp. En el commit de versión, `release:prepare` exige el bloque fechado que coincide con la versión del manifiesto.
 
 ## Release
 
