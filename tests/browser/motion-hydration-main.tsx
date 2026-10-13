@@ -10,7 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-} from "@guidomodarelli/beez-ui";
+} from "beez-ui";
 import "./styles.css";
 
 const SECTIONS = ["Inicio", "Reportes", "Ajustes"] as const;

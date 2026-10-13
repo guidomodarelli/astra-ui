@@ -24,7 +24,7 @@ import {
   SidebarInset,
   SidebarRail,
   SidebarTrigger,
-} from "@guidomodarelli/beez-ui";
+} from "beez-ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 import { Activity, ChevronsUpDown, FolderKanban, Home, Settings } from "lucide-react";

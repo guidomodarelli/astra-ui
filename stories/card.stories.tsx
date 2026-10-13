@@ -8,7 +8,7 @@ import {
   CardContent,
   CardFooter,
   Button,
-} from "@guidomodarelli/beez-ui";
+} from "beez-ui";
 
 /** Editable inputs specific to this example. */
 type Args = {

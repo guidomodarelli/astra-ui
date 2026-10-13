@@ -7,7 +7,7 @@ import {
   serializeFilterQuery,
   tokenizeFilterQuery,
   type FilterQualifierConfig,
-} from "@guidomodarelli/beez-ui";
+} from "beez-ui";
 
 const CONFIGS: FilterQualifierConfig[] = [
   { key: "", kind: "text", label: "Descripción" },

@@ -4,7 +4,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { DataTable } from "@guidomodarelli/beez-ui";
+import { DataTable } from "beez-ui";
 
 type TableRow = {
   label: string;

@@ -8,7 +8,7 @@ import {
   SelectGroup,
   SelectLabel,
   SelectItem,
-} from "@guidomodarelli/beez-ui";
+} from "beez-ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */

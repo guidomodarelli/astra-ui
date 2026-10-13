@@ -1,5 +1,5 @@
 {
-  "name": "@guidomodarelli/beez-ui",
+  "name": "beez-ui",
   "version": "1.1.0",
   "description": "Shared UI components with the customizations extracted from TuTribu.",
   "type": "module",
