@@ -33,20 +33,17 @@ y [Controls](https://storybook.js.org/docs/essentials/controls).
 
 ## Uso del paquete
 
-El paquete se publica en GitHub Packages como `@guidomodarelli/beez-ui`.
-Para instalarlo, agregar esta línea al `.npmrc` de la aplicación:
-
-```ini
-@guidomodarelli:registry=https://npm.pkg.github.com
-```
-
-Autenticarse con el usuario de GitHub y un token personal clásico con
-`read:packages` como contraseña (también es necesario para paquetes públicos):
+El paquete se publica en npm como `@guidomodarelli/beez-ui`. No hace falta
+configurar el registry ni autenticarse para instalarlo:
 
 ```sh
-npm login --scope=@guidomodarelli --auth-type=legacy --registry=https://npm.pkg.github.com
 pnpm add @guidomodarelli/beez-ui
 ```
+
+Las versiones hasta 1.0.0 se publicaron solo en GitHub Packages. Si la aplicación
+todavía mapea el scope a GitHub en su `.npmrc`
+(`@guidomodarelli:registry=https://npm.pkg.github.com`), hay que quitar esa línea
+para recibir las versiones nuevas desde npm.
 
 Al migrar desde `beez-ui` en npm, reemplazar la dependencia y todos los imports,
 incluidos los subpaths y el CSS, por `@guidomodarelli/beez-ui`.
@@ -260,7 +257,7 @@ incluidos los cambios de `package.json`. También se puede iniciar en GitHub des
 **Actions → Release → Run workflow**, seleccionando `main`.
 El workflow usa `pnpm create-version --accept-suggested`: beez-rp calcula la versión
 y verifica el CHANGELOG mantenido manualmente, prepara y valida el tarball, crea y sube
-el commit y el tag y publica en GitHub Packages.
+el commit y el tag y publica en npm con trusted publishing (OIDC).
 
 El disparador también incluye los pushes que cambian `package.json`, pero
 beez-rp 0.6.1 no retoma una versión editada a mano en un commit común: necesita
@@ -298,7 +295,7 @@ pnpm create-version --dry-run               # solo muestra el diagnóstico y el 
 pnpm cv                                     # alias de pnpm create-version
 ```
 
-El comando es el motor compartido de los proyectos Beez, `beez-rp create-version` (devDependency `beez-rp`). Su funcionamiento general (diagnóstico, bloqueos, reanudación, versiones permitidas) está documentado en el README de [beez-rp](https://github.com/guidomodarelli/beez-rp#create-version). Lo propio de beez-ui vive en `beez-rp.config.js`: la audiencia del CHANGELOG, la descripción de cada tipo de versión, el hook `prepare` de `scripts/release-hooks.js` y la publicación en GitHub Packages del tarball preparado (`publish: "npm"` + `artifact`).
+El comando es el motor compartido de los proyectos Beez, `beez-rp create-version` (devDependency `beez-rp`). Su funcionamiento general (diagnóstico, bloqueos, reanudación, versiones permitidas) está documentado en el README de [beez-rp](https://github.com/guidomodarelli/beez-rp#create-version). Lo propio de beez-ui vive en `beez-rp.config.js`: la audiencia del CHANGELOG, la descripción de cada tipo de versión, el hook `prepare` de `scripts/release-hooks.js` y la publicación en npm del tarball preparado (`publish: "npm"` + `artifact`, con `publication.authentication: "oidc"`).
 
 Los releases salen sólo desde `main`, limpio y al día con origin (sólo `CHANGELOG.md` puede quedar sin commitear). En otra rama explica qué falta: pushear, abrir o mergear el PR. El último release es el último commit de `origin/main` que cambió el `version` de `package.json`, así que reconoce tanto los commits `X.Y.Z` como los anteriores `chore(release): prepara la versión X.Y.Z`.
 
@@ -309,13 +306,11 @@ Los releases salen sólo desde `main`, limpio y al día con origin (sólo `CHANG
 3. Pide la versión (sugiere `patch`, `minor` o `major` según los commits) y crea el commit `X.Y.Z` con la versión del manifiesto, el CHANGELOG conservado y el tag anotado `vX.Y.Z`, antes de las validaciones largas.
 4. `prepare` (`scripts/release-hooks.js`): reusa el tarball ya preparado para esa versión si es posterior al último cambio de código (el commit de versión no cuenta); si no, ejecuta `pnpm release:prepare` sobre el commit de versión: instalación congelada, tests sin React Compiler, build optimizado, lint, typechecks, tests unitarios y pruebas de navegador, y genera el tarball verificado con `npm pack --ignore-scripts` (npm y no pnpm, para que sea reproducible) en `releases/<version>-<sha256>/guidomodarelli-beez-ui-<version>.tgz`.
 5. Sube `main` y el tag `vX.Y.Z` a origin con un único `git push --atomic`.
-6. Publicación: beez-rp exige que el commit de versión siga sin cambios, toma `releases/<version>-<sha256>/guidomodarelli-beez-ui-<version>.tgz`, verifica el SHA-256 de su ruta y compara su SHA-512 con el `integrity` de `npm pack --dry-run` sobre ese commit (`npm pack` es reproducible, así que coincidir prueba que es byte a byte lo que npm empaqueta) y recién ahí lo publica en GitHub Packages con etiqueta `latest`. Además, `prepublishOnly` ejecuta `beez-rp guard-publish`, que corta un `pnpm publish` manual (o yarn/bun): se publica sólo con `pnpm create-version`, que usa npm.
+6. Publicación: beez-rp exige que el commit de versión siga sin cambios, toma `releases/<version>-<sha256>/guidomodarelli-beez-ui-<version>.tgz`, verifica el SHA-256 de su ruta y compara su SHA-512 con el `integrity` de `npm pack --dry-run` sobre ese commit (`npm pack` es reproducible, así que coincidir prueba que es byte a byte lo que npm empaqueta) y recién ahí lo publica en npm con etiqueta `latest`. Además, `prepublishOnly` ejecuta `beez-rp guard-publish`, que corta un `pnpm publish` manual (o yarn/bun): se publica sólo con `pnpm create-version`, que usa npm.
 
-Si algo falla después del commit de versión, basta con volver a ejecutar `pnpm create-version`: si `HEAD` es el commit `X.Y.Z` y GitHub Packages todavía no tiene esa versión, retoma sólo la preparación (reusando el tarball si sigue vigente), el push si falta y la publicación. Nunca vuelve a subir la versión.
+Si algo falla después del commit de versión, basta con volver a ejecutar `pnpm create-version`: si `HEAD` es el commit `X.Y.Z` y npm todavía no tiene esa versión, retoma sólo la preparación (reusando el tarball si sigue vigente), el push si falta y la publicación. Nunca vuelve a subir la versión.
 
-La publicación usa el cliente oficial de npm contra `https://npm.pkg.github.com`; instalación, build y checks siguen usando pnpm 12. `NPM_TOKEN` se toma del entorno, del `.env` ignorado o de `~/.config/beez-rp/.env`, en ese orden, y no se imprime. El `.npmrc` del repositorio solo asigna el scope al registry; beez-rp crea una configuración temporal fuera del repositorio que referencia `${NPM_TOKEN}`, la pasa con `--userconfig` y la borra al terminar. El token nunca se agrega al repositorio ni a la línea de comandos.
-
-GitHub Packages crea los paquetes con visibilidad privada inicialmente. Para distribuirlo públicamente, cambiar su visibilidad en GitHub después de la primera publicación; `publishConfig.access: "public"` no sustituye ese ajuste. Los permisos efectivos requieren verificar las credenciales contra el registry. [Documentación de GitHub Packages](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry).
+La publicación usa el cliente oficial de npm contra `https://registry.npmjs.org/` con [trusted publishing](https://docs.npmjs.com/trusted-publishers): el workflow **Release** tiene `id-token: write`, instala npm 11.5.1 y npm intercambia el token OIDC de GitHub Actions por una credencial de un solo uso, así que no hay tokens de npm guardados en el repositorio ni en los secrets. El paquete `@guidomodarelli/beez-ui` en npm tiene configurado como trusted publisher este repositorio y el workflow `release.yml`; por eso la publicación solo funciona desde ese workflow. Instalación, build y checks siguen usando pnpm 12.
 
 ### CHANGELOG
 
@@ -331,7 +326,7 @@ El paquete excluye fuentes privadas, tests, scripts, `.env` y `.npmrc`; incluye 
 
 `prepack` ejecuta el build para los empaquetados manuales. `dist` y `releases` son generados e ignorados por Git. La CI verifica los checks y los tres providers en ambos motores de navegador en Linux y Windows. La publicación se ejecuta desde el workflow **Release** con cada push a `main` o mediante su ejecución manual.
 
-Tras publicar, los consumidores pueden instalar `pnpm add @guidomodarelli/beez-ui`. También pueden instalar directamente el `.tgz` validado antes de una publicación. Las aplicaciones existentes, incluida LaTribu, deben migrar al nombre con scope y configurar autenticación para consumir las versiones nuevas desde GitHub Packages; su lockfile fija la resolución e integridad.
+Tras publicar, los consumidores pueden instalar `pnpm add @guidomodarelli/beez-ui`. También pueden instalar directamente el `.tgz` validado antes de una publicación. Las aplicaciones que todavía mapean `@guidomodarelli` a GitHub Packages en su `.npmrc` deben quitar ese mapeo para consumir las versiones nuevas desde npm; su lockfile fija la resolución e integridad.
 
 Los componentes nuevos de shadcn/ui se agregan mediante su CLI en esta biblioteca y se exportan desde la raíz. No editar las copias instaladas en los consumidores.
 
