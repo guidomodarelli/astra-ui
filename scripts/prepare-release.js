@@ -1,5 +1,5 @@
 /** @module prepare-release Prepares a checked, content-addressed release without publishing or changing Git. */
-import { execFileSync, execSync } from "node:child_process";
+import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
@@ -8,6 +8,7 @@ import console from "node:console";
 import process from "node:process";
 import { ownedPath } from "./owned-path.js";
 import { validatePackageContents, validateReleaseMetadata } from "./release-checks.js";
+import { listArchiveEntries, readArchiveFile } from "./tarball.js";
 
 /** Keeps all generated release paths under their owning repository. */
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -32,9 +33,9 @@ export function prepareRelease() {
     const archive = readdirSync(staging).find(file => file.endsWith(".tgz"));
     if (!archive) throw new Error("release: npm pack did not produce an archive");
     const archivePath = join(staging, archive);
-    const entries = execFileSync("tar", ["-tf", archivePath], { encoding: "utf8" }).trim().split(/\r?\n/u);
+    const entries = listArchiveEntries(archivePath);
     validatePackageContents(metadata, entries);
-    const packed = JSON.parse(execFileSync("tar", ["-xOf", archivePath, "package/package.json"], { encoding: "utf8" }));
+    const packed = JSON.parse(readArchiveFile(archivePath, "package/package.json"));
     if (packed.name !== metadata.name || packed.version !== metadata.version) throw new Error("release: packed metadata differs from the checked manifest");
     const digest = createHash("sha256").update(readFileSync(archivePath)).digest("hex");
     const destination = ownedPath(root, join(releases, `${metadata.version}-${digest}`));

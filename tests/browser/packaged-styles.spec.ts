@@ -1,5 +1,5 @@
 /** Exercises the actual tarball stylesheet in a browser with no Tailwind compiler or app sources. */
-import { execFileSync, execSync } from "node:child_process";
+import { execSync } from "node:child_process";
 import { createServer, type Server } from "node:http";
 import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -10,6 +10,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "@playwright/test";
 import { Avatar, AvatarFallback, Button, PaginationEllipsis, SidebarProvider, SidebarTrigger } from "@guidomodarelli/beez-ui";
 import { ownedPath } from "../../scripts/owned-path.js";
+import { extractArchive } from "../../scripts/tarball.js";
 
 /** Static fixture resources belong exclusively to this test worker. */
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -21,7 +22,7 @@ test.beforeAll(async () => {
   directory = mkdtempSync(join(tmpdir(), "beez-css-consumer-"));
   execSync(`npm pack --ignore-scripts --pack-destination "${directory}"`, { cwd: root, stdio: "pipe" });
   const archive = readdirSync(directory).find((entry) => entry.endsWith(".tgz"))!;
-  execFileSync("tar", ["-xf", join(directory, archive), "-C", directory]);
+  extractArchive(join(directory, archive), directory);
   const content = renderToStaticMarkup(createElement("main", null,
     createElement(Button, null, "Guardar"),
     createElement(Avatar, null, createElement(AvatarFallback, null, "GH")),

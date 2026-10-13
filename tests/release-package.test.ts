@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 import { ownedPath } from "../scripts/owned-path.js";
 import { validatePackageContents } from "../scripts/release-checks.js";
+import { extractArchive, listArchiveEntries } from "../scripts/tarball.js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const require = createRequire(import.meta.url);
@@ -22,9 +23,9 @@ it("should render and filter from the installed archive without Next or a TypeSc
     expect(archive).toBeDefined();
     const archivePath = join(packing, archive!);
     const metadata = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-    const entries = execFileSync("tar", ["-tf", archivePath], { encoding: "utf8" }).trim().split(/\r?\n/u);
+    const entries = listArchiveEntries(archivePath);
     validatePackageContents(metadata, entries);
-    execFileSync("tar", ["-xf", archivePath, "-C", consumer]);
+    extractArchive(archivePath, consumer);
     const modules = join(consumer, "node_modules");
     mkdirSync(modules);
     const packageLink = join(modules, metadata.name);
