@@ -40,7 +40,7 @@ import {
   TooltipContent,
   TooltipTrigger,
   TypingAnimation,
-} from "@guidomodarelli/beez-ui";
+} from "beez-ui";
 
 /** Time the activity tab shows its loading placeholder before the content arrives. */
 const ACTIVITY_LOADING_MS = 1600;

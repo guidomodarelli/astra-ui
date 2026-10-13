@@ -12,7 +12,7 @@ import {
   FormLabel,
   FormMessage,
   Input,
-} from "@guidomodarelli/beez-ui";
+} from "beez-ui";
 
 afterEach(() => vi.restoreAllMocks());
 

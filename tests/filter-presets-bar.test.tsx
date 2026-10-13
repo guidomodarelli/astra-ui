@@ -11,7 +11,7 @@ import {
   parseFilterPresets,
   type FilterPreset,
   type FilterQualifierConfig,
-} from "@guidomodarelli/beez-ui";
+} from "beez-ui";
 
 const QUERY_FILTER_CONFIGS: FilterQualifierConfig[] = [
   { key: "", kind: "text", label: "Descripción" },

@@ -2,7 +2,7 @@
 import { useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { AnimatePresence, motion } from "motion/react";
-import { AnimatedCollapse, BeezUIProvider, Button } from "@guidomodarelli/beez-ui";
+import { AnimatedCollapse, BeezUIProvider, Button } from "beez-ui";
 import "./styles.css";
 
 /** Parent exit long enough to outlast every interaction the spec attempts while it runs. */

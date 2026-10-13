@@ -9,7 +9,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@guidomodarelli/beez-ui";
+} from "beez-ui";
 
 describe("Motion slots", () => {
   it("should forward the consumer ref of a gliding tab list and keep keyboard selection", async () => {

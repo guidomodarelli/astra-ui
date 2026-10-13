@@ -23,7 +23,7 @@ pnpm test:storybook       # Build y navegación/interacciones en Chromium y WebK
 ```
 
 El catálogo consume los exports públicos y el CSS compilado de la librería. Los
-scripts compilan `@guidomodarelli/beez-ui` antes de arrancar; si editás sus fuentes con Storybook
+scripts compilan `beez-ui` antes de arrancar; si editás sus fuentes con Storybook
 abierto, ejecutá `pnpm build` para actualizar el paquete que muestra el preview.
 Los cambios en las stories se actualizan durante el desarrollo. Storybook y sus
 addons son dependencias de desarrollo y no se incluyen en el paquete publicado.
@@ -33,35 +33,33 @@ y [Controls](https://storybook.js.org/docs/essentials/controls).
 
 ## Uso del paquete
 
-El paquete se publica en npm como `@guidomodarelli/beez-ui`. No hace falta
+El paquete se publica en npm como `beez-ui`. No hace falta
 configurar el registry ni autenticarse para instalarlo:
 
 ```sh
-pnpm add @guidomodarelli/beez-ui
+pnpm add beez-ui
 ```
 
-Las versiones hasta 1.0.0 se publicaron solo en GitHub Packages. Si la aplicación
-todavía mapea el scope a GitHub en su `.npmrc`
-(`@guidomodarelli:registry=https://npm.pkg.github.com`), hay que quitar esa línea
-para recibir las versiones nuevas desde npm.
-
-Al migrar desde `beez-ui` en npm, reemplazar la dependencia y todos los imports,
-incluidos los subpaths y el CSS, por `@guidomodarelli/beez-ui`.
+Entre 0.12.0 y 1.0.0 el paquete se publicó solo en GitHub Packages como
+`@guidomodarelli/beez-ui`. Para migrar una aplicación desde ese nombre, reemplazar la
+dependencia y todos los imports, incluidos los subpaths y el CSS, por `beez-ui`, y
+quitar del `.npmrc` el mapeo `@guidomodarelli:registry=https://npm.pkg.github.com`
+si ya no se usa para otros paquetes.
 
 
 ```tsx
-import { Button, Avatar, AvatarImage, DataTable, Calendar } from "@guidomodarelli/beez-ui";
+import { Button, Avatar, AvatarImage, DataTable, Calendar } from "beez-ui";
 ```
 
 Agrupar los imports de componentes desde la raíz. El paquete publica JavaScript ESM y declaraciones TypeScript en `dist`; el consumidor no necesita transpilar el código fuente de la librería. La gramática de filtros y los helpers de mes-año son independientes de React.
 
-La utilidad `cn`, también exportada desde `@guidomodarelli/beez-ui`, usa el paquete `cn` para combinar clases condicionales y resolver conflictos de Tailwind.
+La utilidad `cn`, también exportada desde `beez-ui`, usa el paquete `cn` para combinar clases condicionales y resolver conflictos de Tailwind.
 
 ```css
-@import "@guidomodarelli/beez-ui/styles.css";
+@import "beez-ui/styles.css";
 ```
 
-`@guidomodarelli/beez-ui/styles.css` es CSS listo para el navegador: incluye reset, utilidades, el foundation de [Arc](https://uiarc.dev) (colores, superficies, radios concéntricos, alturas de control, sombras y foco por teclado) con modo claro y oscuro, y las fuentes locales Inter, Geist e IBM Plex Mono. No requiere Tailwind, plugins PostCSS ni declaraciones `@source` en el consumidor. Las clases se compilan en el build de la biblioteca y se publican en `dist/styles.css`; `styles.source.css` es la entrada de desarrollo y no se distribuye.
+`beez-ui/styles.css` es CSS listo para el navegador: incluye reset, utilidades, el foundation de [Arc](https://uiarc.dev) (colores, superficies, radios concéntricos, alturas de control, sombras y foco por teclado) con modo claro y oscuro, y las fuentes locales Inter, Geist e IBM Plex Mono. No requiere Tailwind, plugins PostCSS ni declaraciones `@source` en el consumidor. Las clases se compilan en el build de la biblioteca y se publican en `dist/styles.css`; `styles.source.css` es la entrada de desarrollo y no se distribuye.
 
 El modo oscuro se activa con `data-theme="dark"` o la clase `dark` en `<html>`; `BeezUIProvider` escribe ambos. El acento por defecto es el azul de Arc y se cambia con `data-accent` (`neutral`, `violet`, `blue`, `green`, `amber`, `orange`, `coral` o `rose`) en `<html>`. Los nombres de tokens de shadcn (`--primary`, `--muted`, `--card`…) siguen disponibles como alias de los roles de Arc; `--accent` es el acento de Arc, no el gris de hover de shadcn. Inter se usa para texto y controles y Geist para títulos grandes mediante `--font-display`; las licencias se incluyen en `assets/fonts`. Los consumidores pueden sobrescribir tokens mediante CSS normal. Si la aplicación usa Tailwind para sus propios estilos puede mantenerlo, pero ya no necesita escanear beez-ui.
 
@@ -143,19 +141,19 @@ selector de tema de la story y la barra de Storybook se mantienen sincronizados.
 
 ## Providers de UI
 
-Elegir un único `BeezUIProvider` según el framework. Los componentes y `useTheme` siempre se importan desde `@guidomodarelli/beez-ui`.
+Elegir un único `BeezUIProvider` según el framework. Los componentes y `useTheme` siempre se importan desde `beez-ui`.
 
 | Import del provider | Navegación | Imágenes de avatar |
 | --- | --- | --- |
-| `@guidomodarelli/beez-ui` | Anclas nativas | `@unpic/react` |
-| `@guidomodarelli/beez-ui/next` | `next/link` | `next/image` |
-| `@guidomodarelli/beez-ui/tanstack` | TanStack Router | `@unpic/react` |
+| `beez-ui` | Anclas nativas | `@unpic/react` |
+| `beez-ui/next` | `next/link` | `next/image` |
+| `beez-ui/tanstack` | TanStack Router | `@unpic/react` |
 
 ```tsx
 "use client";
 
 import type { ReactNode } from "react";
-import { BeezUIProvider } from "@guidomodarelli/beez-ui/next";
+import { BeezUIProvider } from "beez-ui/next";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -166,7 +164,7 @@ export function Providers({ children }: { children: ReactNode }) {
 }
 ```
 
-Todos los providers usan `next-themes` con clases CSS. El consumidor configura `themeOptions` y conecta sus controles a `useTheme` desde `@guidomodarelli/beez-ui`. Al migrar una aplicación, conservar su clave de almacenamiento y retirar los scripts y estados anteriores que modifiquen el tema. En Next, mantener `suppressHydrationWarning` en el elemento `html` porque el provider restaura la preferencia antes de hidratar.
+Todos los providers usan `next-themes` con clases CSS. El consumidor configura `themeOptions` y conecta sus controles a `useTheme` desde `beez-ui`. Al migrar una aplicación, conservar su clave de almacenamiento y retirar los scripts y estados anteriores que modifiquen el tema. En Next, mantener `suppressHydrationWarning` en el elemento `html` porque el provider restaura la preferencia antes de hidratar.
 
 El provider de Next desactiva prefetch y optimización de imágenes por defecto, como LaTribu. Se activan con `prefetch` y `optimizeImages`; para optimizar imágenes remotas hay que configurar sus hosts en la app. `Link` y los enlaces de paginación usan el adaptador del provider. El contrato común de `Link` acepta href como string y atributos de ancla, no todas las opciones exclusivas de Next.
 
@@ -195,7 +193,7 @@ Los componentes compartidos conservan el tema de LaTribu. Se incorporaron atribu
 
 Provienen de las carpetas de producto de LaTribu y agenda-mensual y quedaron desacoplados de su dominio: reciben datos ya resueltos y textos por props, con valores por defecto en español. Solo se incorporan piezas genéricas que no fijan decisiones de un producto y que no son una composición trivial de primitivas existentes; los flujos propios de una app (notificaciones, calendarios de eventos, handoff de navegadores internos, actualización de PWA) y los envoltorios simples (estados vacío y de error, loaders, popovers de ayuda) se mantienen en esa app.
 
-- Movimiento: `PresenceSwap`, `AnimatedCount`, `AnimatedCollapse` y `AnimatedListItem`. Los tokens que usa la biblioteca se exportan desde la raíz y desde `@guidomodarelli/beez-ui/motion-tokens`, así las apps animan sus superficies con las mismas curvas y springs en lugar de copiarlos.
+- Movimiento: `PresenceSwap`, `AnimatedCount`, `AnimatedCollapse` y `AnimatedListItem`. Los tokens que usa la biblioteca se exportan desde la raíz y desde `beez-ui/motion-tokens`, así las apps animan sus superficies con las mismas curvas y springs en lugar de copiarlos.
 - Indicadores: `ProgressRing` y `ReactionButton`. El color del ícono activo de la reacción se configura con `activeColor`.
 - Cuenta: `AccountMenu`, con inicio de sesión mediante `signInHref` o `onSignIn`.
 - Contenido: `RichTextContent`, `RichMarkdownContent`, `RichLinkEditor` y `useRichLinkEditor`. Solo interpretan links en markdown, URLs sueltas, listas y negrita; el HTML del contenido nunca se renderiza como markup.
@@ -203,10 +201,10 @@ Provienen de las carpetas de producto de LaTribu y agenda-mensual y quedaron des
 - Archivos: `FileUpload`, `FileUploadDropZone`, `FileUploadList` y `FileUploadItem` validan tipo y tamaño, pero no suben archivos: el progreso y los errores los informa la app. Cada ítem acepta un ícono propio y un progreso en barra (`bar`) o de relleno (`fill`).
 - Utilidades: `formatFileSize`, `copyTextToClipboard` y búsqueda difusa.
 
-Los hooks de uso general se importan desde `@guidomodarelli/beez-ui/hooks`: `useIsMobile`, `useIsHydrated`, `useViewerTimeZone`, `usePrefersReducedMotion` y `useHorizontalSwipe` (con `resolveHorizontalSwipe`). `useIsMobile` también sigue disponible desde la raíz.
+Los hooks de uso general se importan desde `beez-ui/hooks`: `useIsMobile`, `useIsHydrated`, `useViewerTimeZone`, `usePrefersReducedMotion` y `useHorizontalSwipe` (con `resolveHorizontalSwipe`). `useIsMobile` también sigue disponible desde la raíz.
 
 ```tsx
-import { useIsHydrated } from "@guidomodarelli/beez-ui/hooks";
+import { useIsHydrated } from "beez-ui/hooks";
 ```
 
 ## React Compiler
@@ -244,7 +242,7 @@ pnpm release:prepare
 
 `pnpm build` genera las declaraciones con TypeScript 7, JavaScript con Oxc/React Compiler y CSS con el CLI de Tailwind. `pnpm check` ejecuta oxlint (configurado en `.oxlintrc.json`), los typechecks separados de código y tests con TypeScript 7, y Vitest 5. `tests/tsconfig.json` incorpora los matchers de Testing Library y los tipos de Vite sin incluirlos en el código de producción. `test:browser` verifica una app React/Vite nativa y una app Next real en Chromium y WebKit, tanto en desktop como en móvil. Los tests unitarios importan los archivos compilados. Los consumidores de navegador no instalan plugins de Tailwind, y una prueba adicional sirve el tarball por HTTP sin procesadores CSS para verificar estilos computados y carga de fuentes. Una prueba adicional instala el tarball en un consumidor aislado sin Next y verifica render, filtrado y declaraciones públicas.
 
-Los tests resuelven `@guidomodarelli/beez-ui`, `@guidomodarelli/beez-ui/next`, `@guidomodarelli/beez-ui/tanstack` y `@guidomodarelli/beez-ui/hooks` mediante rutas explícitas a las declaraciones compiladas en `tests/tsconfig.json`. Ejecutar `pnpm build` después de clonar o si falta `dist`; los comandos de validación completos ya lo hacen. Si el editor conserva diagnósticos anteriores después del build, reiniciar su servidor de TypeScript.
+Los tests resuelven `beez-ui`, `beez-ui/next`, `beez-ui/tanstack` y `beez-ui/hooks` mediante rutas explícitas a las declaraciones compiladas en `tests/tsconfig.json`. Ejecutar `pnpm build` después de clonar o si falta `dist`; los comandos de validación completos ya lo hacen. Si el editor conserva diagnósticos anteriores después del build, reiniciar su servidor de TypeScript.
 
 El compilador `tsc` es TypeScript 7. El paquete `typescript` apunta a la [API de compatibilidad oficial de TypeScript 6](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/#running-side-by-side-with-typescript-6.0) mediante un alias, porque el plugin de docgen de Storybook lo declara como dependencia peer; no reemplaza el compilador de los typechecks. El lint no depende de él: oxlint analiza TypeScript sin el compilador.
 
@@ -304,13 +302,13 @@ Los releases salen sólo desde `main`, limpio y al día con origin (sólo `CHANG
 1. Actualiza `main` con fast-forward si está atrás.
 2. Verifica que `CHANGELOG.md` exista y haya cambiado manualmente desde el último release. Conserva sus bytes; no genera notas ni renombra `[Unreleased]`.
 3. Pide la versión (sugiere `patch`, `minor` o `major` según los commits) y crea el commit `X.Y.Z` con la versión del manifiesto, el CHANGELOG conservado y el tag anotado `vX.Y.Z`, antes de las validaciones largas.
-4. `prepare` (`scripts/release-hooks.js`): reusa el tarball ya preparado para esa versión si es posterior al último cambio de código (el commit de versión no cuenta); si no, ejecuta `pnpm release:prepare` sobre el commit de versión: instalación congelada, tests sin React Compiler, build optimizado, lint, typechecks, tests unitarios y pruebas de navegador, y genera el tarball verificado con `npm pack --ignore-scripts` (npm y no pnpm, para que sea reproducible) en `releases/<version>-<sha256>/guidomodarelli-beez-ui-<version>.tgz`.
+4. `prepare` (`scripts/release-hooks.js`): reusa el tarball ya preparado para esa versión si es posterior al último cambio de código (el commit de versión no cuenta); si no, ejecuta `pnpm release:prepare` sobre el commit de versión: instalación congelada, tests sin React Compiler, build optimizado, lint, typechecks, tests unitarios y pruebas de navegador, y genera el tarball verificado con `npm pack --ignore-scripts` (npm y no pnpm, para que sea reproducible) en `releases/<version>-<sha256>/beez-ui-<version>.tgz`.
 5. Sube `main` y el tag `vX.Y.Z` a origin con un único `git push --atomic`.
-6. Publicación: beez-rp exige que el commit de versión siga sin cambios, toma `releases/<version>-<sha256>/guidomodarelli-beez-ui-<version>.tgz`, verifica el SHA-256 de su ruta y compara su SHA-512 con el `integrity` de `npm pack --dry-run` sobre ese commit (`npm pack` es reproducible, así que coincidir prueba que es byte a byte lo que npm empaqueta) y recién ahí lo publica en npm con etiqueta `latest`. Además, `prepublishOnly` ejecuta `beez-rp guard-publish`, que corta un `pnpm publish` manual (o yarn/bun): se publica sólo con `pnpm create-version`, que usa npm.
+6. Publicación: beez-rp exige que el commit de versión siga sin cambios, toma `releases/<version>-<sha256>/beez-ui-<version>.tgz`, verifica el SHA-256 de su ruta y compara su SHA-512 con el `integrity` de `npm pack --dry-run` sobre ese commit (`npm pack` es reproducible, así que coincidir prueba que es byte a byte lo que npm empaqueta) y recién ahí lo publica en npm con etiqueta `latest`. Además, `prepublishOnly` ejecuta `beez-rp guard-publish`, que corta un `pnpm publish` manual (o yarn/bun): se publica sólo con `pnpm create-version`, que usa npm.
 
 Si algo falla después del commit de versión, basta con volver a ejecutar `pnpm create-version`: si `HEAD` es el commit `X.Y.Z` y npm todavía no tiene esa versión, retoma sólo la preparación (reusando el tarball si sigue vigente), el push si falta y la publicación. Nunca vuelve a subir la versión.
 
-La publicación usa el cliente oficial de npm contra `https://registry.npmjs.org/` con [trusted publishing](https://docs.npmjs.com/trusted-publishers): el workflow **Release** tiene `id-token: write`, instala npm 11.5.1 y npm intercambia el token OIDC de GitHub Actions por una credencial de un solo uso, así que no hay tokens de npm guardados en el repositorio ni en los secrets. El paquete `@guidomodarelli/beez-ui` en npm tiene configurado como trusted publisher este repositorio y el workflow `release.yml`; por eso la publicación solo funciona desde ese workflow. Instalación, build y checks siguen usando pnpm 12.
+La publicación usa el cliente oficial de npm contra `https://registry.npmjs.org/` con [trusted publishing](https://docs.npmjs.com/trusted-publishers): el workflow **Release** tiene `id-token: write`, instala npm 11.5.1 y npm intercambia el token OIDC de GitHub Actions por una credencial de un solo uso, así que no hay tokens de npm guardados en el repositorio ni en los secrets. El paquete `beez-ui` en npm tiene configurado como trusted publisher este repositorio y el workflow `release.yml`; por eso la publicación solo funciona desde ese workflow. Instalación, build y checks siguen usando pnpm 12.
 
 ### CHANGELOG
 
@@ -326,7 +324,7 @@ El paquete excluye fuentes privadas, tests, scripts, `.env` y `.npmrc`; incluye 
 
 `prepack` ejecuta el build para los empaquetados manuales. `dist` y `releases` son generados e ignorados por Git. La CI verifica los checks y los tres providers en ambos motores de navegador en Linux y Windows. La publicación se ejecuta desde el workflow **Release** con cada push a `main` o mediante su ejecución manual.
 
-Tras publicar, los consumidores pueden instalar `pnpm add @guidomodarelli/beez-ui`. También pueden instalar directamente el `.tgz` validado antes de una publicación. Las aplicaciones que todavía mapean `@guidomodarelli` a GitHub Packages en su `.npmrc` deben quitar ese mapeo para consumir las versiones nuevas desde npm; su lockfile fija la resolución e integridad.
+Tras publicar, los consumidores pueden instalar `pnpm add beez-ui`. También pueden instalar directamente el `.tgz` validado antes de una publicación. Las aplicaciones que todavía usan `@guidomodarelli/beez-ui` desde GitHub Packages deben migrar a `beez-ui` (ver «Uso del paquete»); su lockfile fija la resolución e integridad.
 
 Los componentes nuevos de shadcn/ui se agregan mediante su CLI en esta biblioteca y se exportan desde la raíz. No editar las copias instaladas en los consumidores.
 

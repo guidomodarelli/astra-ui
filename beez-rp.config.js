@@ -14,7 +14,7 @@ import { prepareReleaseArtifact } from "./scripts/release-hooks.js";
 
 /** @type {import("beez-rp/create-version").CreateVersionConfig} */
 export default {
-  projectName: "@guidomodarelli/beez-ui",
+  projectName: "beez-ui",
   changelog: { audience: "quien consume el paquete beez-ui", language: "es" },
   releaseTypeDescriptions: {
     patch: "Solo arreglos o cambios internos; nada nuevo para quien consume el paquete.",
@@ -27,5 +27,5 @@ export default {
   publish: "npm",
   publication: { authentication: "oidc" },
   artifact: "releases/{version}-{sha256}/{name}-{version}.tgz",
-  summary: ["Consumidores: pnpm add @guidomodarelli/beez-ui@^{version}"],
+  summary: ["Consumidores: pnpm add beez-ui@^{version}"],
 };

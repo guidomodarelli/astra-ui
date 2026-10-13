@@ -23,7 +23,7 @@ import {
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
-} from "@guidomodarelli/beez-ui";
+} from "beez-ui";
 import "./styles.css";
 
 const SECTIONS = [

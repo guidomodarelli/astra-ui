@@ -14,7 +14,7 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ### Changed
 
-- El paquete pasa a publicarse en npm (`registry.npmjs.org`) como `@guidomodarelli/beez-ui`, desde GitHub Actions con trusted publishing. Los consumidores ya no necesitan mapear el scope a GitHub Packages ni un token para instalarlo; las versiones hasta 1.0.0 siguen solo en GitHub Packages.
+- **Incompatible:** el paquete vuelve a publicarse en npm como `beez-ui` (sin scope), desde GitHub Actions con trusted publishing. Quienes usan `@guidomodarelli/beez-ui` desde GitHub Packages tienen que reemplazar la dependencia y todos los imports, incluidos los subpaths y el CSS, por `beez-ui`; ya no hace falta mapear el scope ni un token para instalarlo. Las versiones 1.0.0 y 1.1.0 no se publicaron en npm.
 - **Incompatible:** `Button` sigue la API de Arc: `variant` pasa a `primary`, `secondary`, `ghost` o `danger` (antes `default`, `outline`, `secondary`, `ghost`, `destructive` y `link`) y `size` a `sm`, `md` o `lg` (antes `default`, `xs`, `sm`, `lg` y los tamaños `icon`). Renderiza un `<button>` nativo, con `type="button"` por defecto, y toma el radio, las alturas, los colores y el hover solo con puntero fino de Arc.
 - **Incompatible:** `AlertDialogAction` y `AlertDialogCancel` usan las variantes y tamaños de Arc; por defecto, `primary` y `secondary`.
 - `BeezUIProvider` escribe el tema como clase y como atributo `data-theme` en `<html>`.
