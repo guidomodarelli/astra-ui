@@ -4,6 +4,8 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-10-14
+
 ### Changed
 
 - Las versiones se crean con `pnpm create-version` desde una terminal local y se publican en CI: el workflow de Release ya no corre con cada push a `main`, sino que recibe la versión, el tag y el commit creados localmente, verifica que el tag apunte a ese commit dentro de `main` y publica con `--ci-release`.
