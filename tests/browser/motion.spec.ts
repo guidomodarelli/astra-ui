@@ -354,6 +354,75 @@ test("should blur-swap the theme icon and pop in the dialog close button", async
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
+/** Clip keyframes Motion handed to the browser for one dialog animation, plus what else it drove. */
+type DialogClipPlayback = { clipPath: string[]; otherProperties: string[] };
+
+test("should unfold the dialog from its center and fold it back when it closes", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/motion.html");
+  // Records the keyframes of every native dialog animation as it is created, delegating
+  // unchanged to the real browser API so the playback itself is never altered.
+  const dialogPlayback = await page.evaluateHandle(() => {
+    const recorded: DialogClipPlayback[] = [];
+    const nativeAnimate = Element.prototype.animate;
+
+    /** Observes real dialog animations without replacing their effects, timing or controls. */
+    Element.prototype.animate = function (...args) {
+      const animation = nativeAnimate.apply(this, args);
+      if (this.getAttribute("role") === "dialog" && animation.effect instanceof KeyframeEffect) {
+        const frames = animation.effect.getKeyframes();
+        recorded.push({
+          clipPath: frames.map((frame) => String(frame.clipPath ?? "")).filter(Boolean),
+          otherProperties: frames.flatMap((frame) =>
+            Object.keys(frame).filter(
+              (property) => !["clipPath", "offset", "easing", "composite", "computedOffset"].includes(property),
+            ),
+          ),
+        });
+      }
+      return animation;
+    };
+    return {
+      recorded,
+      stop: () => {
+        Element.prototype.animate = nativeAnimate;
+      },
+    };
+  });
+  const playbackAt = (index: number) =>
+    dialogPlayback.evaluate(({ recorded }, position) => recorded[position] ?? null, index);
+  /** Matches an `inset()` clip that keeps the given share of the surface hidden on every side. */
+  const insetOnEverySide = (percent: number) =>
+    new RegExp(`^inset\\(${percent}%( ${percent}%){0,3} round `);
+
+  try {
+    await page.getByRole("button", { name: "Abrir diálogo" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect.poll(() => playbackAt(0)).not.toBeNull();
+    const opening = (await playbackAt(0))!;
+    expect(opening.clipPath[0]).toMatch(insetOnEverySide(48));
+    expect(opening.clipPath.at(-1)).not.toMatch(insetOnEverySide(48));
+    // The surface unfolds in place: it neither fades nor travels while it opens.
+    expect(opening.otherProperties).toEqual([]);
+    await expect(dialog).toHaveCSS("clip-path", "none");
+    await expect(dialog).toHaveCSS("opacity", "1");
+    await expect(dialog).toHaveCSS("transform", "none");
+
+    await page.keyboard.press("Escape");
+    await expect.poll(() => playbackAt(1)).not.toBeNull();
+    const closing = (await playbackAt(1))!;
+    expect(closing.clipPath.at(-1)).toMatch(insetOnEverySide(48));
+    expect(closing.otherProperties).toEqual([]);
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Abrir diálogo" })).toBeFocused();
+  } finally {
+    await dialogPlayback.evaluate(({ stop }) => stop());
+    await dialogPlayback.dispose();
+  }
+});
+
 /** One painted frame of the dialog close button. */
 type CloseButtonSample = {
   opacity: number;

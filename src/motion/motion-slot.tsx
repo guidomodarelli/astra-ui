@@ -55,7 +55,14 @@ import { surfaceEnter, surfaceExit, type SurfaceKind } from "./surface-keyframes
 import { useAttachedElement } from "./use-attached-element.js";
 
 const EASE_OUT: [number, number, number, number] = [...MOTION_EASE];
-const SURFACE_KINDS: readonly MotionKind[] = ["tooltip", "surface", "dialog", "sheet", "overlay"];
+const SURFACE_KINDS: readonly MotionKind[] = [
+  "tooltip",
+  "surface",
+  "dialog",
+  "center-morph",
+  "sheet",
+  "overlay",
+];
 const PRESS_SCALES: Partial<Record<MotionKind, number>> = {
   press: MOTION_PRESS_SCALE,
   "subtle-press": MOTION_SUBTLE_PRESS_SCALE,

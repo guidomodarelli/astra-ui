@@ -20,6 +20,8 @@ export const MOTION_TIMING = {
   closeEnter: 0.2,
   closeDelay: 0.16,
   sheetExit: 0.24,
+  /** Dialog surface unfolding from its center toward every edge, and folding back. */
+  centerMorph: 0.43,
   reveal: 0.4,
   /** Heart and badge pops that confirm a toggle. */
   pop: 0.32,
@@ -39,6 +41,11 @@ export const MOTION_EASE = [0.16, 1, 0.3, 1] as const;
 export const MOTION_EASE_IN_OUT = [0.77, 0, 0.175, 1] as const;
 /** Drawer curve for edge panels leaving the viewport. */
 export const MOTION_EASE_DRAWER = [0.32, 0.72, 0, 1] as const;
+/**
+ * Near-linear curve for the center morph: a spring or strong ease-out would resolve the clip
+ * early and spend the last frames barely moving, so the whole duration reads as unfolding.
+ */
+export const MOTION_EASE_UNFOLD = [0.2, 0, 0.2, 1] as const;
 
 /** Press feedback on buttons and other tappable surfaces. */
 export const SPRING_PRESS = {
@@ -142,6 +149,8 @@ export const MOTION_SURFACE_CLIP_PERCENT = 92;
 export const MOTION_SURFACE_CLIP_BLEED_PX = 24;
 export const MOTION_TOOLTIP_DISTANCE = 8;
 export const MOTION_DIALOG_DISTANCE = 20;
+/** Inset kept on every side of a center-morph dialog while folded, in percent: a sliver at its center. */
+export const MOTION_CENTER_MORPH_FOLDED_PERCENT = 48;
 export const MOTION_CONTENT_DISTANCE = 4;
 export const MOTION_INVALID_SHAKE_PX = [0, -6, 6, -4, 4, -2, 0] as const;
 
@@ -173,5 +182,6 @@ export type MotionKind =
   | "tooltip"
   | "surface"
   | "dialog"
+  | "center-morph"
   | "sheet"
   | "overlay";
