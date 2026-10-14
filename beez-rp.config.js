@@ -25,6 +25,8 @@ export default {
   },
   // release:prepare already runs the full validation on the version commit, so it is not repeated before the bump.
   checks: false,
+  // `pnpm cv` bumps and pushes locally; .github/workflows/release.yml receives version, tag and sha and runs `--ci-release`.
+  ci: { workflow: "release.yml" },
   prepare: prepareReleaseArtifact,
   publish: "npm",
   publication: { authentication: "oidc" },

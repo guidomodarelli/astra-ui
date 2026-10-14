@@ -14,6 +14,7 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 - `DialogContent` se abre desplegándose desde su centro hacia todos los bordes y se cierra plegándose hacia su centro con un plegado más breve, como el Center Morph Modal de beUI, en lugar de aparecer subiendo con un fundido. La API, el foco, el cierre con Escape y el botón de cerrar no cambian; con movimiento reducido el diálogo sigue apareciendo sin animación. El despliegue respeta las esquinas del panel, incluidas las asimétricas o elípticas definidas con `className`.
 - `AlertDialogContent` se abre y se cierra con el mismo despliegue desde el centro que `DialogContent`, en lugar de subir con un fundido, así ambos modales se animan igual. La API, el foco y las acciones no cambian.
+- Las versiones se crean con `pnpm create-version` desde una terminal local y se publican en CI: el workflow de Release ya no corre con cada push a `main`, sino que recibe la versión, el tag y el commit creados localmente, verifica que el tag apunte a ese commit dentro de `main` y publica con `--ci-release`.
 
 ## [2.1.0] - 2026-10-14
 
