@@ -4,6 +4,10 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+### Changed
+
+- La fecha de cada versión en el CHANGELOG usa la hora de Argentina, así una versión publicada de noche ya no aparece fechada al día siguiente.
+
 ## [2.0.1] - 2026-10-14
 
 ### Changed
