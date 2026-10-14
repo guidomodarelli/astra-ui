@@ -4,6 +4,8 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-14
+
 ### Added
 
 - `DialogContent` acepta `closeButtonPlacement="viewport"` para fijar el botón de cerrar en la esquina de la pantalla: aparece recién cuando el panel termina de entrar, así nunca se ve dentro del panel ni salta de lugar, se oculta en cuanto el diálogo empieza a cerrarse y, mientras está oculto, no recibe el foco.
