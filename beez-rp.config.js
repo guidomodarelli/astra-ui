@@ -16,6 +16,8 @@ import { prepareReleaseArtifact } from "./scripts/release-hooks.js";
 /** @type {import("beez-rp/create-version").CreateVersionConfig} */
 export default {
   projectName: "beez-ui",
+  // Dates the `## [X.Y.Z] - YYYY-MM-DD` changelog heading in Argentina time instead of the runner's UTC day.
+  releaseTimeZone: "America/Argentina/Buenos_Aires",
   releaseTypeDescriptions: {
     patch: "Solo arreglos o cambios internos; nada nuevo para quien consume el paquete.",
     minor: "Funcionalidades nuevas compatibles; lo existente sigue funcionando igual.",
