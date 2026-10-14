@@ -10,11 +10,11 @@
 ## CHANGELOG
 
 - Todo cambio que modifique el comportamiento, la API pública, los estilos, las dependencias publicadas o el proceso de release debe actualizar `CHANGELOG.md` en el mismo commit.
-- Las entradas van siempre dentro del bloque `## [Unreleased]`, nunca en una versión ya publicada. No escribir la versión ni la fecha a mano: desde beez-rp 0.7, `pnpm create-version` conserva los bytes del CHANGELOG y verifica su actualización manual respecto del último release. Los bloques históricos con versión siguen siendo compatibles.
+- Las entradas van siempre dentro del bloque `## [Unreleased]`, nunca en una versión ya publicada. No escribir la versión ni la fecha a mano: `pnpm create-version` (beez-rp 0.8.0) renombra `[Unreleased]` a `## [X.Y.Z] - AAAA-MM-DD` en el commit de versión y deja un `## [Unreleased]` vacío arriba.
 - Agrupar las entradas con el formato de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), usando solo estas secciones y en este orden: `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed`, `### Security`. Omitir las secciones vacías.
 - Una línea `- ` por cambio, en español, escrita para quien consume el paquete (qué cambia para él), sin detalles internos de implementación.
 - Cambios que no afectan a quien consume el paquete (tests, refactors internos sin efecto visible, tooling local) no necesitan entrada.
-- Antes de publicar, actualizar manualmente el CHANGELOG con los cambios del release. beez-rp 0.7 no genera notas ni reescribe el archivo; la preparación exige entradas válidas en `[Unreleased]` o un bloque histórico que coincida con la versión del manifiesto.
+- Antes de publicar, escribir a mano en `[Unreleased]` los cambios del release: beez-rp no genera notas y bloquea el release si `[Unreleased]` no existe o no tiene entradas. No cerrar la sección a mano ni desde los hooks (por ejemplo con `releaseUnreleased`): la cierra beez-rp. En el commit de versión, `release:prepare` exige el bloque fechado que coincide con la versión del manifiesto.
 
 ## Release
 

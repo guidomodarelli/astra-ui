@@ -1,8 +1,9 @@
 /**
  * @file Configuration of `beez-rp create-version` (`pnpm create-version`, alias `pnpm cv`) for beez-ui.
  *
- * The shared command diagnoses the repository, verifies the manually maintained
- * changelog without rewriting it, bumps the version (commit `X.Y.Z` + annotated tag `vX.Y.Z`),
+ * The shared command diagnoses the repository, requires hand-written entries in
+ * the changelog `[Unreleased]` block, bumps the version (commit `X.Y.Z` + annotated tag `vX.Y.Z`,
+ * renaming `[Unreleased]` to the dated version in that commit),
  * prepares, pushes `main` and the tag atomically and publishes. beez-ui
  * prepares a checksum-addressed tarball through `scripts/release-hooks.js`;
  * the engine verifies that exact tarball (SHA-256 and contents) and publishes
@@ -15,7 +16,6 @@ import { prepareReleaseArtifact } from "./scripts/release-hooks.js";
 /** @type {import("beez-rp/create-version").CreateVersionConfig} */
 export default {
   projectName: "beez-ui",
-  changelog: { audience: "quien consume el paquete beez-ui", language: "es" },
   releaseTypeDescriptions: {
     patch: "Solo arreglos o cambios internos; nada nuevo para quien consume el paquete.",
     minor: "Funcionalidades nuevas compatibles; lo existente sigue funcionando igual.",

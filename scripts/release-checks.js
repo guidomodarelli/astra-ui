@@ -3,9 +3,9 @@ import { readLatestRelease, readUnreleased } from "beez-rp/changelog";
 import { RELEASE_VERSION_PATTERN } from "./constants/release-checks.js";
 
 /**
- * Requires manually maintained release notes without rewriting the changelog.
- * Accepts the populated Unreleased block preserved by beez-rp 0.7, or a matching
- * dated release block produced by earlier engine versions.
+ * Requires release notes for the version being prepared without rewriting the changelog.
+ * Requires the dated block matching the manifest version, which beez-rp 0.8.0 creates in the
+ * version commit by renaming `[Unreleased]` (leaving an empty Unreleased block above it).
  * @param {{version: string}} metadata - Package release metadata.
  * @param {string} changelog - UTF-8 release notes.
  * @returns {void} Completes when release metadata is consistent.
@@ -15,7 +15,6 @@ export function validateReleaseMetadata(metadata, changelog) {
   if (!RELEASE_VERSION_PATTERN.test(metadata.version)) throw new Error("release: package.version must be a semantic version");
   const unreleased = readUnreleased(changelog);
   if (unreleased.unknownSections.length > 0) throw new Error("release: unreleased changelog contains unsupported change sections");
-  if (unreleased.entryCount > 0) return;
   const latest = readLatestRelease(changelog);
   if (!latest || latest.version !== metadata.version) throw new Error(`release: first released changelog version must be ${metadata.version}`);
   if (latest.entryCount === 0) throw new Error("release: current changelog entry must describe at least one change");

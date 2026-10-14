@@ -254,7 +254,7 @@ El workflow **Release** se ejecuta automáticamente con cada push o merge a `mai
 incluidos los cambios de `package.json`. También se puede iniciar en GitHub desde
 **Actions → Release → Run workflow**, seleccionando `main`.
 El workflow usa `pnpm create-version --accept-suggested`: beez-rp calcula la versión
-y verifica el CHANGELOG mantenido manualmente, prepara y valida el tarball, crea y sube
+y verifica que `[Unreleased]` tenga entradas escritas a mano, cierra esa sección con la versión, prepara y valida el tarball, crea y sube
 el commit y el tag y publica en npm con trusted publishing (OIDC).
 
 El disparador también incluye los pushes que cambian `package.json`, pero
@@ -293,15 +293,15 @@ pnpm create-version --dry-run               # solo muestra el diagnóstico y el 
 pnpm cv                                     # alias de pnpm create-version
 ```
 
-El comando es el motor compartido de los proyectos Beez, `beez-rp create-version` (devDependency `beez-rp`). Su funcionamiento general (diagnóstico, bloqueos, reanudación, versiones permitidas) está documentado en el README de [beez-rp](https://github.com/guidomodarelli/beez-rp#create-version). Lo propio de beez-ui vive en `beez-rp.config.js`: la audiencia del CHANGELOG, la descripción de cada tipo de versión, el hook `prepare` de `scripts/release-hooks.js` y la publicación en npm del tarball preparado (`publish: "npm"` + `artifact`, con `publication.authentication: "oidc"`).
+El comando es el motor compartido de los proyectos Beez, `beez-rp create-version` (devDependency `beez-rp`). Su funcionamiento general (diagnóstico, bloqueos, reanudación, versiones permitidas) está documentado en el README de [beez-rp](https://github.com/guidomodarelli/beez-rp#create-version). Lo propio de beez-ui vive en `beez-rp.config.js`: la descripción de cada tipo de versión, el hook `prepare` de `scripts/release-hooks.js` y la publicación en npm del tarball preparado (`publish: "npm"` + `artifact`, con `publication.authentication: "oidc"`).
 
 Los releases salen sólo desde `main`, limpio y al día con origin (sólo `CHANGELOG.md` puede quedar sin commitear). En otra rama explica qué falta: pushear, abrir o mergear el PR. El último release es el último commit de `origin/main` que cambió el `version` de `package.json`, así que reconoce tanto los commits `X.Y.Z` como los anteriores `chore(release): prepara la versión X.Y.Z`.
 
 ### Flujo validado de un release nuevo
 
 1. Actualiza `main` con fast-forward si está atrás.
-2. Verifica que `CHANGELOG.md` exista y haya cambiado manualmente desde el último release. Conserva sus bytes; no genera notas ni renombra `[Unreleased]`.
-3. Pide la versión (sugiere `patch`, `minor` o `major` según los commits) y crea el commit `X.Y.Z` con la versión del manifiesto, el CHANGELOG conservado y el tag anotado `vX.Y.Z`, antes de las validaciones largas.
+2. Verifica que `CHANGELOG.md` tenga un bloque `## [Unreleased]` con entradas escritas a mano y solo secciones de Keep a Changelog; si falta o está vacío, bloquea el release. No genera notas.
+3. Pide la versión (sugiere `patch`, `minor` o `major` según los commits) y crea el commit `X.Y.Z` con la versión del manifiesto, el CHANGELOG con `[Unreleased]` renombrado a `## [X.Y.Z] - AAAA-MM-DD` y un `## [Unreleased]` vacío arriba, y el tag anotado `vX.Y.Z`, antes de las validaciones largas.
 4. `prepare` (`scripts/release-hooks.js`): reusa el tarball ya preparado para esa versión si es posterior al último cambio de código (el commit de versión no cuenta); si no, ejecuta `pnpm release:prepare` sobre el commit de versión: instalación congelada, tests sin React Compiler, build optimizado, lint, typechecks, tests unitarios y pruebas de navegador, y genera el tarball verificado con `npm pack --ignore-scripts` (npm y no pnpm, para que sea reproducible) en `releases/<version>-<sha256>/beez-ui-<version>.tgz`.
 5. Sube `main` y el tag `vX.Y.Z` a origin con un único `git push --atomic`.
 6. Publicación: beez-rp exige que el commit de versión siga sin cambios, toma `releases/<version>-<sha256>/beez-ui-<version>.tgz`, verifica el SHA-256 de su ruta y compara su SHA-512 con el `integrity` de `npm pack --dry-run` sobre ese commit (`npm pack` es reproducible, así que coincidir prueba que es byte a byte lo que npm empaqueta) y recién ahí lo publica en npm con etiqueta `latest`. Además, `prepublishOnly` ejecuta `beez-rp guard-publish`, que corta un `pnpm publish` manual (o yarn/bun): se publica sólo con `pnpm create-version`, que usa npm.
@@ -312,7 +312,7 @@ La publicación usa el cliente oficial de npm contra `https://registry.npmjs.org
 
 ### CHANGELOG
 
-`CHANGELOG.md` sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Cada cambio agrega sus entradas en el bloque `## [Unreleased]`, agrupadas en `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed` y `### Security` (solo las que apliquen). Desde beez-rp 0.7, `pnpm create-version` exige una actualización manual y conserva el archivo sin generar notas ni escribir versiones o fechas. La preparación acepta notas válidas en `[Unreleased]` y mantiene compatibilidad con un bloque histórico que coincida con el manifiesto. La regla completa está en `AGENTS.md`.
+`CHANGELOG.md` sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Cada cambio agrega sus entradas en el bloque `## [Unreleased]`, agrupadas en `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed` y `### Security` (solo las que apliquen). Las entradas se escriben a mano: `pnpm create-version` no genera notas y bloquea el release si `[Unreleased]` no existe o no tiene entradas. Con beez-rp 0.8.0, el commit de versión renombra `[Unreleased]` a `## [X.Y.Z] - AAAA-MM-DD` y deja un `[Unreleased]` vacío arriba; si el CHANGELOG no está en UTF-8, el release se detiene antes del bump. Ni las personas ni los hooks cierran la sección: hacerlo (por ejemplo con `releaseUnreleased`) la cerraría dos veces o dejaría `[Unreleased]` vacío y bloquearía el release. `release:prepare` exige el bloque fechado que coincide con la versión del manifiesto. La regla completa está en `AGENTS.md`.
 
 Para validar y empaquetar la versión actual sin publicarla:
 
