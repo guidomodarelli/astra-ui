@@ -19,7 +19,11 @@ import {
   type DOMKeyframesDefinition,
 } from "motion/react";
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js";
-import { HOVER_CAPABLE_QUERY, MILLISECONDS_PER_SECOND } from "../constants/motion.js";
+import {
+  HOVER_CAPABLE_QUERY,
+  MILLISECONDS_PER_SECOND,
+  MOTION_ENTERING_ATTRIBUTE,
+} from "../constants/motion.js";
 import {
   MOTION_EASE,
   MOTION_TIMING,
@@ -224,6 +228,7 @@ export function MotionSlot({
       cleanups.forEach((cleanup) => cleanup());
       cancel();
       restore();
+      element!.removeAttribute(MOTION_ENTERING_ATTRIBUTE);
     }
 
     if (
@@ -244,7 +249,11 @@ export function MotionSlot({
     function play(
       keyframes: DOMKeyframesDefinition,
       transition: AnimationOptions,
-      { remove = false, restoreOnComplete = true } = {},
+      {
+        remove = false,
+        restoreOnComplete = true,
+        onSettled,
+      }: { remove?: boolean; restoreOnComplete?: boolean; onSettled?: () => void } = {},
     ) {
       const properties = ANIMATED_PROPERTIES.filter((property) => property in keyframes);
       // Idle properties hold the caller's current inline value (React may have changed it
@@ -281,6 +290,7 @@ export function MotionSlot({
           restore(
             ANIMATED_PROPERTIES.filter((property) => !busy.has(property) && !held.has(property)),
           );
+          onSettled?.();
         });
       });
     }
@@ -303,7 +313,13 @@ export function MotionSlot({
           keyframes[property] = [start, ...frames.slice(1)];
         });
       }
-      play(keyframes as DOMKeyframesDefinition, step.transition, { remove: !isPresent });
+      // The mark outlives the animation until its styles are restored: even a settled
+      // transform left inline would still trap fixed descendants inside the surface.
+      if (isPresent) element.setAttribute(MOTION_ENTERING_ATTRIBUTE, "");
+      play(keyframes as DOMKeyframesDefinition, step.transition, {
+        remove: !isPresent,
+        onSettled: () => element.removeAttribute(MOTION_ENTERING_ATTRIBUTE),
+      });
       return dispose;
     }
     if (!isPresent) {

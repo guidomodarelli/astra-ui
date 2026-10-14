@@ -354,6 +354,74 @@ test("should blur-swap the theme icon and pop in the dialog close button", async
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
+/** One painted frame of the dialog close button. */
+type CloseButtonSample = {
+  opacity: number;
+  top: number;
+  right: number;
+  viewportWidth: number;
+  isFocused: boolean;
+};
+/** Viewport inset of the corner-pinned close button (Tailwind `top-4`/`right-4`). */
+const CLOSE_BUTTON_CORNER_INSET_PX = 16;
+
+test("should only show a viewport-placed dialog close button at the viewport corner", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/motion.html");
+  /** Samples every frame the close button paints with, while the panel opens or closes. */
+  const sampleCloseButton = (durationMs: number) =>
+    page.evaluate(
+      (duration) =>
+        new Promise<CloseButtonSample[]>(
+          (resolve) => {
+            const samples: CloseButtonSample[] = [];
+            const start = performance.now();
+            const tick = () => {
+              const close = document.querySelector<HTMLElement>("[data-slot=dialog-close]");
+              if (close) {
+                const box = close.getBoundingClientRect();
+                samples.push({
+                  opacity: Number(getComputedStyle(close).opacity),
+                  top: box.top,
+                  right: box.right,
+                  viewportWidth: document.documentElement.clientWidth,
+                  isFocused: document.activeElement === close,
+                });
+              }
+              if (performance.now() - start < duration) requestAnimationFrame(tick);
+              else resolve(samples);
+            };
+            requestAnimationFrame(tick);
+          },
+        ),
+      durationMs,
+    );
+  const expectOnlyVisibleAtCorner = (samples: CloseButtonSample[]) => {
+    const visible = samples.filter((sample) => sample.opacity > 0);
+    for (const sample of visible) {
+      expect(sample.top).toBeCloseTo(CLOSE_BUTTON_CORNER_INSET_PX, 0);
+      expect(sample.viewportWidth - sample.right).toBeCloseTo(CLOSE_BUTTON_CORNER_INSET_PX, 0);
+    }
+    return visible;
+  };
+
+  await page.getByRole("button", { name: "Abrir detalle" }).click();
+  const opening = await sampleCloseButton(1200);
+  expect(expectOnlyVisibleAtCorner(opening).length).toBeGreaterThan(0);
+  // The dialog's initial focus must never land on the close button while it is hidden,
+  // or keyboard users would act on a control they cannot see.
+  expect(opening.filter((sample) => sample.isFocused && sample.opacity === 0)).toEqual([]);
+  const close = page.getByRole("button", { name: "Cerrar" });
+  await expect(close).toHaveCSS("opacity", "1");
+
+  await close.click();
+  const closing = await sampleCloseButton(400);
+  expectOnlyVisibleAtCorner(closing);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
 test("should keep chevrons in their final orientation without animating when motion is reduced", async ({
   page,
 }) => {
