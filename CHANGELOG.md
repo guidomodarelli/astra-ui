@@ -4,6 +4,8 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-14
+
 ### Added
 
 - `MOTION_TIMING.centerMorph`, `MOTION_TIMING.centerMorphFold`, `MOTION_EASE_UNFOLD` y `MOTION_CENTER_MORPH_FOLDED_PERCENT` en `beez-ui/motion-tokens`, para animar superficies propias con el mismo despliegue desde el centro que el diálogo.
