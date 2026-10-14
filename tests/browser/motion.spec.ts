@@ -1,5 +1,5 @@
 /** Verifies motion and its accessible fallback in real browser layout and interactions. */
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { recordMotion } from "./motion-recorder.js";
 
 test("should animate menus and dialogs while preserving keyboard dismissal", async ({
@@ -354,19 +354,21 @@ test("should blur-swap the theme icon and pop in the dialog close button", async
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
-/** Clip keyframes Motion handed to the browser for one dialog animation, plus what else it drove. */
-type DialogClipPlayback = { clipPath: string[]; otherProperties: string[] };
+/** Clip keyframes and duration Motion handed to the browser for one dialog animation. */
+type DialogClipPlayback = { clipPath: string[]; otherProperties: string[]; durationMs: number };
 
-test("should unfold the dialog from its center and fold it back when it closes", async ({
-  page,
-}) => {
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.goto("/motion.html");
-  // Records the keyframes of every native dialog animation as it is created, delegating
-  // unchanged to the real browser API so the playback itself is never altered.
-  const dialogPlayback = await page.evaluateHandle(() => {
+/** One painted frame of a closing dialog: whether its layers still take input, and the page does. */
+type FoldSample = { isContentInert: boolean; isOverlayInert: boolean; bodyPointerEvents: string };
+
+/**
+ * Records the keyframes of every native dialog animation as it is created, delegating unchanged
+ * to the real browser API so the playback itself is never altered.
+ */
+async function recordDialogClips(page: Page) {
+  const handle = await page.evaluateHandle(() => {
     const recorded: DialogClipPlayback[] = [];
     const nativeAnimate = Element.prototype.animate;
+    const timingKeys = ["clipPath", "offset", "easing", "composite", "computedOffset"];
 
     /** Observes real dialog animations without replacing their effects, timing or controls. */
     Element.prototype.animate = function (...args) {
@@ -376,10 +378,9 @@ test("should unfold the dialog from its center and fold it back when it closes",
         recorded.push({
           clipPath: frames.map((frame) => String(frame.clipPath ?? "")).filter(Boolean),
           otherProperties: frames.flatMap((frame) =>
-            Object.keys(frame).filter(
-              (property) => !["clipPath", "offset", "easing", "composite", "computedOffset"].includes(property),
-            ),
+            Object.keys(frame).filter((property) => !timingKeys.includes(property)),
           ),
+          durationMs: Number(animation.effect.getTiming().duration),
         });
       }
       return animation;
@@ -391,17 +392,36 @@ test("should unfold the dialog from its center and fold it back when it closes",
       },
     };
   });
-  const playbackAt = (index: number) =>
-    dialogPlayback.evaluate(({ recorded }, position) => recorded[position] ?? null, index);
-  /** Matches an `inset()` clip that keeps the given share of the surface hidden on every side. */
-  const insetOnEverySide = (percent: number) =>
-    new RegExp(`^inset\\(${percent}%( ${percent}%){0,3} round `);
+  return {
+    /** Waits for the animation recorded at a position and returns it. */
+    at: async (index: number) => {
+      await expect
+        .poll(() => handle.evaluate(({ recorded }, position) => recorded.length > position, index))
+        .toBe(true);
+      return handle.evaluate(({ recorded }, position) => recorded[position]!, index);
+    },
+    stop: async () => {
+      await handle.evaluate(({ stop }) => stop());
+      await handle.dispose();
+    },
+  };
+}
+
+/** Matches an `inset()` clip that keeps the given share of the surface hidden on every side. */
+const insetOnEverySide = (percent: number) =>
+  new RegExp(`^inset\\(${percent}%( ${percent}%){0,3} round `);
+
+test("should unfold the dialog from its center and fold it back when it closes", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/motion.html");
+  const playback = await recordDialogClips(page);
 
   try {
     await page.getByRole("button", { name: "Abrir diálogo" }).click();
     const dialog = page.getByRole("dialog");
-    await expect.poll(() => playbackAt(0)).not.toBeNull();
-    const opening = (await playbackAt(0))!;
+    const opening = await playback.at(0);
     expect(opening.clipPath[0]).toMatch(insetOnEverySide(48));
     expect(opening.clipPath.at(-1)).not.toMatch(insetOnEverySide(48));
     // The surface unfolds in place: it neither fades nor travels while it opens.
@@ -410,16 +430,75 @@ test("should unfold the dialog from its center and fold it back when it closes",
     await expect(dialog).toHaveCSS("opacity", "1");
     await expect(dialog).toHaveCSS("transform", "none");
 
+    // Samples every frame of the fold, started before Escape so the first one is never missed.
+    const foldSamples = page.evaluate(
+      () =>
+        new Promise<FoldSample[]>((resolve) => {
+          const samples: FoldSample[] = [];
+          let sawDialog = false;
+          const tick = () => {
+            const content = document.querySelector("[data-slot=dialog-content]");
+            const overlay = document.querySelector("[data-slot=dialog-overlay]");
+            if (content && content.getAttribute("data-state") === "closed") {
+              samples.push({
+                isContentInert: content.hasAttribute("inert"),
+                isOverlayInert: overlay?.hasAttribute("inert") ?? true,
+                bodyPointerEvents: getComputedStyle(document.body).pointerEvents,
+              });
+            }
+            if (content) sawDialog = true;
+            if (sawDialog && !content) resolve(samples);
+            else requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }),
+    );
     await page.keyboard.press("Escape");
-    await expect.poll(() => playbackAt(1)).not.toBeNull();
-    const closing = (await playbackAt(1))!;
+    const closing = await playback.at(1);
     expect(closing.clipPath.at(-1)).toMatch(insetOnEverySide(48));
     expect(closing.otherProperties).toEqual([]);
+    // Folding is brief, so focus and the rest of the page come back sooner than the unfold took.
+    expect(closing.durationMs).toBeLessThan(opening.durationMs);
+    // While it folds, the dialog no longer takes input and the page already does.
+    const samples = await foldSamples;
+    expect(samples.length).toBeGreaterThan(0);
+    for (const sample of samples) {
+      expect(sample).toEqual({
+        isContentInert: true,
+        isOverlayInert: true,
+        bodyPointerEvents: expect.not.stringMatching(/^none$/),
+      });
+    }
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Abrir diálogo" })).toBeFocused();
   } finally {
-    await dialogPlayback.evaluate(({ stop }) => stop());
-    await dialogPlayback.dispose();
+    await playback.stop();
+  }
+});
+
+test("should keep every corner of a custom dialog shape while it unfolds", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/motion.html");
+  const playback = await recordDialogClips(page);
+
+  try {
+    await page.getByRole("button", { name: "Abrir ficha" }).click();
+    const opening = await playback.at(0);
+    const unfolded = opening.clipPath.at(-1)!;
+    // Square left corners and rounded right ones must reach the clip as different radii.
+    const horizontalRadii = unfolded
+      .slice(unfolded.indexOf(" round ") + " round ".length, -1)
+      .split(" / ")[0]!
+      .match(/calc\([^)]*\)|\S+/g)!;
+    // Browsers serialize the shortest equivalent list, so expand it like the CSS shorthand.
+    const [topLeft, topRight = topLeft, bottomRight = topLeft, bottomLeft = topRight] = horizontalRadii;
+    expect(topLeft).toBe(bottomLeft);
+    expect(topRight).toBe(bottomRight);
+    expect(topLeft).not.toBe(topRight);
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+  } finally {
+    await playback.stop();
   }
 });
 

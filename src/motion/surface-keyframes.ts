@@ -86,26 +86,44 @@ function collapsedClip(side: Side | undefined, align: Align): string {
     : `inset(${top} ${OPEN_EDGE} ${bottom} ${hidden})`;
 }
 
+/** Computed radius of each corner, clockwise from the top left, as border-radius serializes it. */
+const CORNER_RADIUS_PROPERTIES = [
+  "borderTopLeftRadius",
+  "borderTopRightRadius",
+  "borderBottomRightRadius",
+  "borderBottomLeftRadius",
+] as const;
+
 /**
- * Folded and unfolded clips of a center-morph surface. Both share one corner radius, the
- * surface's own grown by the bleed, so the shape matches the panel once unfolded and the
- * clip never spends its last frames rounding corners.
+ * Builds the `round` part of an inset clip that repeats the surface's own corners, each grown by
+ * the bleed so the clip edge stays parallel to the border. A corner serializes as one radius or
+ * as a horizontal and vertical pair (elliptical), in pixels or percentages of the box.
+ */
+function bleedingCornerRadii(element: Element): string {
+  const computed = getComputedStyle(element);
+  const grow = (radius: string) => `calc(${radius} + ${MOTION_SURFACE_CLIP_BLEED_PX}px)`;
+  const corners = CORNER_RADIUS_PROPERTIES.map((property) => {
+    const [horizontal = "0px", vertical = horizontal] = computed[property].trim().split(/\s+/);
+    return { horizontal: grow(horizontal), vertical: grow(vertical) };
+  });
+  const horizontals = corners.map((corner) => corner.horizontal).join(" ");
+  const verticals = corners.map((corner) => corner.vertical).join(" ");
+  return `round ${horizontals} / ${verticals}`;
+}
+
+/**
+ * Folded and unfolded clips of a center-morph surface. Both share the surface's own corners,
+ * so the shape matches the panel once unfolded and the clip never spends its last frames
+ * rounding corners.
  */
 function centerMorphClips(element: Element) {
-  const radius = Number.parseFloat(getComputedStyle(element).borderTopLeftRadius) || 0;
-  const round = `round ${radius + MOTION_SURFACE_CLIP_BLEED_PX}px`;
+  const round = bleedingCornerRadii(element);
   const folded = `${MOTION_CENTER_MORPH_FOLDED_PERCENT}%`;
   return {
     folded: `inset(${folded} ${folded} ${folded} ${folded} ${round})`,
     unfolded: `inset(${OPEN_EDGE} ${OPEN_EDGE} ${OPEN_EDGE} ${OPEN_EDGE} ${round})`,
   };
 }
-
-/** Center-morph playback has the same timing both ways: the panel folds back as it unfolded. */
-const CENTER_MORPH_TRANSITION: AnimationOptions = {
-  duration: MOTION_TIMING.centerMorph,
-  ease: EASE_UNFOLD,
-};
 
 /** Edge-panel travel: fully off-screen on the side the sheet is attached to. */
 function sheetOffset(element: Element) {
@@ -151,7 +169,10 @@ export function surfaceEnter(element: Element, kind: SurfaceKind): MotionStep {
   }
   if (kind === "center-morph") {
     const { folded, unfolded } = centerMorphClips(element);
-    return { keyframes: { clipPath: [folded, unfolded] }, transition: CENTER_MORPH_TRANSITION };
+    return {
+      keyframes: { clipPath: [folded, unfolded] },
+      transition: { duration: MOTION_TIMING.centerMorph, ease: EASE_UNFOLD },
+    };
   }
   if (kind === "sheet") {
     const offset = sheetOffset(element);
@@ -209,7 +230,10 @@ export function surfaceExit(element: Element, kind: SurfaceKind): MotionStep {
   }
   if (kind === "center-morph") {
     const { folded, unfolded } = centerMorphClips(element);
-    return { keyframes: { clipPath: [unfolded, folded] }, transition: CENTER_MORPH_TRANSITION };
+    return {
+      keyframes: { clipPath: [unfolded, folded] },
+      transition: { duration: MOTION_TIMING.centerMorphFold, ease: EASE_UNFOLD },
+    };
   }
   if (kind === "sheet") {
     const offset = sheetOffset(element);

@@ -6,11 +6,11 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ### Added
 
-- `MOTION_TIMING.centerMorph`, `MOTION_EASE_UNFOLD` y `MOTION_CENTER_MORPH_FOLDED_PERCENT` en `beez-ui/motion-tokens`, para animar superficies propias con el mismo despliegue desde el centro que el diálogo.
+- `MOTION_TIMING.centerMorph`, `MOTION_TIMING.centerMorphFold`, `MOTION_EASE_UNFOLD` y `MOTION_CENTER_MORPH_FOLDED_PERCENT` en `beez-ui/motion-tokens`, para animar superficies propias con el mismo despliegue desde el centro que el diálogo.
 
 ### Changed
 
-- `DialogContent` se abre desplegándose desde su centro hacia todos los bordes y se cierra plegándose de la misma forma, como el Center Morph Modal de beUI, en lugar de aparecer subiendo con un fundido. La API, el foco, el cierre con Escape y el botón de cerrar no cambian; con movimiento reducido el diálogo sigue apareciendo sin animación.
+- `DialogContent` se abre desplegándose desde su centro hacia todos los bordes y se cierra plegándose hacia su centro con un plegado más breve, como el Center Morph Modal de beUI, en lugar de aparecer subiendo con un fundido. La API, el foco, el cierre con Escape y el botón de cerrar no cambian; con movimiento reducido el diálogo sigue apareciendo sin animación. El despliegue respeta las esquinas del panel, incluidas las asimétricas o elípticas definidas con `className`.
 - `AlertDialogContent` se abre y se cierra con el mismo despliegue desde el centro que `DialogContent`, en lugar de subir con un fundido, así ambos modales se animan igual. La API, el foco y las acciones no cambian.
 
 ## [2.1.0] - 2026-10-14

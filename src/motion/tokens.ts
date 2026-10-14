@@ -20,8 +20,13 @@ export const MOTION_TIMING = {
   closeEnter: 0.2,
   closeDelay: 0.16,
   sheetExit: 0.24,
-  /** Dialog surface unfolding from its center toward every edge, and folding back. */
+  /** Dialog surface unfolding from its center toward every edge. */
   centerMorph: 0.43,
+  /**
+   * Dialog surface folding back to its center. Shorter than the unfold: the page stays hidden
+   * from assistive technology and focus returns to the trigger only once the fold finishes.
+   */
+  centerMorphFold: 0.24,
   reveal: 0.4,
   /** Heart and badge pops that confirm a toggle. */
   pop: 0.32,

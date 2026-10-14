@@ -135,6 +135,17 @@ function MotionExamples() {
               </DialogDescription>
             </DialogContent>
           </Dialog>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>Abrir ficha</Button>
+            </DialogTrigger>
+            <DialogContent style={{ borderRadius: "0 24px 24px 0" }}>
+              <DialogTitle>Ficha</DialogTitle>
+              <DialogDescription>
+                Solo el borde derecho es redondeado.
+              </DialogDescription>
+            </DialogContent>
+          </Dialog>
         </section>
         <section>
           <TypingAnimation duration={1000} delay={10000} startOnView={false}>
