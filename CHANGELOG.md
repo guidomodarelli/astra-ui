@@ -4,6 +4,8 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-10-14
+
 ### Changed
 
 - Cada versión que se publica agrega al CHANGELOG su propia sección con la fecha de publicación.
