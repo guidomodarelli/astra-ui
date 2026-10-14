@@ -59,6 +59,8 @@ type DialogCloseButtonPlacement = "content" | "viewport"
  * Renders a close button pinned to the viewport corner. It stays hidden while the panel
  * enters, because the entrance transform would otherwise pin it inside the panel, and
  * fades in once the panel settles. It hides at once when the dialog starts closing.
+ * While hidden it is also `visibility: hidden`, so the dialog's initial focus and the
+ * keyboard can never land on a control that cannot be seen.
  * @returns The close control for wide layouts that keep the panel clear of controls.
  */
 function DialogViewportCloseButton() {
@@ -66,7 +68,7 @@ function DialogViewportCloseButton() {
     <DialogPrimitive.Close data-slot="dialog-close" asChild>
       <ControlButton
         variant="ghost"
-        className="fixed top-4 right-4 transition-opacity duration-200 ease-out in-data-motion-entering:opacity-0 in-data-motion-entering:transition-none in-data-[state=closed]:opacity-0 in-data-[state=closed]:transition-none motion-reduce:transition-none"
+        className="fixed top-4 right-4 transition-opacity duration-200 ease-out in-data-motion-entering:invisible in-data-motion-entering:opacity-0 in-data-motion-entering:transition-none in-data-[state=closed]:invisible in-data-[state=closed]:opacity-0 in-data-[state=closed]:transition-none motion-reduce:transition-none"
         size="icon-sm"
       >
         <XIcon />
