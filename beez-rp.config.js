@@ -1,8 +1,9 @@
 /**
  * @file Configuration of `beez-rp create-version` (`pnpm create-version`, alias `pnpm cv`) for beez-ui.
  *
- * The shared command diagnoses the repository, requires hand-written entries in
- * the changelog `[Unreleased]` block, bumps the version (commit `X.Y.Z` + annotated tag `vX.Y.Z`,
+ * The shared command diagnoses the repository, requires entries in the changelog
+ * `[Unreleased]` block (drafted by Claude Code, then Codex, when they are missing;
+ * see `changelogDraft`), bumps the version (commit `X.Y.Z` + annotated tag `vX.Y.Z`,
  * renaming `[Unreleased]` to the dated version in that commit),
  * prepares, pushes `main` and the tag atomically and publishes. beez-ui
  * prepares a checksum-addressed tarball through `scripts/release-hooks.js`;
@@ -18,6 +19,8 @@ export default {
   projectName: "beez-ui",
   // Dates the `## [X.Y.Z] - YYYY-MM-DD` changelog heading in Argentina time instead of the runner's UTC day.
   releaseTimeZone: "America/Argentina/Buenos_Aires",
+  // Drafts missing `[Unreleased]` entries with Claude Code, then Codex, before a local release stops for them.
+  changelogDraft: true,
   releaseTypeDescriptions: {
     patch: "Solo arreglos o cambios internos; nada nuevo para quien consume el paquete.",
     minor: "Funcionalidades nuevas compatibles; lo existente sigue funcionando igual.",

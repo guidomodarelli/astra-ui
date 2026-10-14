@@ -10,11 +10,11 @@
 ## CHANGELOG
 
 - Todo cambio que modifique el comportamiento, la API pública, los estilos, las dependencias publicadas o el proceso de release debe actualizar `CHANGELOG.md` en el mismo commit.
-- Las entradas van siempre dentro del bloque `## [Unreleased]`, nunca en una versión ya publicada. No escribir la versión ni la fecha a mano: `pnpm create-version` (beez-rp 0.9.0) renombra `[Unreleased]` a `## [X.Y.Z] - AAAA-MM-DD` en el commit de versión y deja un `## [Unreleased]` vacío arriba. La fecha usa la hora de Argentina (`releaseTimeZone: "America/Argentina/Buenos_Aires"` en `beez-rp.config.js`), también cuando el release corre en el runner de CI en UTC.
+- Las entradas van siempre dentro del bloque `## [Unreleased]`, nunca en una versión ya publicada. No escribir la versión ni la fecha a mano: `pnpm create-version` (beez-rp 0.10.0) renombra `[Unreleased]` a `## [X.Y.Z] - AAAA-MM-DD` en el commit de versión y deja un `## [Unreleased]` vacío arriba. La fecha usa la hora de Argentina (`releaseTimeZone: "America/Argentina/Buenos_Aires"` en `beez-rp.config.js`), también cuando el release corre en el runner de CI en UTC.
 - Agrupar las entradas con el formato de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), usando solo estas secciones y en este orden: `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed`, `### Security`. Omitir las secciones vacías.
 - Una línea `- ` por cambio, en español, escrita para quien consume el paquete (qué cambia para él), sin detalles internos de implementación.
 - Cambios que no afectan a quien consume el paquete (tests, refactors internos sin efecto visible, tooling local) no necesitan entrada.
-- Antes de publicar, escribir a mano en `[Unreleased]` los cambios del release: beez-rp no genera notas y bloquea el release si `[Unreleased]` no existe o no tiene entradas. No cerrar la sección a mano ni desde los hooks (por ejemplo con `releaseUnreleased`): la cierra beez-rp. En el commit de versión, `release:prepare` exige el bloque fechado que coincide con la versión del manifiesto.
+- Antes de publicar, escribir en `[Unreleased]` los cambios del release. Si faltan, `changelogDraft: true` (en `beez-rp.config.js`) hace que beez-rp los redacte con Claude Code o, si falla, con Codex, y los escriba sin confirmar: revisalos en la salida del comando. Si ningún agente puede, beez-rp bloquea el release mientras `[Unreleased]` no exista o no tenga entradas. No cerrar la sección a mano ni desde los hooks (por ejemplo con `releaseUnreleased`): la cierra beez-rp. En el commit de versión, `release:prepare` exige el bloque fechado que coincide con la versión del manifiesto.
 
 ## Release
 
