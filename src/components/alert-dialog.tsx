@@ -63,7 +63,7 @@ function AlertDialogContent({
   return (
     <AlertDialogPortal forceMount><MotionPresence scope="alert-dialog" forceMount={props.forceMount}><React.Fragment>
       <MotionSlot kind="overlay"><AlertDialogOverlay forceMount /></MotionSlot>
-      <MotionSlot kind="dialog"><AlertDialogPrimitive.Content forceMount
+      <MotionSlot kind="center-morph"><AlertDialogPrimitive.Content forceMount
         data-slot="alert-dialog-content"
         data-size={size}
         className={cn(

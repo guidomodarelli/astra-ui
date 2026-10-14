@@ -9,6 +9,7 @@ export const MILLISECONDS_PER_SECOND = 1000;
 
 /**
  * Marks a surface while its entrance plays. Its transform makes it the containing block of
- * fixed descendants, so content pinned to the viewport stays hidden until the surface settles.
+ * fixed descendants and its clip cuts them, so content pinned to the viewport stays hidden
+ * until the surface settles.
  */
 export const MOTION_ENTERING_ATTRIBUTE = "data-motion-entering";

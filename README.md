@@ -91,7 +91,7 @@ siguen los tokens de [beui motion](https://beui.dev/components/motion):
 - `Tooltip` entra con blur, escala y desplazamiento desde el trigger.
   `Popover`, `HoverCard`, `DropdownMenu` y `Select` escalan desde 0.96 y se revelan
   con un clip desde la esquina más cercana al trigger.
-- `Dialog` y `AlertDialog` suben con spring; `Sheet` entra desde su borde con spring
+- `Dialog` y `AlertDialog` se despliegan desde su centro y se pliegan al cerrar; `Sheet` entra desde su borde con spring
   y sale con la curva de cajón (0.24 s), sin demorar la siguiente interacción.
 - `GlideSlot` desliza el indicador activo entre ítems como un `layoutId` compartido:
   la pestaña activa de `Tabs` (fondo o subrayado), la

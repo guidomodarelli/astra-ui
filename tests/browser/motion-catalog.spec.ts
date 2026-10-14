@@ -44,7 +44,7 @@ test("should slide the sheet in and out from its edge", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Abrir panel" })).toBeFocused();
 });
 
-test("should spring the alert dialog and keep its actions working", async ({ page }) => {
+test("should unfold the alert dialog from its center and keep its actions working", async ({ page }) => {
   const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
   await page.getByRole("button", { name: "Eliminar cuenta" }).click();
@@ -52,7 +52,10 @@ test("should spring the alert dialog and keep its actions working", async ({ pag
   await expect(alert).toBeVisible();
   await expect
     .poll(() => motion.properties({ role: "alertdialog" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform"]));
+    .toContain("clipPath");
+  const properties = await motion.properties({ role: "alertdialog" });
+  expect(properties).not.toContain("opacity");
+  expect(properties).not.toContain("transform");
   await expectSettled(alert);
   await page.getByRole("button", { name: "Eliminar", exact: true }).click();
   await expect(page.getByLabel("Última acción")).toHaveText("Cuenta eliminada");

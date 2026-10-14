@@ -57,7 +57,7 @@ type DialogCloseButtonPlacement = "content" | "viewport"
 
 /**
  * Renders a close button pinned to the viewport corner. It stays hidden while the panel
- * enters, because the entrance transform would otherwise pin it inside the panel, and
+ * unfolds, because the entrance clip would otherwise cut it with the panel, and
  * fades in once the panel settles. It hides at once when the dialog starts closing.
  * While hidden it is also `visibility: hidden`, so the dialog's initial focus and the
  * keyboard can never land on a control that cannot be seen.
@@ -79,7 +79,8 @@ function DialogViewportCloseButton() {
 }
 
 /**
- * Renders compact dialog content with viewport-safe scrolling.
+ * Renders compact dialog content with viewport-safe scrolling. The panel unfolds from its
+ * exact center toward every edge and folds back the same way when it closes.
  * @param props - Primitive properties and optional consumer overrides.
  * @param props.showCloseButton - Whether the dialog renders its own close button.
  * @param props.closeButtonPlacement - `viewport` pins the close button to the viewport corner
@@ -99,7 +100,7 @@ function DialogContent({
   return (
     <DialogPortal forceMount><MotionPresence scope="dialog" forceMount={props.forceMount}><React.Fragment>
       <MotionSlot kind="overlay"><DialogOverlay forceMount /></MotionSlot>
-      <MotionSlot kind="dialog"><DialogPrimitive.Content forceMount
+      <MotionSlot kind="center-morph"><DialogPrimitive.Content forceMount
         data-slot="dialog-content"
         className={cn(
           "fixed z-50 grid w-full max-w-[calc(100%-2rem)] max-h-[calc(100svh-2rem)] gap-4 overflow-y-auto rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 outline-none sm:max-w-sm ",

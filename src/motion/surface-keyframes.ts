@@ -1,9 +1,11 @@
 /** Resolves entry and exit playback for floating and modal surfaces from their rendered placement. */
 import type { AnimationOptions, DOMKeyframesDefinition } from "motion/react";
 import {
+  MOTION_CENTER_MORPH_FOLDED_PERCENT,
   MOTION_DIALOG_DISTANCE,
   MOTION_EASE,
   MOTION_EASE_DRAWER,
+  MOTION_EASE_UNFOLD,
   MOTION_SURFACE_CLIP_BLEED_PX,
   MOTION_SURFACE_CLIP_PERCENT,
   MOTION_SURFACE_SCALE,
@@ -14,7 +16,7 @@ import {
 } from "./tokens.js";
 
 /** Surface kinds whose presence is animated on mount and before removal. */
-export type SurfaceKind = "tooltip" | "surface" | "dialog" | "sheet" | "overlay";
+export type SurfaceKind = "tooltip" | "surface" | "dialog" | "center-morph" | "sheet" | "overlay";
 
 /** Keyframes plus the transition that plays them. */
 export interface MotionStep {
@@ -27,6 +29,7 @@ type Align = "start" | "center" | "end";
 
 const EASE_OUT: [number, number, number, number] = [...MOTION_EASE];
 const EASE_DRAWER: [number, number, number, number] = [...MOTION_EASE_DRAWER];
+const EASE_UNFOLD: [number, number, number, number] = [...MOTION_EASE_UNFOLD];
 const SIDES: readonly Side[] = ["top", "right", "bottom", "left"];
 const ALIGNS: readonly Align[] = ["start", "center", "end"];
 
@@ -83,6 +86,45 @@ function collapsedClip(side: Side | undefined, align: Align): string {
     : `inset(${top} ${OPEN_EDGE} ${bottom} ${hidden})`;
 }
 
+/** Computed radius of each corner, clockwise from the top left, as border-radius serializes it. */
+const CORNER_RADIUS_PROPERTIES = [
+  "borderTopLeftRadius",
+  "borderTopRightRadius",
+  "borderBottomRightRadius",
+  "borderBottomLeftRadius",
+] as const;
+
+/**
+ * Builds the `round` part of an inset clip that repeats the surface's own corners, each grown by
+ * the bleed so the clip edge stays parallel to the border. A corner serializes as one radius or
+ * as a horizontal and vertical pair (elliptical), in pixels or percentages of the box.
+ */
+function bleedingCornerRadii(element: Element): string {
+  const computed = getComputedStyle(element);
+  const grow = (radius: string) => `calc(${radius} + ${MOTION_SURFACE_CLIP_BLEED_PX}px)`;
+  const corners = CORNER_RADIUS_PROPERTIES.map((property) => {
+    const [horizontal = "0px", vertical = horizontal] = computed[property].trim().split(/\s+/);
+    return { horizontal: grow(horizontal), vertical: grow(vertical) };
+  });
+  const horizontals = corners.map((corner) => corner.horizontal).join(" ");
+  const verticals = corners.map((corner) => corner.vertical).join(" ");
+  return `round ${horizontals} / ${verticals}`;
+}
+
+/**
+ * Folded and unfolded clips of a center-morph surface. Both share the surface's own corners,
+ * so the shape matches the panel once unfolded and the clip never spends its last frames
+ * rounding corners.
+ */
+function centerMorphClips(element: Element) {
+  const round = bleedingCornerRadii(element);
+  const folded = `${MOTION_CENTER_MORPH_FOLDED_PERCENT}%`;
+  return {
+    folded: `inset(${folded} ${folded} ${folded} ${folded} ${round})`,
+    unfolded: `inset(${OPEN_EDGE} ${OPEN_EDGE} ${OPEN_EDGE} ${OPEN_EDGE} ${round})`,
+  };
+}
+
 /** Edge-panel travel: fully off-screen on the side the sheet is attached to. */
 function sheetOffset(element: Element) {
   const side = readPlacement(element).side ?? "right";
@@ -123,6 +165,13 @@ export function surfaceEnter(element: Element, kind: SurfaceKind): MotionStep {
         transform: [transform(0, MOTION_DIALOG_DISTANCE, 0.97), transform(0, 0)],
       },
       transition: SPRING_PANEL,
+    };
+  }
+  if (kind === "center-morph") {
+    const { folded, unfolded } = centerMorphClips(element);
+    return {
+      keyframes: { clipPath: [folded, unfolded] },
+      transition: { duration: MOTION_TIMING.centerMorph, ease: EASE_UNFOLD },
     };
   }
   if (kind === "sheet") {
@@ -177,6 +226,13 @@ export function surfaceExit(element: Element, kind: SurfaceKind): MotionStep {
         transform: [transform(0, 0), transform(0, MOTION_DIALOG_DISTANCE, 0.98)],
       },
       transition: { duration: MOTION_TIMING.enter, ease: EASE_OUT },
+    };
+  }
+  if (kind === "center-morph") {
+    const { folded, unfolded } = centerMorphClips(element);
+    return {
+      keyframes: { clipPath: [unfolded, folded] },
+      transition: { duration: MOTION_TIMING.centerMorphFold, ease: EASE_UNFOLD },
     };
   }
   if (kind === "sheet") {
