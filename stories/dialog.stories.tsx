@@ -19,6 +19,7 @@ type Args = {
   description: string;
   content: string;
   showCloseButton: boolean;
+  closeButtonPlacement: "content" | "viewport";
 };
 const meta = {
   title: "Components/Dialog",
@@ -28,6 +29,7 @@ const meta = {
     description: "Actualizá tus datos antes de guardar.",
     content: "El contenido del diálogo se adapta al espacio disponible.",
     showCloseButton: true,
+    closeButtonPlacement: "content",
   },
   argTypes: {
     open: {
@@ -45,10 +47,14 @@ const meta = {
     showCloseButton: {
       control: "boolean",
     },
+    closeButtonPlacement: {
+      control: "inline-radio",
+      options: ["content", "viewport"],
+    },
   },
   parameters: {
     controls: {
-      include: ["open", "title", "description", "content", "showCloseButton"],
+      include: ["open", "title", "description", "content", "showCloseButton", "closeButtonPlacement"],
     },
   },
   render: function Render(args) {
@@ -61,7 +67,10 @@ const meta = {
               <DialogTrigger asChild>
                 <Button>Abrir diálogo</Button>
               </DialogTrigger>
-              <DialogContent showCloseButton={args.showCloseButton}>
+              <DialogContent
+                showCloseButton={args.showCloseButton}
+                closeButtonPlacement={args.closeButtonPlacement}
+              >
                 <DialogHeader>
                   <DialogTitle>{args.title}</DialogTitle>
                   <DialogDescription>{args.description}</DialogDescription>

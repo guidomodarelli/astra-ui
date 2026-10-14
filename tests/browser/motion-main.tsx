@@ -124,6 +124,17 @@ function MotionExamples() {
               <DialogFooter showCloseButton />
             </DialogContent>
           </Dialog>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>Abrir detalle</Button>
+            </DialogTrigger>
+            <DialogContent closeButtonPlacement="viewport">
+              <DialogTitle>Detalle</DialogTitle>
+              <DialogDescription>
+                El botón de cerrar queda en la esquina de la pantalla.
+              </DialogDescription>
+            </DialogContent>
+          </Dialog>
         </section>
         <section>
           <TypingAnimation duration={1000} delay={10000} startOnView={false}>

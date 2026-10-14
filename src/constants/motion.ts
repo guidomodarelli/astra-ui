@@ -6,3 +6,9 @@ export const HOVER_CAPABLE_QUERY = "(hover: hover) and (pointer: fine)";
 
 /** Converts Motion's second-based timings to the millisecond timings of Web Animations. */
 export const MILLISECONDS_PER_SECOND = 1000;
+
+/**
+ * Marks a surface while its entrance plays. Its transform makes it the containing block of
+ * fixed descendants, so content pinned to the viewport stays hidden until the surface settles.
+ */
+export const MOTION_ENTERING_ATTRIBUTE = "data-motion-entering";
