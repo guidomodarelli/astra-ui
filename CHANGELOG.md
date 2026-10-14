@@ -11,6 +11,7 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 ### Changed
 
 - `DialogContent` se abre desplegándose desde su centro hacia todos los bordes y se cierra plegándose de la misma forma, como el Center Morph Modal de beUI, en lugar de aparecer subiendo con un fundido. La API, el foco, el cierre con Escape y el botón de cerrar no cambian; con movimiento reducido el diálogo sigue apareciendo sin animación.
+- `AlertDialogContent` se abre y se cierra con el mismo despliegue desde el centro que `DialogContent`, en lugar de subir con un fundido, así ambos modales se animan igual. La API, el foco y las acciones no cambian.
 
 ## [2.1.0] - 2026-10-14
 
