@@ -287,13 +287,20 @@ Desde este repositorio, configurar `NPM_TOKEN` con un token personal de GitHub *
 ```sh
 pnpm create-version                         # diagnóstico, plan y release interactivo
 pnpm create-version --bump minor            # patch | minor | major sin preguntar
+pnpm create-version -b m                    # atajo de --bump: acepta p | m | M (o -b=m)
+pnpm create-version -m                      # atajos --patch/-p, --minor/-m, --major/-M
 pnpm create-version --set-version 0.7.0     # versión exacta
+pnpm create-version -sv 0.7.0               # atajo de --set-version (o -sv=0.7.0)
+pnpm create-version -l                      # atajo de --local: todo el release en esta máquina
 pnpm create-version --accept-suggested     # toma la versión sugerida por los commits
 pnpm create-version --dry-run               # solo muestra el diagnóstico y el plan
 pnpm cv                                     # alias de pnpm create-version
+pnpm create-version -h                      # todas las opciones (atajo de --help)
 ```
 
-El comando es el motor compartido de los proyectos Beez, `beez-rp create-version` (devDependency `beez-rp`). Su funcionamiento general (diagnóstico, bloqueos, reanudación, versiones permitidas) está documentado en el README de [beez-rp](https://github.com/guidomodarelli/beez-rp#create-version). Lo propio de beez-ui vive en `beez-rp.config.js`: la descripción de cada tipo de versión, el hook `prepare` de `scripts/release-hooks.js` y la publicación en npm del tarball preparado (`publish: "npm"` + `artifact`, con `publication.authentication: "oidc"`).
+Los flags cortos distinguen mayúsculas (`-m` es minor y `-M` major) y van de a uno (`-l -m`, no `-lm`). Pedir dos tipos de versión distintos, combinar un tipo con `--set-version` o `--ci` con `--local` corta con un error.
+
+El comando es el motor compartido de los proyectos Beez, `beez-rp create-version` (devDependency `beez-rp`). Su funcionamiento general (diagnóstico, bloqueos, reanudación, versiones permitidas) está documentado en el README de [beez-rp](https://github.com/guidomodarelli/beez-rp#create-version). Lo propio de beez-ui vive en `beez-rp.config.js`: la descripción de cada tipo de versión, la zona horaria de la fecha del CHANGELOG (`releaseTimeZone`), el hook `prepare` de `scripts/release-hooks.js` y la publicación en npm del tarball preparado (`publish: "npm"` + `artifact`, con `publication.authentication: "oidc"`).
 
 Los releases salen sólo desde `main`, limpio y al día con origin (sólo `CHANGELOG.md` puede quedar sin commitear). En otra rama explica qué falta: pushear, abrir o mergear el PR. El último release es el último commit de `origin/main` que cambió el `version` de `package.json`, así que reconoce tanto los commits `X.Y.Z` como los anteriores `chore(release): prepara la versión X.Y.Z`.
 
@@ -312,7 +319,7 @@ La publicación usa el cliente oficial de npm contra `https://registry.npmjs.org
 
 ### CHANGELOG
 
-`CHANGELOG.md` sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Cada cambio agrega sus entradas en el bloque `## [Unreleased]`, agrupadas en `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed` y `### Security` (solo las que apliquen). Las entradas se escriben a mano: `pnpm create-version` no genera notas y bloquea el release si `[Unreleased]` no existe o no tiene entradas. Con beez-rp 0.8.0, el commit de versión renombra `[Unreleased]` a `## [X.Y.Z] - AAAA-MM-DD` y deja un `[Unreleased]` vacío arriba; si el CHANGELOG no está en UTF-8, el release se detiene antes del bump. Ni las personas ni los hooks cierran la sección: hacerlo (por ejemplo con `releaseUnreleased`) la cerraría dos veces o dejaría `[Unreleased]` vacío y bloquearía el release. `release:prepare` exige el bloque fechado que coincide con la versión del manifiesto. La regla completa está en `AGENTS.md`.
+`CHANGELOG.md` sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Cada cambio agrega sus entradas en el bloque `## [Unreleased]`, agrupadas en `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed` y `### Security` (solo las que apliquen). Las entradas se escriben a mano: `pnpm create-version` no genera notas y bloquea el release si `[Unreleased]` no existe o no tiene entradas. Con beez-rp 0.9.0, el commit de versión renombra `[Unreleased]` a `## [X.Y.Z] - AAAA-MM-DD` (fecha en la hora de Argentina por `releaseTimeZone: "America/Argentina/Buenos_Aires"`, aunque el workflow **Release** corra en un runner en UTC) y deja un `[Unreleased]` vacío arriba; si el CHANGELOG no está en UTF-8, el release se detiene antes del bump. Ni las personas ni los hooks cierran la sección: hacerlo (por ejemplo con `releaseUnreleased`) la cerraría dos veces o dejaría `[Unreleased]` vacío y bloquearía el release. `release:prepare` exige el bloque fechado que coincide con la versión del manifiesto. La regla completa está en `AGENTS.md`.
 
 Para validar y empaquetar la versión actual sin publicarla:
 

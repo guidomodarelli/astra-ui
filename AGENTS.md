@@ -10,7 +10,7 @@
 ## CHANGELOG
 
 - Todo cambio que modifique el comportamiento, la API pública, los estilos, las dependencias publicadas o el proceso de release debe actualizar `CHANGELOG.md` en el mismo commit.
-- Las entradas van siempre dentro del bloque `## [Unreleased]`, nunca en una versión ya publicada. No escribir la versión ni la fecha a mano: `pnpm create-version` (beez-rp 0.8.0) renombra `[Unreleased]` a `## [X.Y.Z] - AAAA-MM-DD` en el commit de versión y deja un `## [Unreleased]` vacío arriba.
+- Las entradas van siempre dentro del bloque `## [Unreleased]`, nunca en una versión ya publicada. No escribir la versión ni la fecha a mano: `pnpm create-version` (beez-rp 0.9.0) renombra `[Unreleased]` a `## [X.Y.Z] - AAAA-MM-DD` en el commit de versión y deja un `## [Unreleased]` vacío arriba. La fecha usa la hora de Argentina (`releaseTimeZone: "America/Argentina/Buenos_Aires"` en `beez-rp.config.js`), también cuando el release corre en el runner de CI en UTC.
 - Agrupar las entradas con el formato de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/), usando solo estas secciones y en este orden: `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed`, `### Security`. Omitir las secciones vacías.
 - Una línea `- ` por cambio, en español, escrita para quien consume el paquete (qué cambia para él), sin detalles internos de implementación.
 - Cambios que no afectan a quien consume el paquete (tests, refactors internos sin efecto visible, tooling local) no necesitan entrada.
@@ -18,5 +18,5 @@
 
 ## Release
 
-- `pnpm create-version` (alias `pnpm cv`) es el comando compartido `beez-rp create-version`. Lo propio de beez-ui se configura en `beez-rp.config.js` y en el hook `prepare` de `scripts/release-hooks.js`; la verificación y publicación del tarball y las credenciales de npm las resuelve beez-rp. No reimplementar el orquestador ni la publicación en este repositorio. No publicar con `pnpm publish`: `prepublishOnly` (`beez-rp guard-publish`) lo bloquea a propósito.
+- `pnpm create-version` (alias `pnpm cv`) es el comando compartido `beez-rp create-version`. Lo propio de beez-ui (incluida la zona horaria de la fecha del CHANGELOG, `releaseTimeZone`) se configura en `beez-rp.config.js` y en el hook `prepare` de `scripts/release-hooks.js`; la verificación y publicación del tarball y las credenciales de npm las resuelve beez-rp. No reimplementar el orquestador ni la publicación en este repositorio. No publicar con `pnpm publish`: `prepublishOnly` (`beez-rp guard-publish`) lo bloquea a propósito.
 - Cada versión queda en un commit cuyo asunto es exactamente `X.Y.Z`, con el tag anotado `vX.Y.Z`. No crear commits de release ni tags a mano.
