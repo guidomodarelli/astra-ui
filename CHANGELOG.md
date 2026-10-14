@@ -4,6 +4,8 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+## [2.3.1] - 2026-10-14
+
 ### Changed
 
 - `pnpm create-version` redacta con Claude Code (o Codex si Claude no está disponible) las entradas de `[Unreleased]` cuando faltan, en lugar de cortar el release; si ningún agente puede, el release se corta como antes.
