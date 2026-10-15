@@ -4,8 +4,14 @@ import { createRoot } from "react-dom/client";
 import { ActionButton, BeezUIProvider, SplitButton } from "beez-ui";
 import "./styles.css";
 
-/** Time the fixture action takes to settle, and the success state to stay before returning to idle. */
+/** Time the fixture action takes to settle. */
 const ACTION_STEP_MS = 900;
+
+/**
+ * Time the success state stays before returning to idle: long enough for the width spring to settle on the success
+ * label even on a slow CI engine, so the spec measures it before the reset starts the next morph.
+ */
+const SUCCESS_DWELL_MS = 3000;
 
 /**
  * Settles after a delay, like a request.
@@ -31,7 +37,7 @@ function CopyPageSplitButton() {
 function ActionButtons() {
   return <BeezUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
     <h1>Botones de acción</h1>
-    <section><ActionButton label="Publicar" pendingLabel="Publicando cambios" successLabel="Listo" resetAfterMs={ACTION_STEP_MS} onAction={simulateRequest} /></section>
+    <section><ActionButton label="Publicar" pendingLabel="Publicando cambios" successLabel="Listo" resetAfterMs={SUCCESS_DWELL_MS} onAction={simulateRequest} /></section>
     <section><CopyPageSplitButton /></section>
   </main></BeezUIProvider>;
 }
