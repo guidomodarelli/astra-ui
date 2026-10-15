@@ -1,23 +1,48 @@
-import * as React from "react"
+"use client"
+
+/**
+ * Arc's Textarea (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): a multi-line field on Arc's tokens with
+ * a 110px minimum height and a vertical resize handle. With a `label`, `description` or `error` it renders Arc's
+ * labelled field, where a live count in the description rolls its digits; without them it renders the bare control.
+ */
+import type { ComponentProps } from "react"
 
 import { MotionSlot } from "../motion/motion-slot.js"
 import { cn } from "../lib/utils.js"
+import { Field, hasFieldCopy, useFieldAria } from "./field.js"
+import type { FieldCopyProps } from "./field.js"
+
+/** Same focus language as `Input`: the border answers alone and the box never changes size. */
+const textareaClassName =
+  "flex min-h-[110px] w-full resize-y rounded-(--radius-control) border border-border-strong bg-surface p-(--space-3) font-sans text-base leading-(--leading-body) tracking-(--tracking-body) text-foreground outline-none transition-[color,background-color,border-color] duration-(--duration-fast) ease-(--ease-standard) motion-reduce:transition-none placeholder:text-text-muted hover-fine:not-disabled:not-aria-invalid:border-foreground focus-visible:border-foreground aria-invalid:border-danger disabled:cursor-not-allowed disabled:bg-surface-muted disabled:opacity-60 md:text-sm"
+
+export type TextareaProps = ComponentProps<"textarea"> & FieldCopyProps
 
 /**
- * Distinguishes disabled fields with a muted background in both theme modes.
- * @param props - Primitive properties and optional consumer overrides.
- * @returns The styled primitive with its original interaction contract.
+ * Free-form multi-line text, controlled or uncontrolled like a native textarea.
+ * @param props - Optional field copy plus every native textarea attribute, including `ref`, `rows` and `maxLength`.
+ * @returns The labelled field, or the bare control when there is no field copy.
  */
-function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
+function Textarea({ className, label, description, error, id, ...props }: TextareaProps) {
+  const aria = useFieldAria({ id, description, error, ...props })
+  const isField = hasFieldCopy({ label, description, error })
+  const control = (
+    <MotionSlot kind="field">
+      <textarea
+        data-slot="textarea"
+        className={cn(textareaClassName, className)}
+        {...props}
+        id={isField ? aria.controlId : id}
+        aria-describedby={aria["aria-describedby"]}
+        aria-invalid={aria["aria-invalid"]}
+      />
+    </MotionSlot>
+  )
+  if (!isField) return control
   return (
-    <MotionSlot kind="field"><textarea
-      data-slot="textarea"
-      className={cn(
-        "flex field-sizing-content min-h-16 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-base transition-[color,background-color,border-color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
-        className
-      )}
-      {...props}
-    /></MotionSlot>
+    <Field label={label} description={description} error={error} aria={aria}>
+      {control}
+    </Field>
   )
 }
 

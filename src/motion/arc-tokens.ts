@@ -7,6 +7,7 @@
 export const ARC_DURATION = {
   instant: 0.12,
   fast: 0.16,
+  exit: 0.18,
   standard: 0.24,
 } as const;
 
@@ -18,6 +19,9 @@ export const ARC_EASE = {
 
 /** Presses, toggles and small indicators: settles fast with a hint of life. */
 export const ARC_SPRING_SNAPPY = { type: "spring", visualDuration: 0.26, bounce: 0.12 } as const;
+
+/** Panels, height changes and layout shifts: critically damped, never overshoots. */
+export const ARC_SPRING_SMOOTH = { type: "spring", visualDuration: 0.4, bounce: 0 } as const;
 
 /** Shape morphs and width changes that follow new content. */
 export const ARC_SPRING_MORPH = { type: "spring", visualDuration: 0.42, bounce: 0.16 } as const;

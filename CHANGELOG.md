@@ -4,6 +4,14 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+### Added
+
+- `Input` y `Textarea` aceptan `label`, `description` y `error`, de Arc: con cualquiera de ellos renderizan el campo completo, con el label asociado al control, la ayuda y el error enlazados por `aria-describedby`, y filas que se abren con un resorte y cambian solo las palabras que cambiaron; los números de la ayuda (por ejemplo un contador de caracteres) giran solo los dígitos que cambian. El error marca `aria-invalid` y se anuncia con `role="alert"`. Con movimiento reducido los cambios son instantáneos. Sin esas props siguen renderizando solo el control.
+
+### Changed
+
+- `Input` y `Textarea` toman el diseño de Arc: alto mínimo de 44 px (`Textarea`, 110 px con redimensión vertical y sin crecer con el contenido), radio de control, fondo `surface`, borde fuerte que pasa a `foreground` con hover de puntero fino y con foco de teclado, sin anillos de foco, y borde `danger` cuando son inválidos. `InputGroup` usa el mismo marco.
+
 ## [2.4.0] - 2026-10-14
 
 ### Added

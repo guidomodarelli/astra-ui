@@ -1,6 +1,6 @@
 /** Demonstrates Textarea through its public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Textarea, Label } from "beez-ui";
+import { Textarea } from "beez-ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */
@@ -10,6 +10,8 @@ type Args = {
   placeholder: string;
   disabled: boolean;
   invalid: boolean;
+  description: string;
+  error: string;
 };
 
 const meta = {
@@ -20,6 +22,8 @@ const meta = {
     placeholder: "Escribí un mensaje",
     disabled: false,
     invalid: false,
+    description: "Lo ven todos los miembros de la tribu.",
+    error: "Completá este campo",
   },
   argTypes: {
     label: {
@@ -37,10 +41,16 @@ const meta = {
     invalid: {
       control: "boolean",
     },
+    description: {
+      control: "text",
+    },
+    error: {
+      control: "text",
+    },
   },
   parameters: {
     controls: {
-      include: ["label", "value", "placeholder", "disabled", "invalid"],
+      include: ["label", "value", "placeholder", "disabled", "invalid", "description", "error"],
     },
   },
   render: function Render(args) {
@@ -49,17 +59,15 @@ const meta = {
       <LiveArgs args={args} names={["value"]} updateArgs={updateArgs}>
         {({ value }, { value: setValue }) => {
           return (
-            <div className="StoryStack">
-              <Label htmlFor="story-textarea">{args.label}</Label>
-              <Textarea
-                id="story-textarea"
-                value={value}
-                placeholder={args.placeholder}
-                disabled={args.disabled}
-                aria-invalid={args.invalid}
-                onChange={(event) => setValue(event.target.value)}
-              />
-            </div>
+            <Textarea
+              label={args.label}
+              value={value}
+              placeholder={args.placeholder}
+              disabled={args.disabled}
+              description={args.description || undefined}
+              error={args.invalid ? args.error : undefined}
+              onChange={(event) => setValue(event.target.value)}
+            />
           );
         }}
       </LiveArgs>
