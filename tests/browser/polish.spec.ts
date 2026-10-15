@@ -108,26 +108,29 @@ test.describe("with motion", () => {
     await expectSettled(image);
   });
 
-  test("should sweep a shine across the skeleton", async ({ page }) => {
+  test("should pulse the skeleton a finite number of times and rest fully opaque", async ({ page }) => {
     await page.goto("/polish.html");
     const skeleton = page.getByLabel("Cargando resumen");
-    // The shine is a pseudo-element translated on the compositor, never the box itself.
+    // Arc's pulse dims the box itself on the compositor, then rests: it never loops forever.
     await expect
       .poll(() =>
         skeleton.evaluate((element) =>
-          element
-            .getAnimations({ subtree: true })
-            .map((animation) => (animation.effect as KeyframeEffect).pseudoElement),
+          element.getAnimations().map((animation) => ({
+            pseudoElement: (animation.effect as KeyframeEffect).pseudoElement,
+            iterations: animation.effect?.getTiming().iterations,
+          })),
         ),
       )
-      .toContain("::after");
-    const positions = new Set<string>();
+      .toEqual([{ pseudoElement: null, iterations: 11 }]);
+    const opacities = new Set<string>();
     await expect
       .poll(async () => {
-        positions.add(await skeleton.evaluate((element) => getComputedStyle(element, "::after").translate));
-        return positions.size;
+        opacities.add(await skeleton.evaluate((element) => getComputedStyle(element).opacity));
+        return opacities.size;
       })
       .toBeGreaterThan(1);
+    // Jumps to the end of the pulse instead of waiting about 20 seconds for it to rest.
+    await skeleton.evaluate((element) => element.getAnimations().forEach((animation) => animation.finish()));
     await expectSettled(skeleton);
   });
 
