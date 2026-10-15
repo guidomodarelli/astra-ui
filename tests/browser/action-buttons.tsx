@@ -8,10 +8,10 @@ import "./styles.css";
 const ACTION_STEP_MS = 900;
 
 /**
- * Time the success state stays before returning to idle: long enough for the width spring to settle on the success
- * label even on a slow CI engine, so the spec measures it before the reset starts the next morph.
+ * Keeps the success state: headless CI engines can stall animation frames for seconds, and a reset would change the
+ * width the spec waits for. Vitest covers the automatic return to idle.
  */
-const SUCCESS_DWELL_MS = 3000;
+const KEEP_SUCCESS_STATE_MS = 0;
 
 /**
  * Settles after a delay, like a request.
@@ -37,7 +37,7 @@ function CopyPageSplitButton() {
 function ActionButtons() {
   return <BeezUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
     <h1>Botones de acción</h1>
-    <section><ActionButton label="Publicar" pendingLabel="Publicando cambios" successLabel="Listo" resetAfterMs={SUCCESS_DWELL_MS} onAction={simulateRequest} /></section>
+    <section><ActionButton label="Publicar" pendingLabel="Publicando cambios" successLabel="Listo" resetAfterMs={KEEP_SUCCESS_STATE_MS} onAction={simulateRequest} /></section>
     <section><CopyPageSplitButton /></section>
   </main></BeezUIProvider>;
 }
