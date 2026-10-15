@@ -8,6 +8,8 @@ import {
   AlertTitle,
   Avatar,
   AvatarFallback,
+  AvatarGroup,
+  AvatarGroupCount,
   Badge,
   BeezUIProvider,
   Button,
@@ -68,12 +70,24 @@ function ActionableAlert() {
   );
 }
 
+/** A group of profile-size avatars whose overflow counter must match them. */
+function ProfileAvatarGroup() {
+  return (
+    <AvatarGroup aria-label="Equipo destacado">
+      <Avatar size="xl"><AvatarFallback>AN</AvatarFallback></Avatar>
+      <Avatar size="xl"><AvatarFallback>LU</AvatarFallback></Avatar>
+      <AvatarGroupCount aria-label="Tres personas más">+3</AvatarGroupCount>
+    </AvatarGroup>
+  );
+}
+
 /** Renders one fixture per component. */
 function ArcDisplay() {
   return <BeezUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
     <h1>Componentes de visualización</h1>
     <section><GrowingBadge /></section>
     <section><PresenceAvatar /></section>
+    <section><ProfileAvatarGroup /></section>
     <section className="narrow-field"><Skeleton avatar lines={3} label="Cargando miembros" /></section>
     <section className="controls">
       <Card aria-label="Tarjeta interactiva" className="summary-card">

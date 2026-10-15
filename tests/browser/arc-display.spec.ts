@@ -118,3 +118,14 @@ test("should lay out an alert action beside the dismiss button without overlap",
   await action.click({ trial: true });
   await dismiss.click({ trial: true });
 });
+
+test("should size the group counter like the profile-size avatars beside it", async ({ page }) => {
+  const group = page.getByLabel("Equipo destacado");
+  const avatar = group.locator('[data-slot="avatar"]').first();
+  const counter = page.getByLabel("Tres personas más");
+
+  const [avatarBox, counterBox] = await Promise.all([avatar.boundingBox(), counter.boundingBox()]);
+
+  expect(counterBox!.width).toBeCloseTo(avatarBox!.width, 0);
+  expect(counterBox!.height).toBeCloseTo(avatarBox!.height, 0);
+});
