@@ -188,11 +188,18 @@ function TabsList({
 
   useLayoutEffect(() => {
     if (!list || motionState?.orientation === "vertical") return
-    revealTrigger(
-      list,
-      list.querySelector<HTMLElement>('[data-slot="tabs-trigger"][data-state="active"]'),
-      reduceMotion
-    )
+    const revealActiveTrigger = () =>
+      revealTrigger(
+        list,
+        list.querySelector<HTMLElement>('[data-slot="tabs-trigger"][data-state="active"]'),
+        reduceMotion
+      )
+    revealActiveTrigger()
+    // Triggers can widen after the reveal (a web font swapping in, a label changing), which grows the scrollable
+    // width and pushes the active trigger back out of view; reveal it again whenever a trigger resizes.
+    const observer = new ResizeObserver(revealActiveTrigger)
+    for (const trigger of list.querySelectorAll('[data-slot="tabs-trigger"]')) observer.observe(trigger)
+    return () => observer.disconnect()
   }, [list, activeValue, motionState?.orientation, reduceMotion])
 
   /** Keyboard focus may land on a trigger scrolled out of view before it becomes active. */
@@ -327,6 +334,9 @@ function TabsPanel({ motionState, reduceMotion, ref, ...props }: TabsPanelProps)
       panel.style.flex = "none"
       panel.style.minHeight = "0"
       if (toHeight > fromHeight) panel.style.overflow = "clip"
+      // Motion writes its first keyframe on the next frame; pin the starting height now so the panel never paints a
+      // frame at its full height before the morph begins.
+      panel.style.height = `${fromHeight}px`
       controls = animate(panel, { height: [fromHeight, toHeight] }, { ...ARC_SPRING_SMOOTH, onComplete: release })
     }
     panelHeightRef.current = controls && fromHeight !== null ? fromHeight : toHeight

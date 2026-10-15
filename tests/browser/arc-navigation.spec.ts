@@ -78,11 +78,20 @@ test.describe("with motion", () => {
 
     await tabs.getByRole("tab", { name: "Actividad" }).click();
     await expect(tabs.getByRole("tabpanel")).toHaveText("Actividad reciente de la tribu.");
+    // Waits until the entrance has settled, both the slide and the height, before judging the recorded frames.
     await expect
-      .poll(async () => (await readPanelFrames(page)).at(-1)?.height ?? 0, { timeout: SETTLE_TIMEOUT_MS })
-      .toBeGreaterThanOrEqual(239);
+      .poll(
+        async () => {
+          const last = (await readPanelFrames(page)).at(-1);
+          return last?.text.startsWith("Actividad") === true && last.x === 0 && last.height >= 239;
+        },
+        { timeout: SETTLE_TIMEOUT_MS },
+      )
+      .toBe(true);
     const forward = (await readPanelFrames(page)).filter((frame) => frame.text.startsWith("Actividad"));
-    // The panel enters from the right of the previous one and grows from its height, never jumping to the end.
+    // The panel enters from the right of the previous one and grows from its height, never jumping to the end:
+    // its first painted frame still has the previous panel's height.
+    expect(forward[0]!.height).toBeLessThanOrEqual(initialHeight + 1);
     expect(Math.max(...forward.map((frame) => frame.x))).toBeGreaterThan(0);
     expect(Math.min(...forward.map((frame) => frame.height))).toBeGreaterThanOrEqual(initialHeight - 1);
     expect(
