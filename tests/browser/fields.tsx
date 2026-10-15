@@ -63,6 +63,38 @@ function BioField() {
   );
 }
 
+/** Members the count starts from, one below the first count Spanish formats with a grouping separator. */
+const INITIAL_MEMBER_COUNT = 999;
+
+/** Locale whose grouping separator is a dot, as TuTribu formats counts. */
+const COUNT_LOCALE = "es-AR";
+
+/** A field whose description carries a count formatted in Spanish, which the spec grows past a thousand. */
+function MembersField() {
+  const [members, setMembers] = useState(INITIAL_MEMBER_COUNT);
+  return (
+    <>
+      <Input label="Cupo" description={`${members.toLocaleString(COUNT_LOCALE)} miembros`} />
+      <Button variant="secondary" onClick={() => setMembers((current) => current + 1)}>
+        Sumar miembro
+      </Button>
+    </>
+  );
+}
+
+/** A field whose description the spec rewords by inserting a word in front of the existing copy. */
+function NoticeField() {
+  const [hasPrefix, setHasPrefix] = useState(false);
+  return (
+    <>
+      <Input label="Aviso" description={`${hasPrefix ? "Solo " : ""}10 caracteres disponibles`} />
+      <Button variant="secondary" onClick={() => setHasPrefix(true)}>
+        Anteponer palabra
+      </Button>
+    </>
+  );
+}
+
 /** Renders the fields the spec drives. */
 function Fields() {
   return <BeezUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
@@ -70,6 +102,8 @@ function Fields() {
     <section><FlexRowField /></section>
     <section><EmailField /></section>
     <section><BioField /></section>
+    <section><MembersField /></section>
+    <section><NoticeField /></section>
   </main></BeezUIProvider>;
 }
 

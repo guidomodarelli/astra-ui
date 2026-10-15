@@ -111,7 +111,8 @@ test.describe("with motion", () => {
 
   test("should roll only the digits of the count that changed", async ({ page }) => {
     const bio = page.getByRole("textbox", { name: "Biografía" });
-    const columns = page.locator('[data-slot="field-description"] [aria-hidden="true"] .tabular-nums');
+    const field = page.locator('[data-slot="field"]').filter({ has: bio });
+    const columns = field.locator('[data-slot="field-description"] [aria-hidden="true"] .tabular-nums');
     await expect(columns).toHaveCount(3);
     await columns.nth(0).evaluate((column) => {
       (column.firstElementChild as HTMLElement).dataset.marked = "hundreds";
@@ -122,6 +123,46 @@ test.describe("with motion", () => {
     await expect(bio).toHaveAccessibleDescription("Quedan 119 caracteres");
     await expect(columns.nth(0).locator('[data-marked="hundreds"]')).toHaveText("1");
     await expect.poll(() => columns.evaluateAll((items) => items.map((item) => item.lastElementChild?.textContent).join(""))).toBe("119");
+  });
+
+  test("should roll a Spanish count up when it grows past a thousand", async ({ page }) => {
+    const field = page.locator('[data-slot="field"]').filter({ has: page.getByRole("textbox", { name: "Cupo" }) });
+    const columns = field.locator('[data-slot="field-description"] [aria-hidden="true"] .tabular-nums');
+    await expect(columns).toHaveCount(3);
+
+    // Samples, frame by frame, the vertical offset of the units digit entering after 999 becomes 1.000.
+    const offsets = await page.getByRole("button", { name: "Sumar miembro", exact: true }).evaluate(async (button, frames) => {
+      (button as HTMLButtonElement).click();
+      const samples: number[] = [];
+      for (let frame = 0; frame < frames; frame++) {
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        const description = [...document.querySelectorAll('[data-slot="field-description"]')].find((element) => element.textContent?.includes("miembros"));
+        const units = [...(description?.querySelectorAll('[aria-hidden="true"] .tabular-nums') ?? [])].at(-1);
+        const entering = [...(units?.children ?? [])].find((digit) => digit.textContent === "0");
+        if (entering) samples.push(new DOMMatrixReadOnly(getComputedStyle(entering).transform).f);
+      }
+      return samples;
+    }, SAMPLED_FRAMES);
+
+    expect(offsets.length).toBeGreaterThan(0);
+    expect(Math.max(...offsets)).toBeGreaterThan(0);
+    expect(Math.min(...offsets)).toBeGreaterThanOrEqual(0);
+    await expect(page.getByRole("textbox", { name: "Cupo" })).toHaveAccessibleDescription("1.000 miembros");
+  });
+
+  test("should keep the words after an inserted word mounted", async ({ page }) => {
+    const control = page.getByRole("textbox", { name: "Aviso" });
+    const field = page.locator('[data-slot="field"]').filter({ has: control });
+    const words = field.locator('[data-slot="field-description"] [aria-hidden="true"] > span');
+    await words.filter({ hasText: "disponibles" }).evaluate((word) => {
+      (word as HTMLElement).dataset.marked = "kept";
+    });
+
+    await page.getByRole("button", { name: "Anteponer palabra", exact: true }).click();
+
+    await expect(control).toHaveAccessibleDescription("Solo 10 caracteres disponibles");
+    await expect(words.filter({ hasText: "disponibles" })).toHaveAttribute("data-marked", "kept");
+    await expect(words.filter({ hasText: "caracteres" })).toHaveCount(1);
   });
 });
 

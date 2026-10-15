@@ -13,8 +13,9 @@ import type { Transition } from "motion/react"
 import {
   FIELD_MESSAGE_DIGIT_OFFSET_EM,
   FIELD_MESSAGE_ID_SUFFIX,
+  FIELD_MESSAGE_DECIMAL_COMMA,
+  FIELD_MESSAGE_GROUP_SEPARATOR_PATTERN,
   FIELD_MESSAGE_NUMBER_PATTERN,
-  FIELD_MESSAGE_THOUSANDS_SEPARATOR_PATTERN,
   FIELD_MESSAGE_WORD_OFFSET_EM,
 } from "../constants/field.js"
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
@@ -50,12 +51,34 @@ const digitVariants = {
 const instantTransition: Transition = { duration: 0 }
 
 /**
- * Reads a count in the message as a number, ignoring thousands separators.
+ * Reads a count in the message as a number, in English or Spanish formatting: grouping separators are dropped and a
+ * decimal comma becomes a point.
  * @param word - A word matching `FIELD_MESSAGE_NUMBER_PATTERN`.
- * @returns Its numeric value, `NaN` when it is a ratio or a time.
+ * @returns Its numeric value; a ratio or a time reads as its leading number.
  */
 function parseCount(word: string): number {
-  return parseFloat(word.replace(FIELD_MESSAGE_THOUSANDS_SEPARATOR_PATTERN, ""))
+  return parseFloat(word.replace(FIELD_MESSAGE_GROUP_SEPARATOR_PATTERN, "").replace(FIELD_MESSAGE_DECIMAL_COMMA, "."))
+}
+
+/** A word of the message with the key that keeps it mounted while the copy around it changes. */
+type KeyedWord = { word: string; isCount: boolean; key: string }
+
+/**
+ * Keys each word by its text and how many times that text appeared before it, so a word keeps its key when copy is
+ * inserted or removed before it and only the words that really changed animate. Counts are keyed by their order
+ * among counts instead of their value, so a changing count rolls its digits instead of being replaced.
+ * @param words - Words of the message in reading order.
+ * @returns The words with their keys.
+ */
+function keyWords(words: string[]): KeyedWord[] {
+  const occurrences = new Map<string, number>()
+  return words.map((word) => {
+    const isCount = FIELD_MESSAGE_NUMBER_PATTERN.test(word)
+    const identity = isCount ? "#" : `w:${word}`
+    const occurrence = occurrences.get(identity) ?? 0
+    occurrences.set(identity, occurrence + 1)
+    return { word, isCount, key: `${identity}:${occurrence}` }
+  })
 }
 
 /**
@@ -116,12 +139,10 @@ function MotionText({ text }: { text: string }) {
       <span className="sr-only">{text}</span>
       <span className="relative block" aria-hidden="true">
         <AnimatePresence initial={false} mode="popLayout">
-          {words.map((word, index) => {
-            const isCount = FIELD_MESSAGE_NUMBER_PATTERN.test(word)
+          {keyWords(words).map(({ word, isCount, key }, index) => {
             return (
               <motion.span
-                // A count keeps its key while its value changes, so it rolls its digits instead of being replaced.
-                key={`${index}:${isCount ? "#" : word}`}
+                key={key}
                 className="inline-block whitespace-pre"
                 // Reduced motion mounts a new word already visible: even a zero-duration fade paints one blank frame.
                 initial={
