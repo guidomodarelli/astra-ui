@@ -9,6 +9,7 @@ type Args = {
   checked: boolean;
   disabled: boolean;
   size: "default" | "sm";
+  inlineLabel: boolean;
 };
 
 const meta = {
@@ -18,6 +19,7 @@ const meta = {
     checked: false,
     disabled: false,
     size: "default",
+    inlineLabel: true,
   },
   argTypes: {
     label: {
@@ -33,15 +35,29 @@ const meta = {
       control: "select",
       options: ["default", "sm"],
     },
+    inlineLabel: {
+      control: "boolean",
+      description: "Pasa el texto en `label` (dentro del control) en lugar de un `Label` externo.",
+    },
   },
   parameters: {
-    controls: { include: ["label", "checked", "disabled", "size"] },
+    controls: { include: ["label", "checked", "disabled", "size", "inlineLabel"] },
   },
   render: function Render(args) {
     const [, updateArgs] = useArgs<Args>();
     return (
       <LiveArgs args={args} names={["checked"]} updateArgs={updateArgs}>
         {({ checked }, { checked: setChecked }) => {
+          if (args.inlineLabel)
+            return (
+              <Switch
+                label={args.label}
+                checked={checked}
+                disabled={args.disabled}
+                size={args.size}
+                onCheckedChange={(checked) => setChecked(checked)}
+              />
+            );
           return (
             <div className="StoryRow">
               <Switch

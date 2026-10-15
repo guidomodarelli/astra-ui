@@ -7,6 +7,7 @@ import { LiveArgs } from "./live-args.js";
 type Args = {
   label: string;
   checked: boolean | "indeterminate";
+  description: string;
   disabled: boolean;
 };
 
@@ -14,11 +15,15 @@ const meta = {
   title: "Components/Checkbox",
   args: {
     label: "Aceptar condiciones",
+    description: "Podés cambiar esta preferencia cuando quieras.",
     checked: false,
     disabled: false,
   },
   argTypes: {
     label: {
+      control: "text",
+    },
+    description: {
       control: "text",
     },
     checked: {
@@ -29,21 +34,30 @@ const meta = {
       control: "boolean",
     },
   },
-  parameters: { controls: { include: ["label", "checked", "disabled"] } },
+  parameters: { controls: { include: ["label", "description", "checked", "disabled"] } },
   render: function Render(args) {
     const [, updateArgs] = useArgs<Args>();
     return (
       <LiveArgs args={args} names={["checked"]} updateArgs={updateArgs}>
         {({ checked }, { checked: setChecked }) => {
           return (
-            <div className="StoryRow">
+            <div className="StoryStack">
               <Checkbox
-                id="story-checkbox"
+                label={args.label}
+                description={args.description || undefined}
                 checked={checked}
                 disabled={args.disabled}
                 onCheckedChange={(checked) => setChecked(checked)}
               />
-              <Label htmlFor="story-checkbox">{args.label}</Label>
+              <div className="StoryRow">
+                <Checkbox
+                  id="story-checkbox"
+                  checked={checked}
+                  disabled={args.disabled}
+                  onCheckedChange={(checked) => setChecked(checked)}
+                />
+                <Label htmlFor="story-checkbox">{args.label}</Label>
+              </div>
             </div>
           );
         }}
