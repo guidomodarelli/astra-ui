@@ -14,6 +14,7 @@ import {
   dateMatchModifiers,
   getDefaultClassNames,
   useDayPicker,
+  type CustomComponents,
   type DayButton,
   type Locale,
   type Modifiers,
@@ -192,52 +193,57 @@ function Calendar({
           ...classNames,
         }}
         components={{
-          Root: ({ className, rootRef, ...props }) => {
-            return (
-              <div
-                data-slot="calendar"
-                ref={rootRef}
-                className={cn(className)}
-                {...props}
-              />
-            )
-          },
-          Chevron: ({ className, orientation, ...props }) => {
-            if (orientation === "left") {
-              return (
-                <ChevronLeft className={cn("size-4", className)} strokeWidth={1.75} {...props} />
-              )
-            }
-
-            if (orientation === "right") {
-              return (
-                <ChevronRight className={cn("size-4", className)} strokeWidth={1.75} {...props} />
-              )
-            }
-
-            return (
-              <ChevronDown className={cn("size-4", className)} {...props} />
-            )
-          },
-          DayButton: ({ ...props }) => (
-            <CalendarDayButton locale={locale} {...props} />
-          ),
+          Root: CalendarRoot,
+          Chevron: CalendarChevron,
+          DayButton: CalendarDayButtonSlot,
           Month: CalendarMonth,
           ...(showToday ? { Nav: CalendarNav } : {}),
-          WeekNumber: ({ children, ...props }) => {
-            return (
-              <td {...props}>
-                <div className="flex size-(--cell-size) items-center justify-center text-center">
-                  {children}
-                </div>
-              </td>
-            )
-          },
+          WeekNumber: CalendarWeekNumber,
           ...components,
         }}
         {...props}
       />
     </CalendarSettingsContext.Provider>
+  )
+}
+
+/** Props react-day-picker passes to one of its replaceable slots. */
+type CalendarSlotProps<SlotName extends keyof CustomComponents> = React.ComponentProps<CustomComponents[SlotName]>
+
+/*
+ * The slots below live at module level so their component identity is stable across renders. Inline slot functions
+ * would be new component types on every render: React would remount the whole calendar (Root wraps it) and every month
+ * would lose its state, which cancels the month slide and the selected disc glide when nothing memoizes them.
+ */
+
+/** The calendar root, tagged with `data-slot="calendar"`. */
+function CalendarRoot({ className, rootRef, ...props }: CalendarSlotProps<"Root">) {
+  return <div data-slot="calendar" ref={rootRef} className={cn(className)} {...props} />
+}
+
+/** Arc's chevrons for the month controls and the caption dropdowns. */
+function CalendarChevron({ className, orientation, ...props }: CalendarSlotProps<"Chevron">) {
+  if (orientation === "left") {
+    return <ChevronLeft className={cn("size-4", className)} strokeWidth={1.75} {...props} />
+  }
+  if (orientation === "right") {
+    return <ChevronRight className={cn("size-4", className)} strokeWidth={1.75} {...props} />
+  }
+  return <ChevronDown className={cn("size-4", className)} {...props} />
+}
+
+/** The day button slot, which reads the calendar locale for `data-day`. */
+function CalendarDayButtonSlot(props: CalendarSlotProps<"DayButton">) {
+  const { dayPickerProps } = useDayPicker()
+  return <CalendarDayButton locale={dayPickerProps.locale} {...props} />
+}
+
+/** A week number cell sized like a day. */
+function CalendarWeekNumber({ children, ...props }: CalendarSlotProps<"WeekNumber">) {
+  return (
+    <td {...props}>
+      <div className="flex size-(--cell-size) items-center justify-center text-center">{children}</div>
+    </td>
   )
 }
 
