@@ -9,3 +9,4 @@ h1 { font-family: var(--font-display); font-size: 2rem; }
 .carousel-frame { padding-block: 3.5rem; max-width: 16rem; margin-inline: auto; }
 .vertical-carousel-content { height: 6rem; }
 .summary-card { max-width: 20rem; }
+.narrow-field { max-width: 20rem; }

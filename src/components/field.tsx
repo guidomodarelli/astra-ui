@@ -82,7 +82,7 @@ function RollingNumber({ word }: { word: string }) {
         <motion.span
           key={characters.length - index}
           className="relative inline-flex justify-center tabular-nums"
-          initial={{ width: 0, opacity: 0 }}
+          initial={reduceMotion ? false : { width: 0, opacity: 0 }}
           animate={{ width: "auto", opacity: 1 }}
           exit={{ width: 0, opacity: 0 }}
           transition={transition}
@@ -93,7 +93,7 @@ function RollingNumber({ word }: { word: string }) {
               className="inline-block"
               custom={shown.direction}
               variants={digitVariants}
-              initial="enter"
+              initial={reduceMotion ? false : "enter"}
               animate="center"
               exit="exit"
               transition={transition}
@@ -123,9 +123,10 @@ function MotionText({ text }: { text: string }) {
                 // A count keeps its key while its value changes, so it rolls its digits instead of being replaced.
                 key={`${index}:${isCount ? "#" : word}`}
                 className="inline-block whitespace-pre"
+                // Reduced motion mounts a new word already visible: even a zero-duration fade paints one blank frame.
                 initial={
                   reduceMotion
-                    ? { opacity: 0 }
+                    ? false
                     : { opacity: 0, y: `${FIELD_MESSAGE_WORD_OFFSET_EM.enter}em`, filter: `blur(${ARC_BLUR.soft}px)` }
                 }
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -139,11 +140,7 @@ function MotionText({ text }: { text: string }) {
                         transition: { duration: ARC_DURATION.exit, ease: [...ARC_EASE.standard] },
                       }
                 }
-                transition={
-                  reduceMotion
-                    ? { duration: ARC_DURATION.instant }
-                    : { duration: ARC_DURATION.standard, ease: [...ARC_EASE.enter] }
-                }
+                transition={reduceMotion ? instantTransition : { duration: ARC_DURATION.standard, ease: [...ARC_EASE.enter] }}
               >
                 {isCount ? <RollingNumber word={word} /> : word}
                 {index < words.length - 1 ? " " : null}
@@ -270,11 +267,12 @@ type FieldProps = Omit<FieldCopyProps, "label"> & {
 
 /**
  * Arc's field layout: label, control, then the helper and error rows. There is no row gap, because grid tracks clamp
- * a negative margin at zero and a closed row would still pay it; each row carries its own space instead.
+ * a negative margin at zero and a closed row would still pay it; each row carries its own space instead. The wrapper
+ * keeps the bare control's full-width contract, so a field fills a flex row like the control alone does.
  */
 export function Field({ label, description, error, aria, className, children }: FieldProps) {
   return (
-    <div data-slot="field" className={cn("grid min-w-0", className)}>
+    <div data-slot="field" className={cn("grid w-full min-w-0", className)}>
       {label ? (
         <label
           data-slot="field-label"
