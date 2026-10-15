@@ -1,6 +1,6 @@
 /** Demonstrates Input through its public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Input, Label } from "beez-ui";
+import { Input } from "beez-ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */
@@ -10,6 +10,8 @@ type Args = {
   placeholder: string;
   disabled: boolean;
   invalid: boolean;
+  description: string;
+  error: string;
   type: "text" | "email" | "password" | "number";
 };
 
@@ -21,6 +23,8 @@ const meta = {
     placeholder: "Ingresá tu nombre",
     disabled: false,
     invalid: false,
+    description: "Lo ven todos los miembros de la tribu.",
+    error: "Completá este campo",
     type: "text",
   },
   argTypes: {
@@ -39,6 +43,12 @@ const meta = {
     invalid: {
       control: "boolean",
     },
+    description: {
+      control: "text",
+    },
+    error: {
+      control: "text",
+    },
     type: {
       control: "select",
       options: ["text", "email", "password", "number"],
@@ -46,7 +56,7 @@ const meta = {
   },
   parameters: {
     controls: {
-      include: ["label", "value", "placeholder", "disabled", "invalid", "type"],
+      include: ["label", "value", "placeholder", "disabled", "invalid", "description", "error", "type"],
     },
   },
   render: function Render(args) {
@@ -55,18 +65,16 @@ const meta = {
       <LiveArgs args={args} names={["value"]} updateArgs={updateArgs}>
         {({ value }, { value: setValue }) => {
           return (
-            <div className="StoryStack">
-              <Label htmlFor="story-input">{args.label}</Label>
-              <Input
-                id="story-input"
-                value={value}
-                placeholder={args.placeholder}
-                disabled={args.disabled}
-                aria-invalid={args.invalid}
-                type={args.type}
-                onChange={(event) => setValue(event.target.value)}
-              />
-            </div>
+            <Input
+              label={args.label}
+              value={value}
+              placeholder={args.placeholder}
+              disabled={args.disabled}
+              description={args.description || undefined}
+              error={args.invalid ? args.error : undefined}
+              type={args.type}
+              onChange={(event) => setValue(event.target.value)}
+            />
           );
         }}
       </LiveArgs>
