@@ -5,8 +5,7 @@ import {
   HoverCard,
   HoverCardTrigger,
   HoverCardContent,
-  Avatar,
-  AvatarFallback,
+  HoverCardProfile,
 } from "beez-ui";
 
 /** Editable inputs specific to this example. */
@@ -22,8 +21,8 @@ const meta = {
   args: {
     name: "Guido",
     bio: "Construye componentes reutilizables.",
-    openDelay: 200,
-    closeDelay: 150,
+    openDelay: 500,
+    closeDelay: 140,
     side: "bottom",
   },
   argTypes: {
@@ -63,15 +62,16 @@ const meta = {
         <Button variant="ghost">@{name}</Button>
       </HoverCardTrigger>
       <HoverCardContent side={side}>
-        <div className="StoryRow">
-          <Avatar>
-            <AvatarFallback>GH</AvatarFallback>
-          </Avatar>
-          <div>
-            <strong>{name}</strong>
-            <p>{bio}</p>
-          </div>
-        </div>
+        <HoverCardProfile
+          name={name}
+          role="Ingeniero de producto, Plataforma"
+          bio={bio}
+          stats={[
+            { label: "Componentes", value: 48 },
+            { label: "Versiones", value: 12 },
+          ]}
+          meta="Buenos Aires"
+        />
       </HoverCardContent>
     </HoverCard>
   ),
