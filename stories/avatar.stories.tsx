@@ -7,7 +7,8 @@ type Args = {
   src: string;
   alt: string;
   initials: string;
-  size: "default" | "sm" | "lg";
+  size: "default" | "sm" | "lg" | "xl";
+  status: "none" | "online" | "offline";
   showBadge: boolean;
 };
 
@@ -18,7 +19,8 @@ const meta = {
     alt: "Perfil de ejemplo",
     initials: "GH",
     size: "default",
-    showBadge: true,
+    status: "none",
+    showBadge: false,
   },
   argTypes: {
     src: {
@@ -32,17 +34,21 @@ const meta = {
     },
     size: {
       control: "select",
-      options: ["default", "sm", "lg"],
+      options: ["default", "sm", "lg", "xl"],
+    },
+    status: {
+      control: "select",
+      options: ["none", "online", "offline"],
     },
     showBadge: {
       control: "boolean",
     },
   },
   parameters: {
-    controls: { include: ["src", "alt", "initials", "size", "showBadge"] },
+    controls: { include: ["src", "alt", "initials", "size", "status", "showBadge"] },
   },
-  render: ({ src, alt, initials, size, showBadge }) => (
-    <Avatar size={size}>
+  render: ({ src, alt, initials, size, status, showBadge }) => (
+    <Avatar size={size} status={status === "none" ? undefined : status}>
       <AvatarImage src={src} alt={alt} />
       <AvatarFallback>{initials}</AvatarFallback>
       {showBadge && <AvatarBadge aria-label="Disponible" />}
@@ -54,6 +60,6 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 export const Playground: Story = {
   args: {
-    showBadge: true,
+    status: "online",
   },
 };
