@@ -58,6 +58,33 @@ async function clickAndSampleRow(page: Page, buttonName: string, copySlot: strin
 }
 
 /**
+ * Clicks a button and samples, frame by frame, the vertical offset of the digit entering the units column of the count
+ * in a field description: positive while it rolls up from below, negative while it rolls down from above.
+ * @param page - Page that holds the field.
+ * @param buttonName - Accessible name of the button that changes the count.
+ * @param descriptionText - Text that identifies the description holding the count.
+ * @param enteringDigit - Digit that enters the units column.
+ * @returns One offset per frame in which the entering digit is mounted.
+ */
+async function clickAndSampleEnteringDigit(page: Page, buttonName: string, descriptionText: string, enteringDigit: string): Promise<number[]> {
+  return page.getByRole("button", { name: buttonName, exact: true }).evaluate(
+    async (button, { frames, text, digit }) => {
+      (button as HTMLButtonElement).click();
+      const samples: number[] = [];
+      for (let frame = 0; frame < frames; frame++) {
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        const description = [...document.querySelectorAll('[data-slot="field-description"]')].find((element) => element.textContent?.includes(text));
+        const units = [...(description?.querySelectorAll('[aria-hidden="true"] .tabular-nums') ?? [])].at(-1);
+        const entering = [...(units?.children ?? [])].find((candidate) => candidate.textContent === digit);
+        if (entering) samples.push(new DOMMatrixReadOnly(getComputedStyle(entering).transform).f);
+      }
+      return samples;
+    },
+    { frames: SAMPLED_FRAMES, text: descriptionText, digit: enteringDigit },
+  );
+}
+
+/**
  * Waits until a message slot is exactly as tall as its copy.
  * @param slot - The clipped slot.
  * @param copy - The copy it holds.
@@ -126,28 +153,21 @@ test.describe("with motion", () => {
   });
 
   test("should roll a Spanish count up when it grows past a thousand", async ({ page }) => {
-    const field = page.locator('[data-slot="field"]').filter({ has: page.getByRole("textbox", { name: "Cupo" }) });
-    const columns = field.locator('[data-slot="field-description"] [aria-hidden="true"] .tabular-nums');
-    await expect(columns).toHaveCount(3);
-
-    // Samples, frame by frame, the vertical offset of the units digit entering after 999 becomes 1.000.
-    const offsets = await page.getByRole("button", { name: "Sumar miembro", exact: true }).evaluate(async (button, frames) => {
-      (button as HTMLButtonElement).click();
-      const samples: number[] = [];
-      for (let frame = 0; frame < frames; frame++) {
-        await new Promise((resolve) => requestAnimationFrame(resolve));
-        const description = [...document.querySelectorAll('[data-slot="field-description"]')].find((element) => element.textContent?.includes("miembros"));
-        const units = [...(description?.querySelectorAll('[aria-hidden="true"] .tabular-nums') ?? [])].at(-1);
-        const entering = [...(units?.children ?? [])].find((digit) => digit.textContent === "0");
-        if (entering) samples.push(new DOMMatrixReadOnly(getComputedStyle(entering).transform).f);
-      }
-      return samples;
-    }, SAMPLED_FRAMES);
+    const offsets = await clickAndSampleEnteringDigit(page, "Sumar miembro", "miembros", "0");
 
     expect(offsets.length).toBeGreaterThan(0);
     expect(Math.max(...offsets)).toBeGreaterThan(0);
     expect(Math.min(...offsets)).toBeGreaterThanOrEqual(0);
     await expect(page.getByRole("textbox", { name: "Cupo" })).toHaveAccessibleDescription("1.000 miembros");
+  });
+
+  test("should roll a countdown down when its seconds go from 0:10 to 0:09", async ({ page }) => {
+    const offsets = await clickAndSampleEnteringDigit(page, "Restar segundo", "Vence", "9");
+
+    expect(offsets.length).toBeGreaterThan(0);
+    expect(Math.min(...offsets)).toBeLessThan(0);
+    expect(Math.max(...offsets)).toBeLessThanOrEqual(0);
+    await expect(page.getByRole("textbox", { name: "Código" })).toHaveAccessibleDescription("Vence en 0:09");
   });
 
   test("should keep the words after an inserted word mounted", async ({ page }) => {

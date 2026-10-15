@@ -95,6 +95,26 @@ function NoticeField() {
   );
 }
 
+/** Seconds the countdown starts from, so the next tick crosses from 0:10 to 0:09. */
+const COUNTDOWN_START_SECONDS = 10;
+
+/** Seconds per minute, to format the countdown as m:ss. */
+const SECONDS_PER_MINUTE = 60;
+
+/** A field whose description carries a countdown the spec ticks down. */
+function CountdownField() {
+  const [seconds, setSeconds] = useState(COUNTDOWN_START_SECONDS);
+  const countdown = `${Math.floor(seconds / SECONDS_PER_MINUTE)}:${String(seconds % SECONDS_PER_MINUTE).padStart(2, "0")}`;
+  return (
+    <>
+      <Input label="Código" description={`Vence en ${countdown}`} />
+      <Button variant="secondary" onClick={() => setSeconds((current) => current - 1)}>
+        Restar segundo
+      </Button>
+    </>
+  );
+}
+
 /** Renders the fields the spec drives. */
 function Fields() {
   return <BeezUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
@@ -104,6 +124,7 @@ function Fields() {
     <section><BioField /></section>
     <section><MembersField /></section>
     <section><NoticeField /></section>
+    <section><CountdownField /></section>
   </main></BeezUIProvider>;
 }
 

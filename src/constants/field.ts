@@ -18,6 +18,9 @@ export const FIELD_MESSAGE_NUMBER_PATTERN = /^\d[\d.,/:]*%?$/
  */
 export const FIELD_MESSAGE_GROUP_SEPARATOR_PATTERN = /[.,](?=\d{3}(?!\d))/g
 
+/** Separators between the components of a time (`0:09`) or a ratio (`3/10`), compared one by one. */
+export const FIELD_MESSAGE_COMPONENT_SEPARATOR_PATTERN = /[:/]/
+
 /** Decimal comma of locales such as Spanish, read as a decimal point once the grouping separators are gone. */
 export const FIELD_MESSAGE_DECIMAL_COMMA = ","
 

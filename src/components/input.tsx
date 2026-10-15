@@ -11,7 +11,7 @@ import { Input as InputPrimitive } from "@base-ui/react/input"
 
 import { MotionSlot } from "../motion/motion-slot.js"
 import { cn } from "../lib/utils.js"
-import { Field, hasFieldCopy, useFieldAria } from "./field.js"
+import { Field, usesFieldCopy, useFieldAria } from "./field.js"
 import type { FieldCopyProps } from "./field.js"
 
 /**
@@ -25,12 +25,14 @@ export type InputProps = ComponentProps<"input"> & FieldCopyProps
 
 /**
  * A single-line text value, controlled or uncontrolled like a native input.
- * @param props - Optional field copy plus every native input attribute, including `ref`, `name` and `type`.
- * @returns The labelled field, or the bare control when there is no field copy.
+ * @param inputProps - Optional field copy plus every native input attribute, including `ref`, `name` and `type`.
+ * @returns The labelled field when `label`, `description` or `error` is passed (even as `undefined`), otherwise the
+ *   bare control.
  */
-function Input({ className, type, label, description, error, id, ...props }: InputProps) {
+function Input(inputProps: InputProps) {
+  const { className, type, label, description, error, id, ...props } = inputProps
   const aria = useFieldAria({ id, description, error, ...props })
-  const isField = hasFieldCopy({ label, description, error })
+  const isField = usesFieldCopy(inputProps)
   const control = (
     <MotionSlot kind="field">
       <InputPrimitive

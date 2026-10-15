@@ -13,6 +13,7 @@ import type { Transition } from "motion/react"
 import {
   FIELD_MESSAGE_DIGIT_OFFSET_EM,
   FIELD_MESSAGE_ID_SUFFIX,
+  FIELD_MESSAGE_COMPONENT_SEPARATOR_PATTERN,
   FIELD_MESSAGE_DECIMAL_COMMA,
   FIELD_MESSAGE_GROUP_SEPARATOR_PATTERN,
   FIELD_MESSAGE_NUMBER_PATTERN,
@@ -51,13 +52,29 @@ const digitVariants = {
 const instantTransition: Transition = { duration: 0 }
 
 /**
- * Reads a count in the message as a number, in English or Spanish formatting: grouping separators are dropped and a
- * decimal comma becomes a point.
- * @param word - A word matching `FIELD_MESSAGE_NUMBER_PATTERN`.
- * @returns Its numeric value; a ratio or a time reads as its leading number.
+ * Reads one component of a count as a number, in English or Spanish formatting: grouping separators are dropped and
+ * a decimal comma becomes a point.
+ * @param component - A count, or one side of a time or ratio.
+ * @returns Its numeric value.
  */
-function parseCount(word: string): number {
-  return parseFloat(word.replace(FIELD_MESSAGE_GROUP_SEPARATOR_PATTERN, "").replace(FIELD_MESSAGE_DECIMAL_COMMA, "."))
+function parseCountComponent(component: string): number {
+  return parseFloat(component.replace(FIELD_MESSAGE_GROUP_SEPARATOR_PATTERN, "").replace(FIELD_MESSAGE_DECIMAL_COMMA, "."))
+}
+
+/**
+ * Tells whether a count went down. Times and ratios compare component by component from the left, so `0:10` to
+ * `0:09` counts as a decrease.
+ * @param next - The new count.
+ * @param previous - The count shown before.
+ * @returns `true` when `next` is smaller than `previous`.
+ */
+function isCountDecrease(next: string, previous: string): boolean {
+  const nextComponents = next.split(FIELD_MESSAGE_COMPONENT_SEPARATOR_PATTERN).map(parseCountComponent)
+  const previousComponents = previous.split(FIELD_MESSAGE_COMPONENT_SEPARATOR_PATTERN).map(parseCountComponent)
+  for (let index = 0; index < Math.min(nextComponents.length, previousComponents.length); index++) {
+    if (nextComponents[index] !== previousComponents[index]) return nextComponents[index]! < previousComponents[index]!
+  }
+  return false
 }
 
 /** A word of the message with the key that keeps it mounted while the copy around it changes. */
@@ -88,7 +105,7 @@ function keyWords(words: string[]): KeyedWord[] {
 function RollingNumber({ word }: { word: string }) {
   const reduceMotion = usePrefersReducedMotion()
   const [shown, setShown] = useState<{ word: string; direction: RollDirection }>({ word, direction: 1 })
-  if (shown.word !== word) setShown({ word, direction: parseCount(word) < parseCount(shown.word) ? -1 : 1 })
+  if (shown.word !== word) setShown({ word, direction: isCountDecrease(word, shown.word) ? -1 : 1 })
   const characters = word.split("")
   const transition: Transition = reduceMotion
     ? instantTransition
@@ -270,13 +287,18 @@ export function useFieldAria({ id, description, error, ...aria }: FieldAriaOptio
   }
 }
 
+/** Props that turn a bare control into a labelled field. */
+const FIELD_COPY_PROPS = ["label", "description", "error"] as const satisfies readonly (keyof FieldCopyProps)[]
+
 /**
- * Tells whether a control should render as a labelled field.
- * @param copy - Label, description and error passed to the control.
- * @returns `true` when any of them has copy.
+ * Tells whether a control renders as a labelled field. It looks at which props were passed, not at their values, so a
+ * field whose error or description comes and goes keeps the same tree and its control never remounts (losing an
+ * uncontrolled value or the focus) when validation appears.
+ * @param props - Props passed to the control.
+ * @returns `true` when the caller passed `label`, `description` or `error`, even as `undefined`.
  */
-export function hasFieldCopy({ label, description, error }: FieldCopyProps): boolean {
-  return Boolean(label || description || error)
+export function usesFieldCopy(props: FieldCopyProps): boolean {
+  return FIELD_COPY_PROPS.some((propName) => propName in props)
 }
 
 type FieldProps = Omit<FieldCopyProps, "label"> & {

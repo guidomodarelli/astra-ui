@@ -9,7 +9,7 @@ import type { ComponentProps } from "react"
 
 import { MotionSlot } from "../motion/motion-slot.js"
 import { cn } from "../lib/utils.js"
-import { Field, hasFieldCopy, useFieldAria } from "./field.js"
+import { Field, usesFieldCopy, useFieldAria } from "./field.js"
 import type { FieldCopyProps } from "./field.js"
 
 /** Same focus language as `Input`: the border answers alone and the box never changes size. */
@@ -20,12 +20,14 @@ export type TextareaProps = ComponentProps<"textarea"> & FieldCopyProps
 
 /**
  * Free-form multi-line text, controlled or uncontrolled like a native textarea.
- * @param props - Optional field copy plus every native textarea attribute, including `ref`, `rows` and `maxLength`.
- * @returns The labelled field, or the bare control when there is no field copy.
+ * @param textareaProps - Optional field copy plus every native textarea attribute, including `ref`, `rows` and `maxLength`.
+ * @returns The labelled field when `label`, `description` or `error` is passed (even as `undefined`), otherwise the
+ *   bare control.
  */
-function Textarea({ className, label, description, error, id, ...props }: TextareaProps) {
+function Textarea(textareaProps: TextareaProps) {
+  const { className, label, description, error, id, ...props } = textareaProps
   const aria = useFieldAria({ id, description, error, ...props })
-  const isField = hasFieldCopy({ label, description, error })
+  const isField = usesFieldCopy(textareaProps)
   const control = (
     <MotionSlot kind="field">
       <textarea

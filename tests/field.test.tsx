@@ -58,6 +58,33 @@ describe("Input", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
+  it("should keep the typed value and the focus when an error appears", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <>
+        <label htmlFor="slug">Dirección</label>
+        <Input id="slug" error={undefined} />
+      </>,
+    );
+    const control = screen.getByLabelText("Dirección");
+    await user.type(control, "mi tribu");
+
+    // Act
+    rerender(
+      <>
+        <label htmlFor="slug">Dirección</label>
+        <Input id="slug" error="Usá solo letras, números y guiones" />
+      </>,
+    );
+
+    // Assert
+    expect(screen.getByLabelText("Dirección")).toBe(control);
+    expect(control).toHaveValue("mi tribu");
+    expect(control).toHaveFocus();
+    expect(control).toHaveAccessibleDescription(/Usá solo letras, números y guiones/);
+  });
+
   it("should render the bare control when it has no field copy", async () => {
     // Arrange
     const user = userEvent.setup();
