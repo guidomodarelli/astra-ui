@@ -176,7 +176,7 @@ describe("RadioGroup", () => {
     expect(screen.getByRole("radio", { name: "Mensual" })).toBeChecked();
   });
 
-  it("should choose an option from its row copy", async () => {
+  it("should choose and focus an option from its row copy", async () => {
     // Arrange
     const user = userEvent.setup();
     const onValueChange = vi.fn();
@@ -188,6 +188,7 @@ describe("RadioGroup", () => {
     // Assert
     expect(onValueChange).toHaveBeenCalledWith("yearly");
     expect(screen.getByRole("radio", { name: "Anual" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Anual" })).toHaveFocus();
     expect(screen.getByRole("radio", { name: "Mensual" })).not.toBeChecked();
   });
 

@@ -9,11 +9,17 @@ const SETTLE_TIMEOUT_MS = 15_000;
 const SWITCH_TRACK_PX = { width: 42, height: 24 };
 const SWITCH_THUMB_TRAVEL_PX = 18;
 
+/** How far the held thumb widens toward the other side, in CSS pixels. */
+const SWITCH_PRESS_STRETCH_PX = 5;
+
 /** Arc's control height (`--control-height-md`), the minimum touch target, in CSS pixels. */
 const CONTROL_HEIGHT_PX = 44;
 
 /** Side of the checkbox square, in CSS pixels. */
 const CHECKBOX_SQUARE_PX = 18;
+
+/** How long an arrow key is held, in milliseconds, like a person's key press. */
+const ARROW_KEY_HOLD_MS = 80;
 
 /** Tolerance, in CSS pixels, for sub-pixel rounding between engines. */
 const PIXEL_TOLERANCE = 0.5;
@@ -84,9 +90,16 @@ test("should widen the held thumb toward the other side and keep its far edge an
   await toggle.hover();
   await page.mouse.down();
 
-  await expect.poll(async () => (await readBox(thumb)).width, { timeout: SETTLE_TIMEOUT_MS }).toBeGreaterThan(restingBox.width);
-  const heldBox = await readBox(thumb);
-  expect(heldBox.x + heldBox.width).toBeCloseTo(restingBox.x + restingBox.width, 0);
+  // The width and the glide run on different springs, so the far edge is checked once both have settled.
+  await expect
+    .poll(async () => (await readBox(thumb)).width, { timeout: SETTLE_TIMEOUT_MS })
+    .toBeCloseTo(restingBox.width + SWITCH_PRESS_STRETCH_PX, 0);
+  await expect
+    .poll(async () => {
+      const heldBox = await readBox(thumb);
+      return heldBox.x + heldBox.width;
+    }, { timeout: SETTLE_TIMEOUT_MS })
+    .toBeCloseTo(restingBox.x + restingBox.width, 0);
   await page.mouse.up();
   await expect(toggle).not.toBeChecked();
 });
@@ -137,7 +150,11 @@ test("should glide one highlight to the chosen row and follow the arrow keys", a
   await expect.poll(async () => (await readBox(highlight)).y, { timeout: SETTLE_TIMEOUT_MS }).toBeCloseTo(yearlyBox.y, 0);
   expect((await readBox(highlight)).height).toBeCloseTo(yearlyBox.height, 0);
 
-  await page.keyboard.press("ArrowUp");
+  // Radix checks the radio that roving focus lands on only while the arrow is still held, and moves focus on a timer, so
+  // the key is held as long as a person would hold it instead of an instant synthetic press.
+  await page.keyboard.down("ArrowUp");
+  await page.waitForTimeout(ARROW_KEY_HOLD_MS);
+  await page.keyboard.up("ArrowUp");
 
   await expect(page.getByRole("radio", { name: "Trimestral" })).toBeChecked();
   const quarterlyBox = await readBox(page.locator("[data-slot=radio-group-option]", { hasText: "Trimestral" }));

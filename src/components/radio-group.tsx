@@ -195,7 +195,16 @@ function RadioGroupItem({ className, label, description, id, value, ...props }: 
 
   if (!hasRow) return item;
   return (
-    <label data-slot="radio-group-option" className={optionClassName}>
+    <label
+      data-slot="radio-group-option"
+      className={optionClassName}
+      onClick={(event) => {
+        // A click on the row copy activates the radio without focusing it in Chromium; focus it like a native radio
+        // row so the arrow keys keep moving the choice from there.
+        const radio = event.currentTarget.querySelector<HTMLButtonElement>('[data-slot="radio-group-item"]');
+        if (radio && !radio.disabled && event.target !== radio) radio.focus({ preventScroll: true });
+      }}
+    >
       {item}
       {/* Rows are not stacking contexts, so their mark and copy rise above the highlight while their border stays below. */}
       <span className="relative z-2 min-w-0">

@@ -85,7 +85,9 @@ function Switch({
     const isFromPress = performance.now() - releasedAt.current < SWITCH_PRESS_RELEASE_WINDOW_MS
     if (reduceMotion || isFromPress) return
     const { scaleX: keyframes, ...transition } = SWITCH_CHANGE_STRETCH
-    const controls = animate(scaleX, [...keyframes], { ...transition, times: [...transition.times], ease: [...transition.ease] })
+    // Starts from the scale on screen, so a change that interrupts a stretch continues it instead of snapping back.
+    const [, peakScale, restingScale] = keyframes
+    const controls = animate(scaleX, [scaleX.get(), peakScale, restingScale], { ...transition, times: [...transition.times], ease: [...transition.ease] })
     return () => controls.stop()
   }, [isChecked, reduceMotion, scaleX])
 
