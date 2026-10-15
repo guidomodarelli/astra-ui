@@ -111,16 +111,36 @@ test("should open a submenu with motion and glide inside it", async ({ page }) =
 });
 
 test("should press radios and pop their dot on selection", async ({ page }) => {
-  const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
   const yearly = page.getByRole("radio", { name: "Anual" });
-  await yearly.click();
-  await expect(yearly).toBeChecked();
+  const dot = yearly.locator("[data-slot=radio-group-indicator]");
+  await expect(dot).toHaveCSS("opacity", "0");
+  // Held down, the mark dips and previews a faint dot before anything is chosen.
+  await yearly.hover();
+  await page.mouse.down();
+  await expect.poll(() => yearly.evaluate((mark) => getComputedStyle(mark).scale)).toBe("0.88");
   await expect
-    .poll(() => motion.properties({ slot: "radio-group-indicator" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform"]));
+    .poll(() => yearly.evaluate((mark) => Number(getComputedStyle(mark, "::before").opacity)))
+    .toBeCloseTo(0.22, 2);
+  await expect(yearly).not.toBeChecked();
+  // Samples the dot's scale on every frame from the release on, inside the page so test latency skips none.
+  await dot.evaluate((element) => {
+    const samples: number[] = [];
+    const sample = () => {
+      const transform = getComputedStyle(element).transform;
+      samples.push(transform === "none" ? 1 : new DOMMatrixReadOnly(transform).a);
+      if (samples.length < 120) requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+    Object.assign(window, { __dotScales: samples });
+  });
+  await page.mouse.up();
+  await expect(yearly).toBeChecked();
   await expectSettled(yearly);
-  await expectSettled(page.locator("[data-slot=radio-group-indicator]"));
+  await expectSettled(dot);
+  // The new dot springs up from a smaller scale instead of appearing at full size.
+  const dotScales = await page.evaluate(() => (window as unknown as { __dotScales: number[] }).__dotScales);
+  expect(dotScales.some((scale) => scale > 0.45 && scale < 0.99)).toBe(true);
 });
 
 test("should shake the whole input group and textarea when they turn invalid", async ({
@@ -184,21 +204,33 @@ test("should keep long selects responsive and blur only the first options", asyn
 });
 
 test("should not jump a switch thumb that was hidden when the page loaded", async ({ page }) => {
-  const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
   await page.getByRole("button", { name: "Mostrar preferencia" }).click();
   const toggle = page.getByRole("switch", { name: "Avisos por correo" });
   await expect(toggle).toBeVisible();
   const thumb = page.locator("#catalog-switch [data-slot=switch-thumb]");
   const uncheckedLeft = (await thumb.boundingBox())!.x;
+  // Samples the thumb's left edge on every frame from the press on, inside the page so test latency skips none.
+  await thumb.evaluate((element) => {
+    const lefts: number[] = [];
+    const sample = () => {
+      lefts.push(element.getBoundingClientRect().left);
+      if (lefts.length < 120) requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+    Object.assign(window, { __thumbLefts: lefts });
+  });
   await toggle.click();
   await expect(toggle).toBeChecked();
-  // The glide starts where the thumb was, never from the track's left edge beyond it.
+  // Arc's thumb rests at the far end of the track: 18px of travel, held by its transform.
+  await expect.poll(async () => (await thumb.boundingBox())!.x - uncheckedLeft).toBeCloseTo(18, 0);
   await expect
-    .poll(() => motion.properties({ slot: "switch-thumb" }))
-    .toContain("transform");
-  await expect(thumb).toHaveCSS("transform", "none");
-  expect((await thumb.boundingBox())!.x).toBeGreaterThan(uncheckedLeft);
+    .poll(() => thumb.evaluate((element) => new DOMMatrixReadOnly(getComputedStyle(element).transform).e))
+    .toBeCloseTo(18, 0);
+  // The glide starts where the thumb was, never from the track's left edge beyond it, and travels over several frames.
+  const lefts = await page.evaluate(() => (window as unknown as { __thumbLefts: number[] }).__thumbLefts);
+  expect(Math.min(...lefts)).toBeGreaterThan(uncheckedLeft - 0.5);
+  expect(lefts.some((left) => left - uncheckedLeft > 1 && left - uncheckedLeft < 17)).toBe(true);
 });
 
 test("should glide the underline of line tabs and restore it", async ({ page }) => {

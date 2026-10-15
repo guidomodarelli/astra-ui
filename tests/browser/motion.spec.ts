@@ -152,34 +152,58 @@ test("should pop and draw the checkbox mark and blur it out when unchecked", asy
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  const motion = await recordMotion(page);
   await page.goto("/motion.html");
   const checkbox = page.getByRole("checkbox", { name: "Recibir novedades" });
-  const indicator = page.locator("[data-slot=checkbox-indicator]");
-  await expect(indicator).toHaveCSS("opacity", "0");
+  const mark = page.locator("[data-slot=checkbox-indicator] path");
+  // Arc's fill: the square behind the mark that springs in when the box is checked.
+  const fill = page.locator("[data-slot=checkbox-visual] > span");
+  /** Fraction of the mark's stroke drawn, from the first length of Motion's normalised dash pattern. */
+  const drawnLength = () => mark.evaluate((path) => Number.parseFloat(path.getAttribute("stroke-dasharray") ?? "0"));
+  /** Scale the fill renders with: `1` when it has no transform. */
+  const fillScale = () =>
+    fill.evaluate((element) => {
+      const transform = getComputedStyle(element).transform;
+      return transform === "none" ? 1 : new DOMMatrixReadOnly(transform).a;
+    });
+  await expect(mark).toHaveCSS("opacity", "0");
+  await expect(fill).toHaveCSS("opacity", "0");
+
+  // Samples the fill's scale on every frame from the check on, inside the page so test latency skips none.
+  await fill.evaluate((element) => {
+    const scales: number[] = [];
+    const sample = () => {
+      const transform = getComputedStyle(element).transform;
+      scales.push(transform === "none" ? 1 : new DOMMatrixReadOnly(transform).a);
+      if (scales.length < 120) requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+    Object.assign(window, { __fillScales: scales });
+  });
   await checkbox.check();
-  await expect(indicator).toHaveCSS("opacity", "1");
-  await expect
-    .poll(() => motion.properties({ slot: "checkbox-indicator" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform"]));
+  await expect(mark).toHaveCSS("opacity", "1");
+  await expect(fill).toHaveCSS("opacity", "1");
+  await expect.poll(drawnLength).toBeCloseTo(1, 2);
+  await expect.poll(fillScale).toBe(1);
+  // The fill pops up from a smaller square instead of appearing at full size.
+  const fillScales = await page.evaluate(() => (window as unknown as { __fillScales: number[] }).__fillScales);
+  expect(fillScales.some((scale) => scale > 0.65 && scale < 0.99)).toBe(true);
+
   await checkbox.uncheck();
   await expect(checkbox).not.toBeChecked();
-  await expect(indicator).toHaveCSS("opacity", "0");
-  await expect
-    .poll(() => motion.properties({ slot: "checkbox-indicator" }))
-    .toContain("filter");
-  await expect(indicator).toHaveCSS("opacity", "0");
+  await expect(mark).toHaveCSS("opacity", "0");
+  await expect(fill).toHaveCSS("opacity", "0");
+  await expect.poll(drawnLength).toBeCloseTo(0, 2);
 
-  // Re-checking after the blurred exit, and toggling faster than the stroke draws, must still
-  // settle on a sharp, fully drawn mark.
+  // Re-checking after the exit, and toggling faster than the stroke draws, must still
+  // settle on a fully drawn mark over a full fill.
   await checkbox.check();
   await checkbox.click();
   await checkbox.click();
   await expect(checkbox).toBeChecked();
-  await expect(indicator).toHaveCSS("opacity", "1");
-  await expect(indicator).toHaveCSS("filter", "none");
-  await expect(indicator).toHaveCSS("transform", "none");
-  await expect(indicator.locator("path")).toHaveCSS("stroke-dasharray", "none");
+  await expect(mark).toHaveCSS("opacity", "1");
+  await expect(fill).toHaveCSS("opacity", "1");
+  await expect.poll(drawnLength).toBeCloseTo(1, 2);
+  await expect.poll(fillScale).toBe(1);
 });
 
 test("should spring the switch thumb, blur in tooltips and shake invalid fields", async ({
@@ -189,18 +213,34 @@ test("should spring the switch thumb, blur in tooltips and shake invalid fields"
   const motion = await recordMotion(page);
   await page.goto("/motion.html");
   const toggle = page.getByRole("switch", { name: "Modo compacto" });
+  const thumb = page.locator("[data-slot=switch-thumb]");
+  const uncheckedLeft = (await thumb.boundingBox())!.x;
+  // Samples the thumb's left edge on every frame from the press on, inside the page so test latency skips none.
+  await thumb.evaluate((element) => {
+    const lefts: number[] = [];
+    const sample = () => {
+      lefts.push(element.getBoundingClientRect().left);
+      if (lefts.length < 120) requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+    Object.assign(window, { __thumbLefts: lefts });
+  });
   await toggle.click();
   await expect(toggle).toBeChecked();
+  // Arc's thumb springs to the far end of the track and rests there: 18px of travel, held by its transform.
   await expect
-    .poll(() => motion.properties({ slot: "switch-thumb" }))
-    .toContain("transform");
-  await expect(page.locator("[data-slot=switch-thumb]")).toHaveCSS("transform", "none");
+    .poll(() => thumb.evaluate((element) => new DOMMatrixReadOnly(getComputedStyle(element).transform).e))
+    .toBeCloseTo(18, 0);
+  const lefts = await page.evaluate(() => (window as unknown as { __thumbLefts: number[] }).__thumbLefts);
+  expect(lefts.some((left) => left - uncheckedLeft > 1 && left - uncheckedLeft < 17)).toBe(true);
 
+  // Arc's tooltip enters with transform and opacity only, without a blur.
   await page.getByRole("button", { name: "Ayuda" }).focus();
   await expect(page.getByRole("tooltip")).toHaveText("Explicación breve");
   await expect
     .poll(() => motion.properties({ slot: "tooltip-content" }))
-    .toEqual(expect.arrayContaining(["filter", "transform", "opacity"]));
+    .toEqual(expect.arrayContaining(["transform", "opacity"]));
+  expect(await motion.properties({ slot: "tooltip-content" })).not.toContain("filter");
 
   await page.getByRole("button", { name: "Validar correo" }).click();
   const email = page.getByRole("textbox", { name: "Correo" });
