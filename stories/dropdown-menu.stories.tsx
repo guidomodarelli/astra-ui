@@ -12,7 +12,9 @@ import {
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
+  DropdownMenuShortcut,
 } from "beez-ui";
+import { PencilIcon, Trash2Icon } from "lucide-react";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */
@@ -71,7 +73,9 @@ const meta = {
               <DropdownMenuContent align={args.align}>
                 <DropdownMenuLabel>Registro</DropdownMenuLabel>
                 <DropdownMenuItem disabled={args.disabled}>
+                  <PencilIcon aria-hidden="true" />
                   Editar datos
+                  <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
                 </DropdownMenuItem>
                 <DropdownMenuCheckboxItem
                   checked={checked}
@@ -90,6 +94,7 @@ const meta = {
                 <DropdownMenuItem
                   variant={args.destructive ? "destructive" : "default"}
                 >
+                  <Trash2Icon aria-hidden="true" />
                   Eliminar registro
                 </DropdownMenuItem>
               </DropdownMenuContent>
