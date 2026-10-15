@@ -144,22 +144,28 @@ const tabsListVariants = cva(
 )
 
 /**
- * Scrolls a horizontally overflowing list just enough to show the trigger, never the page around it.
+ * Scrolls a horizontally overflowing list just enough to show the trigger, never the page around it. The target is an
+ * absolute offset, so a second call while a smooth scroll is still running (focus and selection both reveal the
+ * trigger on the same key press) aims at the same place instead of adding its delta to a moving position.
  * @param list - The scrolling tab list.
  * @param trigger - The trigger to reveal.
  * @param reduceMotion - True jumps instead of scrolling smoothly.
  */
 function revealTrigger(list: HTMLElement, trigger: HTMLElement | null, reduceMotion: boolean) {
-  if (!trigger || list.scrollWidth <= list.clientWidth || typeof list.scrollBy !== "function") return
+  if (!trigger || list.scrollWidth <= list.clientWidth || typeof list.scrollTo !== "function") return
   const frame = list.getBoundingClientRect()
   const item = trigger.getBoundingClientRect()
-  const delta =
-    item.left < frame.left + TABS_REVEAL_MARGIN_PX
-      ? item.left - frame.left - TABS_REVEAL_MARGIN_PX
-      : item.right > frame.right - TABS_REVEAL_MARGIN_PX
-        ? item.right - frame.right + TABS_REVEAL_MARGIN_PX
-        : 0
-  if (delta) list.scrollBy({ left: delta, behavior: reduceMotion ? "instant" : "smooth" })
+  const itemStart = item.left - frame.left + list.scrollLeft
+  const itemEnd = itemStart + item.width
+  const visibleStart = list.scrollLeft
+  const visibleEnd = visibleStart + list.clientWidth
+  const target =
+    itemStart < visibleStart + TABS_REVEAL_MARGIN_PX
+      ? itemStart - TABS_REVEAL_MARGIN_PX
+      : itemEnd > visibleEnd - TABS_REVEAL_MARGIN_PX
+        ? itemEnd - list.clientWidth + TABS_REVEAL_MARGIN_PX
+        : visibleStart
+  if (target !== visibleStart) list.scrollTo({ left: target, behavior: reduceMotion ? "instant" : "smooth" })
 }
 
 /**
