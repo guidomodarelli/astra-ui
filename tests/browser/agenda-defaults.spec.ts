@@ -4,12 +4,14 @@ import { expect, test } from "@playwright/test";
 test.beforeEach(async ({ page }) => { await page.goto("/agenda-defaults.html"); });
 
 test("should retain compact controls and disabled textarea feedback", async ({ page }) => {
-  await expect(page.getByRole("combobox", { name: "Frecuencia" })).toHaveCSS("height", "32px");
+  // Arc sizes the select trigger like Input and Button: the medium control height (44px).
+  await expect(page.getByRole("combobox", { name: "Frecuencia" })).toHaveCSS("height", "44px");
   await page.getByRole("combobox", { name: "Frecuencia" }).click();
   await expect(page.getByRole("listbox")).toHaveCSS("min-width", "192px");
   await page.getByRole("option", { name: "Semanal" }).click();
   await expect(page.getByRole("combobox", { name: "Frecuencia" })).toHaveText("Semanal");
-  await expect(page.getByRole("tablist")).toHaveCSS("height", "32px");
+  // Arc segmented track: 36px triggers inside a 4px padding and a 1px border.
+  await expect(page.getByRole("tablist")).toHaveCSS("height", "46px");
   await page.getByRole("tab", { name: "Segunda" }).click();
   await expect(page.getByRole("tabpanel")).toHaveText("Segundo contenido");
   const disabled = page.getByRole("textbox", { name: "Mensaje deshabilitado" });
@@ -17,12 +19,17 @@ test("should retain compact controls and disabled textarea feedback", async ({ p
   const editableBackground = await page.getByRole("textbox", { name: "Mensaje editable" }).evaluate(element => getComputedStyle(element).backgroundColor);
   await expect(disabled).not.toHaveCSS("background-color", editableBackground);
   await page.getByRole("button", { name: "Abrir detalle" }).click();
-  await expect(page.getByRole("dialog", { name: "Detalle" })).toHaveCSS("padding", "10px");
+  // Arc popover panel padding (--space-4).
+  await expect(page.getByRole("dialog", { name: "Detalle" })).toHaveCSS("padding", "16px");
 });
 
 test("should render compact action menus and readable submenus", async ({ page }) => {
   await page.getByRole("button", { name: "Abrir acciones" }).click();
-  await expect(page.getByRole("menuitem", { name: "Editar", exact: true })).toHaveCSS("padding-top", "4px");
+  // Arc menu rows are 36px tall with the text 11px from the edge, instead of padding-driven compact rows.
+  const editItem = page.getByRole("menuitem", { name: "Editar", exact: true });
+  await expect(editItem).toHaveCSS("min-height", "36px");
+  await expect(editItem).toHaveCSS("padding-left", "11px");
+  expect(await editItem.evaluate(element => (element as HTMLElement).offsetHeight)).toBe(36);
   await page.getByRole("menuitem", { name: "Carpetas" }).click();
   await expect(page.getByRole("menuitem", { name: "Archivo" })).toBeVisible();
   await expect(page.locator('[data-slot="dropdown-menu-sub-content"]')).toHaveCSS("min-width", "192px");
