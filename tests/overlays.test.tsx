@@ -18,15 +18,6 @@ import {
   TooltipTrigger,
 } from "beez-ui";
 
-/** Emulates a user who prefers reduced motion, through the matchMedia shim of the test setup. */
-function preferReducedMotion() {
-  const nativeMatchMedia = window.matchMedia;
-  return vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
-    ...nativeMatchMedia(query),
-    matches: query.includes("prefers-reduced-motion"),
-  }));
-}
-
 describe("Tooltip", () => {
   it("should open on keyboard focus without a TooltipProvider around it", async () => {
     const user = userEvent.setup();
@@ -116,26 +107,6 @@ describe("Popover", () => {
     await act(() => new Promise((resolve) => setTimeout(resolve, 400)));
     expect(screen.getByText("Contenido del detalle")).toBeInTheDocument();
     expect(screen.getByText("Contenido del detalle")).toHaveAttribute("data-state", "open");
-  });
-
-  it("should leave no inline transform or opacity behind when motion is reduced", async () => {
-    const reducedMotion = preferReducedMotion();
-    const user = userEvent.setup();
-    render(
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button>Opciones</Button>
-        </PopoverTrigger>
-        <PopoverContent>Opciones de vista</PopoverContent>
-      </Popover>,
-    );
-    await user.click(screen.getByRole("button", { name: "Opciones" }));
-    const panel = screen.getByText("Opciones de vista");
-    await waitFor(() => {
-      expect(panel.style.transform).toBe("");
-      expect(panel.style.opacity).toBe("");
-    });
-    reducedMotion.mockRestore();
   });
 });
 

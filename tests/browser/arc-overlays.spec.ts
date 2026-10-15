@@ -76,7 +76,12 @@ test("should open the popover in place when motion is reduced", async ({ page })
     expect(sample.translateY).toBe(0);
     expect(sample.scale).toBe(1);
   });
-  await expectSettled(page.getByRole("dialog", { name: "Filtros" }));
+  const panel = page.getByRole("dialog", { name: "Filtros" });
+  await expectSettled(panel);
+  // The fade gives the panel's inline styles back once it settles.
+  await expect
+    .poll(() => panel.evaluate((element) => [element.style.transform, element.style.opacity]))
+    .toEqual(["", ""]);
 });
 
 test("should wait before the first tooltip and open the next one at once, only fading", async ({ page }) => {
