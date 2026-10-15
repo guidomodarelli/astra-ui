@@ -190,7 +190,8 @@ function ActionButton({
       <Button
         {...props}
         data-slot="action-button"
-        data-state={state}
+        // Not `data-state`: the press feedback and the button recipe read it as a popup trigger and skip the scale.
+        data-action-state={state}
         aria-label={label}
         aria-busy={isPending || undefined}
         aria-disabled={isPending || props["aria-disabled"] || undefined}

@@ -31,14 +31,14 @@ describe("ActionButton", () => {
     const action = createControlledAction();
     render(<ActionButton label="Publicar" pendingLabel="Publicando" successLabel="Publicado" onAction={action.onAction} />);
     const button = screen.getByRole("button", { name: "Publicar" });
-    expect(button).toHaveAttribute("data-state", "idle");
+    expect(button).toHaveAttribute("data-action-state", "idle");
     expect(screen.getByRole("status")).toHaveTextContent("");
 
     // Act
     await user.click(button);
 
     // Assert
-    expect(button).toHaveAttribute("data-state", "pending");
+    expect(button).toHaveAttribute("data-action-state", "pending");
     expect(button).toHaveAttribute("aria-busy", "true");
     expect(button).toHaveAttribute("aria-disabled", "true");
     expect(button).not.toBeDisabled();
@@ -46,7 +46,7 @@ describe("ActionButton", () => {
     expect(screen.getByRole("button", { name: "Publicar" })).toBe(button);
 
     action.resolve();
-    await waitFor(() => expect(button).toHaveAttribute("data-state", "success"));
+    await waitFor(() => expect(button).toHaveAttribute("data-action-state", "success"));
     expect(screen.getByRole("status")).toHaveTextContent("Publicado");
     expect(button).not.toHaveAttribute("aria-busy");
   });
@@ -61,9 +61,9 @@ describe("ActionButton", () => {
     await user.click(button);
 
     // Assert
-    await waitFor(() => expect(button).toHaveAttribute("data-state", "success"));
+    await waitFor(() => expect(button).toHaveAttribute("data-action-state", "success"));
     expect(screen.getByRole("status")).toHaveTextContent("Guardado");
-    await waitFor(() => expect(button).toHaveAttribute("data-state", "idle"));
+    await waitFor(() => expect(button).toHaveAttribute("data-action-state", "idle"));
     expect(screen.getByRole("status")).toHaveTextContent("");
   });
 
@@ -75,11 +75,11 @@ describe("ActionButton", () => {
 
     // Act
     await user.click(button);
-    await waitFor(() => expect(button).toHaveAttribute("data-state", "success"));
+    await waitFor(() => expect(button).toHaveAttribute("data-action-state", "success"));
     await new Promise((resolve) => setTimeout(resolve, SHORT_RESET_MS * 2));
 
     // Assert
-    expect(button).toHaveAttribute("data-state", "success");
+    expect(button).toHaveAttribute("data-action-state", "success");
   });
 
   it("should ignore presses while the action is still running", async () => {
@@ -97,7 +97,7 @@ describe("ActionButton", () => {
     // Assert
     expect(action.onAction).toHaveBeenCalledTimes(1);
     action.resolve();
-    await waitFor(() => expect(button).toHaveAttribute("data-state", "success"));
+    await waitFor(() => expect(button).toHaveAttribute("data-action-state", "success"));
   });
 
   it("should return to idle and hand the error to onActionError when the action fails", async () => {
@@ -114,7 +114,7 @@ describe("ActionButton", () => {
     action.reject(failure);
 
     // Assert
-    await waitFor(() => expect(button).toHaveAttribute("data-state", "idle"));
+    await waitFor(() => expect(button).toHaveAttribute("data-action-state", "idle"));
     expect(onActionError).toHaveBeenCalledWith(failure);
     expect(screen.getByRole("status")).toHaveTextContent("");
   });
@@ -128,12 +128,12 @@ describe("ActionButton", () => {
 
     // Act
     await user.click(button);
-    await waitFor(() => expect(button).toHaveAttribute("data-state", "idle"));
+    await waitFor(() => expect(button).toHaveAttribute("data-action-state", "idle"));
     button.focus();
     await user.keyboard("{Enter}");
 
     // Assert
-    await waitFor(() => expect(button).toHaveAttribute("data-state", "success"));
+    await waitFor(() => expect(button).toHaveAttribute("data-action-state", "success"));
     expect(onAction).toHaveBeenCalledTimes(2);
   });
 

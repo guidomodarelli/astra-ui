@@ -3,7 +3,7 @@
 /** Phases an action goes through: ready to run, running, and finished successfully. */
 export type ActionButtonState = "idle" | "pending" | "success"
 
-/** Value of each phase, exposed on the button as `data-state`. */
+/** Value of each phase, exposed on the button as `data-action-state`, apart from `data-state`, which marks popup triggers that never press. */
 export const ACTION_BUTTON_STATE = {
   idle: "idle",
   pending: "pending",
