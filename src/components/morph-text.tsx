@@ -28,6 +28,20 @@ const reducedExit: TargetAndTransition = { opacity: 0, transition: reducedTransi
 /** One letter of the label; kept letters keep their id so they glide instead of being replaced. */
 type Glyph = { id: string; character: string; order: number }
 
+/** Grapheme segmenter created once; absent on runtimes without `Intl.Segmenter`. */
+const graphemeSegmenter = typeof Intl.Segmenter === "function" ? new Intl.Segmenter(undefined, { granularity: "grapheme" }) : undefined
+
+/**
+ * Splits text into user-perceived characters, so emoji sequences, flags and combining accents stay in one glyph.
+ * Falls back to code points when `Intl.Segmenter` is unavailable.
+ * @param text - Text to split.
+ * @returns Graphemes in reading order.
+ */
+function splitGraphemes(text: string): string[] {
+  if (!graphemeSegmenter) return [...text]
+  return Array.from(graphemeSegmenter.segment(text), (segment) => segment.segment)
+}
+
 /**
  * Turns characters into glyphs of one generation.
  * @param characters - Characters to wrap.
@@ -45,11 +59,11 @@ function toGlyphs(characters: string[], generation: number): Glyph[] {
  * @returns Glyphs of the label.
  */
 function useGlyphs(text: string): Glyph[] {
-  const [glyphState, setGlyphState] = useState(() => ({ text, generation: 0, glyphs: toGlyphs([...text], 0) }))
+  const [glyphState, setGlyphState] = useState(() => ({ text, generation: 0, glyphs: toGlyphs(splitGraphemes(text), 0) }))
   if (glyphState.text === text) return glyphState.glyphs
 
-  const previous = [...glyphState.text]
-  const next = [...text]
+  const previous = splitGraphemes(glyphState.text)
+  const next = splitGraphemes(text)
   let sharedStart = 0
   let sharedEnd = 0
   while (sharedStart < previous.length && sharedStart < next.length && previous[sharedStart] === next[sharedStart]) {

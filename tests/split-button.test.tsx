@@ -65,6 +65,29 @@ describe("SplitButton", () => {
     expect(screen.getByRole("group")).toHaveTextContent("Copiado");
   });
 
+  it("should keep emoji sequences, flags and combining accents whole in a single letter across label changes", () => {
+    // Arrange
+    const family = "👨‍👩‍👧‍👦";
+    const flag = "🇦🇷";
+    const decomposedAccent = "é";
+    const getGlyphTexts = (container: HTMLElement) =>
+      Array.from(container.querySelectorAll('[data-slot="split-button-label"] span.inline-block'), (glyph) => glyph.textContent);
+    const { container, rerender } = render(<SplitButton label={`Hola ${family} ${flag} caf${decomposedAccent}`} actions={[]} />);
+    const initialGlyphs = getGlyphTexts(container);
+
+    // Act
+    rerender(<SplitButton label={`Chau ${family} ${flag} caf${decomposedAccent}`} actions={[]} />);
+    const nextGlyphs = getGlyphTexts(container);
+
+    // Assert
+    for (const glyphs of [initialGlyphs, nextGlyphs]) {
+      expect(glyphs).toEqual(expect.arrayContaining([family, flag, decomposedAccent]));
+      for (const fragment of ["‍", "🇦", "́"]) {
+        expect(glyphs).not.toContain(fragment);
+      }
+    }
+  });
+
   it("should disable both halves and use the compact size for the secondary variant", () => {
     // Arrange
     const onClick = vi.fn();
