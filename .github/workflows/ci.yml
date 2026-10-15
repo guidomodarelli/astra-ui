@@ -26,3 +26,5 @@ jobs:
       - run: pnpm check
       - run: pnpm exec playwright install --with-deps chromium webkit
       - run: pnpm exec playwright test
+      # Builds the Storybook catalog and runs its Playwright suite, so broken stories or controls fail CI too.
+      - run: pnpm test:storybook
