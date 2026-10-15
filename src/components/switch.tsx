@@ -9,7 +9,8 @@
 import { useEffect, useRef, useState } from "react"
 import type { ComponentProps } from "react"
 import { Switch as SwitchPrimitive } from "radix-ui"
-import { animate, motion, useMotionValue } from "motion/react"
+import { animate, frameData, motion, useMotionValue } from "motion/react"
+import type { MotionValue, Transition } from "motion/react"
 
 import {
   SWITCH_CHANGE_STRETCH,
@@ -47,6 +48,27 @@ const trackClassName =
 const thumbClassName =
   "pointer-events-none block flex-none rounded-(--radius-pill) bg-(--control-thumb) shadow-(--control-thumb-shadow) will-change-transform transition-[background-color] duration-(--duration-standard) ease-(--ease-standard) group-data-[state=checked]/switch:bg-(--control-thumb-on) group-data-[size=default]/switch:h-[18px] group-data-[size=sm]/switch:h-[14px] motion-reduce:transition-none"
 
+/** The thumb values last written to the screen, which an interrupted glide continues from. */
+type PaintedThumb = { x: number; width: number; scaleX: number }
+
+/**
+ * Springs a thumb value to its target from where it was last painted, carrying its velocity. Motion samples a stopped
+ * animation at the current time, ahead of the last painted frame, and renders that sample right after the commit, so
+ * a reversed glide would otherwise jump by up to a frame of travel, more when frames run long.
+ * @param value - The motion value to animate.
+ * @param paintedValue - The value last written to the screen.
+ * @param target - Where the value should settle.
+ * @param transition - Spring to travel on.
+ * @returns The running animation, or `undefined` when the value already rests on its target.
+ */
+function glideFromPainted(value: MotionValue<number>, paintedValue: number, target: number, transition: Transition) {
+  if (!value.isAnimating() && value.get() === target) return undefined
+  const velocity = value.getVelocity()
+  // Puts the sampled value back on the painted one before Motion's post-commit render can write the sample.
+  value.jump(paintedValue)
+  return animate(value, [paintedValue, target], { ...transition, velocity })
+}
+
 /**
  * A binary setting that applies at once, controlled or uncontrolled like Radix's switch.
  * @param switchProps - Every Radix switch prop, including `ref`, plus the Arc `size` and `label`.
@@ -74,10 +96,41 @@ function Switch({
   const [uncontrolledChecked, setUncontrolledChecked] = useState(defaultChecked ?? false)
   const [isPressed, setIsPressed] = useState(false)
   const isChecked = checked ?? uncontrolledChecked
+  const geometry = SWITCH_THUMB_GEOMETRY_PX[size]
+  const stretch = isPressed && !reduceMotion && !disabled ? SWITCH_PRESS_STRETCH_PX[size] : 0
+  const targetX = isChecked ? geometry.travel - stretch : 0
+  const targetWidth = geometry.size + stretch
+  const x = useMotionValue(targetX)
+  const width = useMotionValue(targetWidth)
   const scaleX = useMotionValue(1)
+  const painted = useRef<PaintedThumb>({ x: targetX, width: targetWidth, scaleX: 1 })
   const shownChecked = useRef(isChecked)
   // A pointer or Space press already stretched the thumb, so its release should not add a second stretch on top.
   const releasedAt = useRef(-Infinity)
+
+  useEffect(() => {
+    const trackPainted = (key: keyof PaintedThumb) => (value: number) => {
+      // Values set inside a frame are the ones written to the screen; a stopped animation samples ahead of them.
+      if (frameData.isProcessing) painted.current[key] = value
+    }
+    const unsubscribes = [x.on("change", trackPainted("x")), width.on("change", trackPainted("width")), scaleX.on("change", trackPainted("scaleX"))]
+    return () => unsubscribes.forEach((unsubscribe) => unsubscribe())
+  }, [x, width, scaleX])
+
+  useEffect(() => {
+    if (reduceMotion) {
+      x.jump(targetX)
+      width.jump(targetWidth)
+      painted.current = { ...painted.current, x: targetX, width: targetWidth }
+      return
+    }
+    const xControls = glideFromPainted(x, painted.current.x, targetX, SWITCH_THUMB_GLIDE_SPRING)
+    const widthControls = glideFromPainted(width, painted.current.width, targetWidth, ARC_SPRING_SNAPPY)
+    return () => {
+      xControls?.stop()
+      widthControls?.stop()
+    }
+  }, [targetX, targetWidth, reduceMotion, x, width])
 
   useEffect(() => {
     if (shownChecked.current === isChecked) return
@@ -87,12 +140,11 @@ function Switch({
     const { scaleX: keyframes, ...transition } = SWITCH_CHANGE_STRETCH
     // Starts from the scale on screen, so a change that interrupts a stretch continues it instead of snapping back.
     const [, peakScale, restingScale] = keyframes
-    const controls = animate(scaleX, [scaleX.get(), peakScale, restingScale], { ...transition, times: [...transition.times], ease: [...transition.ease] })
+    scaleX.jump(painted.current.scaleX)
+    const controls = animate(scaleX, [painted.current.scaleX, peakScale, restingScale], { ...transition, times: [...transition.times], ease: [...transition.ease] })
     return () => controls.stop()
   }, [isChecked, reduceMotion, scaleX])
 
-  const geometry = SWITCH_THUMB_GEOMETRY_PX[size]
-  const stretch = isPressed && !reduceMotion && !disabled ? SWITCH_PRESS_STRETCH_PX[size] : 0
   const release = () => {
     if (isPressed && !disabled) releasedAt.current = performance.now()
     setIsPressed(false)
@@ -147,10 +199,7 @@ function Switch({
           <motion.span
             data-slot="switch-thumb"
             className={thumbClassName}
-            style={{ scaleX }}
-            initial={false}
-            animate={{ x: isChecked ? geometry.travel - stretch : 0, width: geometry.size + stretch }}
-            transition={reduceMotion ? { duration: 0 } : { x: SWITCH_THUMB_GLIDE_SPRING, width: ARC_SPRING_SNAPPY }}
+            style={{ x, width, scaleX }}
           />
         </SwitchPrimitive.Thumb>
       </span>

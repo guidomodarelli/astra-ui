@@ -174,6 +174,8 @@ test("should pop and draw the checkbox mark and blur it out when unchecked", asy
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/motion.html");
   const checkbox = page.getByRole("checkbox", { name: "Recibir novedades" });
+  // A loaded machine can take longer than an assertion's default wait to mount the page.
+  await expect(checkbox).toBeVisible({ timeout: 15_000 });
   const mark = page.locator("[data-slot=checkbox-indicator] path");
   // Arc's fill: the square behind the mark that springs in when the box is checked.
   const fill = page.locator("[data-slot=checkbox-visual] > span");
@@ -188,25 +190,25 @@ test("should pop and draw the checkbox mark and blur it out when unchecked", asy
   await expect(mark).toHaveCSS("opacity", "0");
   await expect(fill).toHaveCSS("opacity", "0");
 
-  // Samples the fill's scale on every frame from the check on, inside the page so test latency skips none.
+  // Reads the fill's scale at the very moment the box reports the new state, before any frame can advance it.
   await fill.evaluate((element) => {
-    const scales: number[] = [];
-    const sample = () => {
+    const box = element.closest("[data-slot=checkbox]")!;
+    const observer = new MutationObserver(() => {
+      if (box.getAttribute("data-state") !== "checked") return;
       const transform = getComputedStyle(element).transform;
-      scales.push(transform === "none" ? 1 : new DOMMatrixReadOnly(transform).a);
-      if (scales.length < 120) requestAnimationFrame(sample);
-    };
-    requestAnimationFrame(sample);
-    Object.assign(window, { __fillScales: scales });
+      Object.assign(window, { __fillScaleOnCheck: transform === "none" ? 1 : new DOMMatrixReadOnly(transform).a });
+      observer.disconnect();
+    });
+    observer.observe(box, { attributes: true, attributeFilter: ["data-state"] });
   });
   await checkbox.check();
   await expect(mark).toHaveCSS("opacity", "1");
   await expect(fill).toHaveCSS("opacity", "1");
   await expect.poll(drawnLength).toBeCloseTo(1, 2);
   await expect.poll(fillScale).toBe(1);
-  // The fill pops up from a smaller square instead of appearing at full size.
-  const fillScales = await page.evaluate(() => (window as unknown as { __fillScales: number[] }).__fillScales);
-  expect(fillScales.some((scale) => scale > 0.65 && scale < 0.99)).toBe(true);
+  // The fill pops up from its smaller hidden square to full size instead of appearing at full size.
+  const fillScaleOnCheck = await page.evaluate(() => (window as unknown as { __fillScaleOnCheck: number }).__fillScaleOnCheck);
+  expect(fillScaleOnCheck).toBeCloseTo(0.6, 2);
 
   await checkbox.uncheck();
   await expect(checkbox).not.toBeChecked();
@@ -234,16 +236,22 @@ test("should spring the switch thumb, blur in tooltips and shake invalid fields"
   await page.goto("/motion.html");
   const toggle = page.getByRole("switch", { name: "Modo compacto" });
   const thumb = page.locator("[data-slot=switch-thumb]");
-  const uncheckedLeft = (await thumb.boundingBox())!.x;
-  // Samples the thumb's left edge on every frame from the press on, inside the page so test latency skips none.
+  // Positions are read against the track, so a page that still shifts around the switch cannot skew them.
+  const offsetInTrack = () =>
+    thumb.evaluate((element) => {
+      const track = element.closest("[data-slot=switch-track]")!;
+      return element.getBoundingClientRect().left - track.getBoundingClientRect().left;
+    });
+  const uncheckedOffset = await offsetInTrack();
+  // Reads the thumb's offset at the very moment the switch reports the new state, before any frame can advance it.
   await thumb.evaluate((element) => {
-    const lefts: number[] = [];
-    const sample = () => {
-      lefts.push(element.getBoundingClientRect().left);
-      if (lefts.length < 120) requestAnimationFrame(sample);
-    };
-    requestAnimationFrame(sample);
-    Object.assign(window, { __thumbLefts: lefts });
+    const track = element.closest("[data-slot=switch-track]")!;
+    const observer = new MutationObserver(() => {
+      if (element.getAttribute("data-state") !== "checked") return;
+      Object.assign(window, { __thumbOffsetOnCheck: element.getBoundingClientRect().left - track.getBoundingClientRect().left });
+      observer.disconnect();
+    });
+    observer.observe(element, { attributes: true, attributeFilter: ["data-state"] });
   });
   await toggle.click();
   await expect(toggle).toBeChecked();
@@ -251,8 +259,10 @@ test("should spring the switch thumb, blur in tooltips and shake invalid fields"
   await expect
     .poll(() => thumb.evaluate((element) => new DOMMatrixReadOnly(getComputedStyle(element).transform).e))
     .toBeCloseTo(18, 0);
-  const lefts = await page.evaluate(() => (window as unknown as { __thumbLefts: number[] }).__thumbLefts);
-  expect(lefts.some((left) => left - uncheckedLeft > 1 && left - uncheckedLeft < 17)).toBe(true);
+  await expect.poll(async () => (await offsetInTrack()) - uncheckedOffset).toBeCloseTo(18, 0);
+  // The thumb travels there from where it was instead of jumping to the end with the new state.
+  const offsetOnCheck = await page.evaluate(() => (window as unknown as { __thumbOffsetOnCheck: number }).__thumbOffsetOnCheck);
+  expect(offsetOnCheck).toBeCloseTo(uncheckedOffset, 0);
 
   // Arc's tooltip enters with transform and opacity only, without a blur.
   await page.getByRole("button", { name: "Ayuda" }).focus();

@@ -138,17 +138,23 @@ test("should draw the check and morph the indeterminate dash into it", async ({ 
 
 test("should glide one highlight to the chosen row and follow the arrow keys", async ({ page }) => {
   const highlight = page.locator("[data-slot=radio-group-highlight]");
-  const monthlyRow = page.locator("[data-slot=radio-group-option]", { hasText: "Mensual" });
-  const yearlyRow = page.locator("[data-slot=radio-group-option]", { hasText: "Anual" });
-  await expect.poll(async () => (await readBox(highlight)).y).toBeCloseTo((await readBox(monthlyRow)).y, 0);
+  const optionRow = (name: string) => page.locator("[data-slot=radio-group-option]", { hasText: name });
+  /**
+   * Reads how far the highlight sits from a row, both measured in the same call so layout shifts cannot skew them.
+   * @param name - Visible label of the row.
+   * @returns The vertical and height differences, in CSS pixels.
+   */
+  const distanceToRow = (name: string) =>
+    Promise.all([readBox(highlight), readBox(optionRow(name))]).then(([highlightBox, rowBox]) =>
+      Math.abs(highlightBox.y - rowBox.y) + Math.abs(highlightBox.height - rowBox.height),
+    );
+  await expect.poll(() => distanceToRow("Mensual")).toBeLessThan(PIXEL_TOLERANCE);
   expect(await readOpacity(highlight)).toBe(1);
 
   await page.getByText("Dos meses sin cargo.").click();
 
   await expect(page.getByRole("radio", { name: "Anual" })).toBeChecked();
-  const yearlyBox = await readBox(yearlyRow);
-  await expect.poll(async () => (await readBox(highlight)).y, { timeout: SETTLE_TIMEOUT_MS }).toBeCloseTo(yearlyBox.y, 0);
-  expect((await readBox(highlight)).height).toBeCloseTo(yearlyBox.height, 0);
+  await expect.poll(() => distanceToRow("Anual"), { timeout: SETTLE_TIMEOUT_MS }).toBeLessThan(PIXEL_TOLERANCE);
 
   // Radix checks the radio that roving focus lands on only while the arrow is still held, and moves focus on a timer, so
   // the key is held as long as a person would hold it instead of an instant synthetic press.
@@ -157,21 +163,22 @@ test("should glide one highlight to the chosen row and follow the arrow keys", a
   await page.keyboard.up("ArrowUp");
 
   await expect(page.getByRole("radio", { name: "Trimestral" })).toBeChecked();
-  const quarterlyBox = await readBox(page.locator("[data-slot=radio-group-option]", { hasText: "Trimestral" }));
-  await expect.poll(async () => (await readBox(highlight)).y, { timeout: SETTLE_TIMEOUT_MS }).toBeCloseTo(quarterlyBox.y, 0);
+  await expect.poll(() => distanceToRow("Trimestral"), { timeout: SETTLE_TIMEOUT_MS }).toBeLessThan(PIXEL_TOLERANCE);
 });
-
 test("should place every mark and the highlight at once when motion is reduced", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.reload();
   const highlight = page.locator("[data-slot=radio-group-highlight]");
-  const yearlyRow = page.locator("[data-slot=radio-group-option]", { hasText: "Anual" });
 
   await page.getByText("Dos meses sin cargo.").click();
   await page.getByText("Recibir novedades").click();
 
   // No spring runs: the very next frame already shows the final geometry.
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(resolve)));
-  expect((await readBox(highlight)).y).toBeCloseTo((await readBox(yearlyRow)).y, 0);
+  const highlightOffset = await highlight.evaluate((element) => {
+    const row = [...document.querySelectorAll("[data-slot=radio-group-option]")].find((option) => option.textContent?.includes("Anual"))!;
+    return element.getBoundingClientRect().top - row.getBoundingClientRect().top;
+  });
+  expect(highlightOffset).toBeCloseTo(0, 0);
   expect(await readOpacity(page.getByRole("checkbox", { name: "Recibir novedades" }).locator("[data-slot=checkbox-indicator] path"))).toBe(1);
 });
