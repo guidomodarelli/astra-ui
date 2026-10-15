@@ -112,6 +112,8 @@ test.describe("Arc dropdown menu", () => {
     await expect(page.getByRole("menuitem", { name: "Eliminar" })).toHaveCSS("opacity", "1", {
       timeout: SETTLE_TIMEOUT_MS,
     });
+    // The surface grows from a slightly smaller scale; measure once its entrance has settled.
+    await expect(menu).toHaveCSS("transform", "none", { timeout: SETTLE_TIMEOUT_MS });
 
     const bounds = (await menu.boundingBox())!;
     const viewportWidth = page.viewportSize()!.width;
@@ -158,11 +160,13 @@ test.describe("Arc select", () => {
   test("should open a popper list as wide as the trigger and mark the chosen option", async ({ page }) => {
     await page.goto("/arc-menus.html");
     const trigger = page.getByRole("combobox", { name: "Moneda" });
+    // Measured before opening: the open list hides the rest of the page from the accessibility tree.
+    const triggerBounds = (await trigger.boundingBox())!;
     await trigger.click();
     const listbox = page.getByRole("listbox");
     await expect(listbox).toBeVisible();
+    await expect(listbox).toHaveCSS("transform", "none", { timeout: SETTLE_TIMEOUT_MS });
 
-    const triggerBounds = (await trigger.boundingBox())!;
     const listBounds = (await listbox.boundingBox())!;
     expect(listBounds.width).toBeGreaterThanOrEqual(Math.min(triggerBounds.width, 192) - 1);
     await expect(page.getByRole("option", { name: "Pesos" })).toHaveAttribute("aria-selected", "true");
