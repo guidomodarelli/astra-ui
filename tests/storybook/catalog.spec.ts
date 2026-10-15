@@ -45,11 +45,11 @@ test("should apply args and keep form controls interactive", async ({
   page,
 }) => {
   await page.goto(
-    "/iframe.html?id=components-button--playground&viewMode=story&args=children:Eliminar;variant:destructive;disabled:true",
+    "/iframe.html?id=components-button--playground&viewMode=story&args=children:Eliminar;variant:danger;disabled:true",
   );
   const button = page.getByRole("button", { name: "Eliminar", exact: true });
   await expect(button).toBeDisabled();
-  await expect(button).toHaveAttribute("data-variant", "destructive");
+  await expect(button).toHaveAttribute("data-variant", "danger");
 
   await page.goto(
     "/iframe.html?id=components-input--playground&viewMode=story",
@@ -80,11 +80,11 @@ test("should update the canvas from the visible Controls panel", async ({
   ).toBeVisible();
   await page
     .getByRole("combobox", { name: "variant", exact: true })
-    .selectOption("destructive");
+    .selectOption("danger");
   await expect(
     canvas.getByRole("button", { name: "Guardar cambios", exact: true }),
-  ).toHaveAttribute("data-variant", "destructive");
-  await page.getByText("True", { exact: true }).click();
+  ).toHaveAttribute("data-variant", "danger");
+  await page.getByLabel("disabled").getByText("True", { exact: true }).click();
   await expect(
     canvas.getByRole("button", { name: "Guardar cambios", exact: true }),
   ).toBeDisabled();

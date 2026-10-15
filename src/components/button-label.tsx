@@ -4,32 +4,28 @@
  * Label morph and loading spinner adapted from Arc (https://uiarc.dev), Copyright (c) 2026 Elia Kuratli,
  * MIT License. The full license text ships in THIRD_PARTY_NOTICES.md. Internal to Button.
  */
-import { isValidElement, useEffect, useLayoutEffect, useRef } from "react"
-import type { ReactNode, Ref, RefObject } from "react"
-import { AnimatePresence, animate, motion, useIsPresent, useMotionValue } from "motion/react"
+import { isValidElement, useRef } from "react"
+import type { ReactNode, Ref } from "react"
+import { AnimatePresence, motion, useIsPresent } from "motion/react"
 import type { TargetAndTransition, Transition } from "motion/react"
 
-import { BUTTON_MORPH_WINDOW_MS } from "../constants/button.js"
 import { cn } from "../lib/utils.js"
-import { ARC_BLUR, ARC_DURATION, ARC_EASE, ARC_SPRING_MORPH, ARC_SPRING_SNAPPY } from "../motion/arc-tokens.js"
+import { ARC_BLUR, ARC_DURATION, ARC_EASE } from "../motion/arc-tokens.js"
+import {
+  ARC_ICON_ENTER as iconEnter,
+  ARC_ICON_EXIT as iconExit,
+  ARC_ICON_TRANSITION as iconTransition,
+  ARC_REDUCED_ENTER as reducedEnter,
+  ARC_REDUCED_EXIT as reducedExit,
+  ARC_REDUCED_TRANSITION as reducedTransition,
+  ARC_SWAP_EXIT_TRANSITION as exitTransition,
+  ARC_SWAP_REST as restState,
+} from "../motion/arc-swap.js"
+import { useMorphWidth } from "../motion/use-morph-width.js"
 
-const restState: TargetAndTransition = { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }
-/** Outgoing labels and icons leave faster than they enter. */
-const exitTransition: Transition = { duration: ARC_DURATION.fast, ease: [...ARC_EASE.standard] }
 /** Text rises out of a soft blur; the outgoing label lifts away a little faster. */
 const textEnter: TargetAndTransition = { opacity: 0, y: 4, filter: `blur(${ARC_BLUR.soft}px)` }
 const textExit: TargetAndTransition = { opacity: 0, y: -3, filter: `blur(${ARC_BLUR.soft}px)`, transition: exitTransition }
-const iconEnter: TargetAndTransition = { opacity: 0, scale: 0.6, filter: `blur(${ARC_BLUR.subtle}px)` }
-const iconExit: TargetAndTransition = { ...iconEnter, transition: exitTransition }
-const reducedTransition: Transition = { duration: ARC_DURATION.instant }
-const reducedEnter: TargetAndTransition = { ...restState, opacity: 0 }
-const reducedExit: TargetAndTransition = { opacity: 0, transition: reducedTransition }
-/** Scale rides the spring; opacity and blur tween so blur never overshoots below zero. */
-const iconTransition: Transition = {
-  ...ARC_SPRING_SNAPPY,
-  opacity: { duration: ARC_DURATION.fast, ease: [...ARC_EASE.enter] },
-  filter: { duration: ARC_DURATION.fast, ease: [...ARC_EASE.enter] },
-}
 const textTransition: Transition = { duration: ARC_DURATION.standard, ease: [...ARC_EASE.enter] }
 
 /** Matches markup tags inside a label key so icon-only labels can be detected. */
@@ -47,51 +43,6 @@ function getLabelKey(node: ReactNode): string {
   const elementName =
     typeof elementType === "string" ? elementType : (elementType?.displayName ?? elementType?.name ?? "")
   return `<${elementName}>${getLabelKey((node.props as { children?: ReactNode }).children)}`
-}
-
-/**
- * Springs the label slot to the natural width of an incoming label, so a new label never snaps the
- * button's size. Other resizes jump straight to the new width.
- */
-function useMorphWidth(contentRef: RefObject<HTMLElement | null>, labelKey: string, reduceMotion: boolean) {
-  const width = useMotionValue<number | "auto">("auto")
-  const lastLabelKey = useRef(labelKey)
-  const morphDeadline = useRef(0)
-
-  useLayoutEffect(() => {
-    if (lastLabelKey.current === labelKey) return
-    lastLabelKey.current = labelKey
-    morphDeadline.current = performance.now() + BUTTON_MORPH_WINDOW_MS
-  }, [labelKey])
-
-  useEffect(() => {
-    const content = contentRef.current
-    const slot = content?.parentElement
-    if (!content || !slot || typeof ResizeObserver === "undefined") return
-    let hasMeasured = false
-    const observer = new ResizeObserver(([entry]) => {
-      if (!entry) return
-      const nextWidth = entry.contentRect.width
-      const shouldJump = !nextWidth || !hasMeasured || reduceMotion || performance.now() > morphDeadline.current
-      if (shouldJump) {
-        hasMeasured = nextWidth > 0
-        width.jump(nextWidth || "auto")
-        delete slot.dataset.morphing
-        return
-      }
-      slot.dataset.morphing = ""
-      animate(width, nextWidth, {
-        ...ARC_SPRING_MORPH,
-        onComplete: () => {
-          delete slot.dataset.morphing
-        },
-      })
-    })
-    observer.observe(content)
-    return () => observer.disconnect()
-  }, [contentRef, reduceMotion, width])
-
-  return width
 }
 
 type LabelPhaseProps = {
