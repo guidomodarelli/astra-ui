@@ -13,7 +13,7 @@ import { Slot } from "radix-ui";
 import { animate, frame, usePresence, type AnimationOptions } from "motion/react";
 
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js";
-import { MOTION_ENTERING_ATTRIBUTE } from "../constants/motion.js";
+import { MILLISECONDS_PER_SECOND, MOTION_ENTERING_ATTRIBUTE } from "../constants/motion.js";
 import { ARC_DURATION, ARC_EASE } from "./arc-tokens.js";
 import { useAttachedElement } from "./use-attached-element.js";
 
@@ -47,6 +47,18 @@ const REST_POSE: ArcFloatingPose = { travel: 0, scale: 1, opacity: 1 };
 
 /** Reduced motion keeps the layer in place and only fades it, on Arc's instant timing. */
 const REDUCED_TWEEN: AnimationOptions = { duration: ARC_DURATION.instant, ease: [...ARC_EASE.standard] };
+
+/** Grace, in ms, past the planned exit before the layer is removed even if its playback never reports completion. */
+const EXIT_DEADLINE_GRACE_MS = 100;
+
+/**
+ * Reads how long a transition plays, in ms: a spring's `visualDuration` (which overrides `duration`) or a tween's `duration`.
+ * @param transition - Motion transition options.
+ * @returns The planned duration, or Arc's standard duration when the transition does not state one.
+ */
+function plannedDurationMs({ duration, visualDuration }: AnimationOptions): number {
+  return (visualDuration ?? duration ?? ARC_DURATION.standard) * MILLISECONDS_PER_SECOND;
+}
 
 /**
  * Builds the transform of a pose. Radix writes the placed side on `data-side`; the offset points toward the trigger,
@@ -152,10 +164,28 @@ export function ArcFloatingSlot({
         ? []
         : [animate(element, { transform: [from.transform, to.transform] }, transitions.transform)]),
     ];
+    /*
+     * Playback reports completion from Motion's frame loop, which runs on animation frames. When frames stop (a hidden
+     * tab, or a test whose fake clock swallowed the pending frame), a leaving layer would stay mounted forever, so
+     * its removal also has a deadline on a plain timer, shortly after the planned exit.
+     */
+    let removed = false;
+    const removeLeavingLayer = () => {
+      if (removed || !active) return;
+      removed = true;
+      safeToRemoveRef.current?.();
+    };
+    const exitDeadline = isPresent
+      ? undefined
+      : setTimeout(
+          removeLeavingLayer,
+          Math.max(plannedDurationMs(transitions.opacity), plannedDurationMs(transitions.transform)) +
+            EXIT_DEADLINE_GRACE_MS,
+        );
     void Promise.all(animations).then(() => {
       if (!active) return;
       if (!isPresent) {
-        safeToRemoveRef.current?.();
+        removeLeavingLayer();
         return;
       }
       // Motion commits the final keyframe inline; giving the caller's styles back leaves no compositing layer.
@@ -166,6 +196,7 @@ export function ArcFloatingSlot({
 
     return () => {
       active = false;
+      clearTimeout(exitDeadline);
       const computed = getComputedStyle(element);
       const isMidPlayback = element.hasAttribute(MOTION_ENTERING_ATTRIBUTE) || !isPresent;
       // A settled entrance needs no snapshot: the next playback starts from rest.

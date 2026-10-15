@@ -24,13 +24,11 @@ export interface OverlayWarmth {
 export function createOverlayWarmth(skipWindowMs: number): OverlayWarmth {
   let warm = false;
   let openCount = 0;
+  /** When the last layer closed, so the window also expires when its timer never runs (a frozen test clock). */
+  let closedAt = 0;
   let coolTimer: ReturnType<typeof setTimeout> | undefined;
   const listeners = new Set<() => void>();
-  const setWarm = (next: boolean) => {
-    if (warm === next) return;
-    warm = next;
-    listeners.forEach((listener) => listener());
-  };
+  const notify = () => listeners.forEach((listener) => listener());
   return {
     subscribe(listener) {
       listeners.add(listener);
@@ -38,12 +36,18 @@ export function createOverlayWarmth(skipWindowMs: number): OverlayWarmth {
         listeners.delete(listener);
       };
     },
-    isWarm: () => warm,
+    isWarm() {
+      if (warm && !openCount && Date.now() - closedAt >= skipWindowMs) warm = false;
+      return warm;
+    },
     isWarmOnServer: () => false,
     open() {
       openCount += 1;
       clearTimeout(coolTimer);
-      setWarm(true);
+      if (!warm) {
+        warm = true;
+        notify();
+      }
       let closed = false;
       return () => {
         if (closed) return;
@@ -51,7 +55,11 @@ export function createOverlayWarmth(skipWindowMs: number): OverlayWarmth {
         openCount = Math.max(0, openCount - 1);
         if (openCount) return;
         clearTimeout(coolTimer);
-        coolTimer = setTimeout(() => setWarm(false), skipWindowMs);
+        closedAt = Date.now();
+        coolTimer = setTimeout(() => {
+          warm = false;
+          notify();
+        }, skipWindowMs);
       };
     },
   };

@@ -1,5 +1,5 @@
 /** Exercises Arc's Tooltip, Popover and Hover Card through their public composition and Arc's additions. */
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
@@ -197,5 +197,63 @@ describe("HoverCard", () => {
     await user.tab();
     await waitFor(() => expect(screen.queryByText("Tarjeta de perfil")).not.toBeInTheDocument());
     expect(onOpenChange).toHaveBeenLastCalledWith(false);
+  });
+});
+
+/*
+ * A consumer test that opens a layer under a fake clock and ends without running it out leaves the animation frame
+ * jsdom had scheduled on that clock pending forever, so frames never run again in the file. Layers must still finish
+ * leaving and unmount in the next tests, which run on real timers.
+ */
+describe("overlays after a test that leaves a fake clock with a pending frame", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Milliseconds the fake-clock test advances: past the hover card's open delay, mid-entrance. */
+  const FAKE_CLOCK_ADVANCE_MS = 700;
+
+  function ProfileCard() {
+    return (
+      <HoverCard>
+        <HoverCardTrigger href="#perfil">Perfil público</HoverCardTrigger>
+        <HoverCardContent>Tarjeta de perfil</HoverCardContent>
+      </HoverCard>
+    );
+  }
+
+  it("should open the hover card under a fake clock and end the test with it open", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<ProfileCard />);
+    await user.hover(screen.getByText("Perfil público"));
+    await act(async () => {
+      vi.advanceTimersByTime(FAKE_CLOCK_ADVANCE_MS);
+    });
+    expect(screen.getByText("Tarjeta de perfil")).toBeInTheDocument();
+  });
+
+  it("should still remove the hover card and a popover once they close on real timers", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <ProfileCard />
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button>Ver filtros</Button>
+          </PopoverTrigger>
+          <PopoverContent>Filtros disponibles</PopoverContent>
+        </Popover>
+      </>,
+    );
+    await user.hover(screen.getByText("Perfil público"));
+    await screen.findByText("Tarjeta de perfil");
+    await user.unhover(screen.getByText("Perfil público"));
+    await waitFor(() => expect(screen.queryByText("Tarjeta de perfil")).toBeNull());
+
+    await user.click(screen.getByRole("button", { name: "Ver filtros" }));
+    await screen.findByText("Filtros disponibles");
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByText("Filtros disponibles")).toBeNull());
   });
 });
