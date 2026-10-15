@@ -33,16 +33,17 @@ type PanelFrame = { text: string; x: number; height: number };
  * Starts sampling, on every animation frame, the visible panel of the panel tabs. Sampling inside the page catches the
  * whole entrance even when the round trips of the test runner take longer than the spring itself.
  * @param page - Page that holds the tabs; a previous recording is discarded.
+ * @param testId - Test id of the tabs whose panel is sampled.
  */
-async function recordPanelFrames(page: Page): Promise<void> {
-  await page.evaluate(() => {
+async function recordPanelFrames(page: Page, testId = "panel-tabs"): Promise<void> {
+  await page.evaluate((tabsTestId) => {
     const recorder = window as unknown as { __panelFrames?: PanelFrame[]; __panelFrameId?: number };
     if (recorder.__panelFrameId !== undefined) cancelAnimationFrame(recorder.__panelFrameId);
     const frames: PanelFrame[] = [];
     recorder.__panelFrames = frames;
     const sample = () => {
       const panel = document.querySelector<HTMLElement>(
-        '[data-testid="panel-tabs"] [role="tabpanel"]:not([aria-hidden="true"])',
+        `[data-testid="${tabsTestId}"] [role="tabpanel"]:not([aria-hidden="true"])`,
       );
       if (panel)
         frames.push({
@@ -53,7 +54,7 @@ async function recordPanelFrames(page: Page): Promise<void> {
       recorder.__panelFrameId = requestAnimationFrame(sample);
     };
     recorder.__panelFrameId = requestAnimationFrame(sample);
-  });
+  }, testId);
 }
 
 /**
@@ -106,6 +107,31 @@ test.describe("with motion", () => {
       .toBe(0);
     const backward = (await readPanelFrames(page)).filter((frame) => frame.text.startsWith("Resumen"));
     expect(Math.min(...backward.map((frame) => frame.x))).toBeLessThan(0);
+  });
+
+  test("should slide the panel from the side of the new tab when the parent changes the value", async ({ page }) => {
+    await page.goto("/arc-navigation.html");
+    const tabs = page.getByTestId("controlled-tabs");
+    const settledOn = async (text: string) => {
+      await expect(tabs.getByRole("tabpanel")).toHaveText(text);
+      await expect
+        .poll(async () => (await samplePanel(tabs.getByRole("tabpanel"))).x, { timeout: SETTLE_TIMEOUT_MS })
+        .toBe(0);
+    };
+
+    await recordPanelFrames(page, "controlled-tabs");
+    await page.getByRole("button", { name: "Mostrar miembros" }).click();
+    await settledOn("Miembros controlados.");
+    const forward = (await readPanelFrames(page)).filter((frame) => frame.text.startsWith("Miembros"));
+    expect(Math.max(...forward.map((frame) => frame.x))).toBeGreaterThan(0);
+
+    // No trigger is involved, so only the change of the rendered value can tell the panel it travels backwards.
+    await recordPanelFrames(page, "controlled-tabs");
+    await page.getByRole("button", { name: "Mostrar resumen" }).click();
+    await settledOn("Resumen controlado.");
+    const backward = (await readPanelFrames(page)).filter((frame) => frame.text.startsWith("Resumen"));
+    expect(Math.min(...backward.map((frame) => frame.x))).toBeLessThan(0);
+    expect(Math.max(...backward.map((frame) => frame.x))).toBeLessThanOrEqual(0);
   });
 
   test("should glide the tab highlight and hand it back to the active tab", async ({ page }) => {

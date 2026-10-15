@@ -90,11 +90,39 @@ function StatefulPagination() {
   );
 }
 
+/** Tabs driven only by their parent's `value`, as a router or a reset would change them, never by a trigger. */
+function ControlledTabs() {
+  const [value, setValue] = useState<string>(SECTIONS[0]);
+  return (
+    <div>
+      <div className="controls">
+        <button type="button" onClick={() => setValue(SECTIONS[2])}>Mostrar miembros</button>
+        <button type="button" onClick={() => setValue(SECTIONS[0])}>Mostrar resumen</button>
+      </div>
+      <Tabs value={value} data-testid="controlled-tabs">
+        <TabsList aria-label="Secciones controladas">
+          {SECTIONS.map((section) => (
+            <TabsTrigger key={section} value={section}>
+              {section}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value="Resumen">Resumen controlado.</TabsContent>
+        <TabsContent value="Actividad">Actividad controlada.</TabsContent>
+        <TabsContent value="Miembros">Miembros controlados.</TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
 createRoot(document.getElementById("root")!).render(
   <BeezUIProvider>
     <main>
       <section>
         <PanelTabs />
+      </section>
+      <section>
+        <ControlledTabs />
       </section>
       <section>
         <OverflowTabs />

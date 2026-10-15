@@ -68,6 +68,53 @@ describe("Pagination", () => {
     expect(screen.getByRole("link", { name: "Ver más resultados" })).toHaveTextContent("Más");
   });
 
+  it("should never navigate from a disabled link, whether clicked or activated with Enter", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    const onNavigate = vi.fn();
+    const onClick = vi.fn();
+    /** Router link that, like the Next.js and TanStack ones, skips clicks a handler already prevented. */
+    function RouterLink({ href, onClick: handleClick, ...props }: BeezLinkProps) {
+      return (
+        <a
+          {...props}
+          href={href}
+          onClick={(event) => {
+            handleClick?.(event);
+            if (event.defaultPrevented) return;
+            event.preventDefault();
+            onNavigate(href);
+          }}
+        />
+      );
+    }
+    render(
+      <>
+        <PaginationNext component={RouterLink} href="/pagina/3" aria-disabled="true" onClick={onClick} />
+        <PaginationLink href="/pagina/9" aria-disabled onClick={onClick}>
+          9
+        </PaginationLink>
+      </>,
+    );
+    const nativeClicks: MouseEvent[] = [];
+    const listening = new AbortController();
+    document.addEventListener("click", (event) => nativeClicks.push(event), { signal: listening.signal });
+
+    // Act
+    screen.getByRole("link", { name: "Ir a la página siguiente" }).focus();
+    await user.keyboard("{Enter}");
+    await user.click(screen.getByRole("link", { name: "Ir a la página siguiente" }));
+    screen.getByRole("link", { name: "9" }).focus();
+    await user.keyboard("{Enter}");
+
+    // Assert
+    expect(onNavigate).not.toHaveBeenCalled();
+    expect(onClick).not.toHaveBeenCalled();
+    expect(nativeClicks.length).toBeGreaterThan(0);
+    expect(nativeClicks.every((event) => event.defaultPrevented)).toBe(true);
+    listening.abort();
+  });
+
   it("should navigate through a per-link component and forward the arrow ref to its anchor", async () => {
     // Arrange
     const user = userEvent.setup();

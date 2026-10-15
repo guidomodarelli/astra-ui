@@ -91,6 +91,43 @@ describe("Tabs", () => {
     expect(screen.getByRole("tabpanel", { name: "Detalle" })).toHaveTextContent("Contenido del detalle");
   });
 
+  it("should render the consumer's element as the panel with asChild, with and without force mounting", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    const animatedRef = createRef<HTMLElement>();
+    const mountedRef = createRef<HTMLElement>();
+    render(
+      <Tabs defaultValue="resumen">
+        <TabsList aria-label="Secciones">
+          <TabsTrigger value="resumen">Resumen</TabsTrigger>
+          <TabsTrigger value="detalle">Detalle</TabsTrigger>
+        </TabsList>
+        <TabsContent asChild value="resumen">
+          <section ref={animatedRef}>Contenido del resumen</section>
+        </TabsContent>
+        <TabsContent asChild forceMount value="detalle">
+          <section ref={mountedRef}>Contenido del detalle</section>
+        </TabsContent>
+      </Tabs>,
+    );
+
+    // Act
+    const animatedPanel = screen.getByRole("tabpanel", { name: "Resumen" });
+
+    // Assert
+    expect(animatedPanel.tagName).toBe("SECTION");
+    expect(animatedRef.current).toBe(animatedPanel);
+    expect(animatedPanel.querySelector("div")).toBeNull();
+
+    // Act
+    await user.click(screen.getByRole("tab", { name: "Detalle" }));
+
+    // Assert
+    const mountedPanel = screen.getByRole("tabpanel", { name: "Detalle" });
+    expect(mountedPanel.tagName).toBe("SECTION");
+    expect(mountedRef.current).toBe(mountedPanel);
+  });
+
   it("should move the selection with the arrow keys and forward the root and panel refs", async () => {
     // Arrange
     const user = userEvent.setup();

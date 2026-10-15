@@ -6,7 +6,7 @@
  * hover only on fine pointers and arrows that press in. Unlike Arc's stateful component it stays composable: every
  * page is a link rendered through the provider's `Link` adapter (Next.js, TanStack Router or a native anchor).
  */
-import type { ComponentProps, Ref } from "react"
+import type { ComponentProps, MouseEvent, Ref } from "react"
 import { cva } from "class-variance-authority"
 import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
 
@@ -86,10 +86,20 @@ export type PaginationLinkProps = {
 /**
  * One page, rendered through the provider's `Link` adapter or the `component` passed to it.
  * @param props - `isActive` marks the current page (`aria-current="page"`); `size` keeps the previous size names
- *   and only changes the horizontal padding; every other prop reaches the link.
+ *   and only changes the horizontal padding; every other prop reaches the link. With `aria-disabled` the link
+ *   stays visible but never navigates, whether clicked or activated with Enter, and `onClick` is not called.
  * @returns The page link.
  */
-function PaginationLink({ className, isActive, size = "icon", ...props }: PaginationLinkProps) {
+function PaginationLink({ className, isActive, size = "icon", onClick, ...props }: PaginationLinkProps) {
+  const isDisabled = props["aria-disabled"] === true || props["aria-disabled"] === "true"
+  /** Cancels the click before the native anchor or the router adapter, which both skip prevented clicks, acts on it. */
+  function handleClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (isDisabled) {
+      event.preventDefault()
+      return
+    }
+    onClick?.(event)
+  }
   return (
     <Link
       aria-current={isActive ? "page" : undefined}
@@ -98,6 +108,7 @@ function PaginationLink({ className, isActive, size = "icon", ...props }: Pagina
       data-size={size}
       className={cn(paginationLinkVariants({ size }), className)}
       {...props}
+      onClick={handleClick}
     />
   )
 }

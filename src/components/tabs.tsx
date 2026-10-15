@@ -17,7 +17,7 @@ import {
   type RefObject,
 } from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { Tabs as TabsPrimitive } from "radix-ui"
+import { Slot, Tabs as TabsPrimitive } from "radix-ui"
 import {
   AnimatePresence,
   animate,
@@ -52,7 +52,13 @@ interface TabsMotionState {
   /** Height of the visible panel, so the next one can morph from it. */
   panelHeightRef: RefObject<number | null>
   /** Where the leaving panel was on screen, so it stays there while it fades out. */
-  leavingRectRef: RefObject<DOMRect | null>
+  leavingRectRef: RefObject<LeavingPanelRect | null>
+}
+
+/** Screen rectangle of the panel that was active when a trigger selected `value`. */
+interface LeavingPanelRect {
+  value: string
+  rect: DOMRect
 }
 
 const TabsMotionContext = createContext<TabsMotionState | null>(null)
@@ -62,6 +68,24 @@ function getOwnElements(root: HTMLElement, selector: string): HTMLElement[] {
   return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter(
     (element) => element.closest('[data-slot="tabs"]') === root
   )
+}
+
+/**
+ * Reads which way the selection travels from the order of this instance's triggers.
+ * @param root - The tabs root, or null before it is attached.
+ * @param fromValue - Value of the previously active tab.
+ * @param toValue - Value of the newly active tab.
+ * @returns The travel direction, or null when either tab is not rendered.
+ */
+function getTravelDirection(root: HTMLElement | null, fromValue: string, toValue: string): number | null {
+  if (!root) return null
+  const order = getOwnElements(root, '[data-slot="tabs-trigger"]').map((trigger) =>
+    trigger.getAttribute("data-value")
+  )
+  const fromIndex = order.indexOf(fromValue)
+  const toIndex = order.indexOf(toValue)
+  if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return null
+  return toIndex > fromIndex ? TABS_DIRECTION.forward : TABS_DIRECTION.backward
 }
 
 /**
@@ -82,22 +106,27 @@ function Tabs({
   const [direction, setDirection] = useState<number>(TABS_DIRECTION.forward)
   const [root, attachRoot] = useAttachedElement<HTMLDivElement>(ref)
   const panelHeightRef = useRef<number | null>(null)
-  const leavingRectRef = useRef<DOMRect | null>(null)
+  const leavingRectRef = useRef<LeavingPanelRect | null>(null)
   const activeValue = value ?? uncontrolledValue
+  const [renderedValue, setRenderedValue] = useState(activeValue)
 
-  /** Records where the selection travels from before Radix and the consumer learn about it. */
+  // Every change of the rendered value sets the direction, whether a trigger or a controlled parent (a router
+  // update, a reset, an asynchronous confirmation) made it. The triggers have not re-rendered yet, so their order is
+  // still readable.
+  if (renderedValue !== activeValue) {
+    setRenderedValue(activeValue)
+    const travelDirection = getTravelDirection(root, renderedValue, activeValue)
+    if (travelDirection !== null) setDirection(travelDirection)
+  }
+
+  /** Records where the active panel is on screen before Radix and the consumer learn about the change. */
   function handleValueChange(nextValue: string) {
-    if (root) {
-      const activePanel = getOwnElements(root, '[data-slot="tabs-content"][data-state="active"]')[0]
-      leavingRectRef.current = activePanel?.getBoundingClientRect() ?? null
-      const order = getOwnElements(root, '[data-slot="tabs-trigger"]').map((trigger) =>
-        trigger.getAttribute("data-value")
-      )
-      const fromIndex = order.indexOf(activeValue)
-      const toIndex = order.indexOf(nextValue)
-      if (fromIndex >= 0 && toIndex >= 0 && fromIndex !== toIndex)
-        setDirection(toIndex > fromIndex ? TABS_DIRECTION.forward : TABS_DIRECTION.backward)
-    }
+    const activePanel = root
+      ? getOwnElements(root, '[data-slot="tabs-content"][data-state="active"]')[0]
+      : undefined
+    leavingRectRef.current = activePanel
+      ? { value: nextValue, rect: activePanel.getBoundingClientRect() }
+      : null
     if (value === undefined) setUncontrolledValue(nextValue)
     onValueChange?.(nextValue)
   }
@@ -291,25 +320,35 @@ const reducedPanelVariants: Variants = {
   exit: { opacity: 0, x: 0, y: 0, transition: { duration: TABS_PANEL_REDUCED_EXIT_DURATION_S } },
 }
 
+/** Animates the consumer's own element when `TabsContent` is used with `asChild`. */
+const MotionPanelSlot = motion.create(Slot.Root)
+
 type TabsPanelProps = ComponentProps<typeof motion.div> & {
   motionState: TabsMotionState
   reduceMotion: boolean
+  /** Renders the single child as the panel instead of a `div`. */
+  asChild?: boolean
 }
 
 /**
  * The animated element behind an active panel. While present it morphs from the previous panel's height to its
  * own; once leaving it stays pinned where it was, inert and hidden from assistive technology, until it fades out.
  */
-function TabsPanel({ motionState, reduceMotion, ref, ...props }: TabsPanelProps) {
+function TabsPanel({ motionState, reduceMotion, asChild, ref, ...props }: TabsPanelProps) {
   const isPresent = useIsPresent()
   const [panel, attachPanel] = useAttachedElement<HTMLDivElement>(ref)
   const { panelHeightRef, leavingRectRef, direction, orientation } = motionState
+  // A leaving panel keeps the props it last rendered with; the live context says which value replaced it.
+  const activeValue = useContext(TabsMotionContext)?.activeValue ?? motionState.activeValue
+  const PanelElement = asChild ? MotionPanelSlot : motion.div
 
   useLayoutEffect(() => {
     if (!panel) return
     if (!isPresent) {
-      // The tabs root may have resized around the leaving panel; keep it where it was on screen.
-      const before = leavingRectRef.current
+      // The tabs root may have resized around the leaving panel; keep it where it was on screen. Only a rectangle
+      // measured for this very change counts: one left by an earlier selection would misplace it.
+      const leaving = leavingRectRef.current
+      const before = leaving?.value === activeValue ? leaving.rect : null
       const now = panel.getBoundingClientRect()
       if (before) panel.style.translate = `${before.left - now.left}px ${before.top - now.top}px`
       return
@@ -349,10 +388,10 @@ function TabsPanel({ motionState, reduceMotion, ref, ...props }: TabsPanelProps)
       controls?.stop()
       release()
     }
-  }, [panel, isPresent, reduceMotion, panelHeightRef, leavingRectRef])
+  }, [panel, isPresent, reduceMotion, panelHeightRef, leavingRectRef, activeValue])
 
   return (
-    <motion.div
+    <PanelElement
       ref={attachPanel}
       {...props}
       custom={{ direction, orientation } satisfies PanelMotionCustom}
@@ -368,7 +407,7 @@ function TabsPanel({ motionState, reduceMotion, ref, ...props }: TabsPanelProps)
 
 /**
  * Content of one tab. Inside `Tabs` it animates between panels; with `forceMount` it stays mounted and switches
- * without motion, as Radix renders it.
+ * without motion, as Radix renders it. With `asChild` the consumer's element is the panel in both cases.
  * @param props - Radix content props, including `value` and `forceMount`.
  * @returns The tab panel, or nothing while another tab is active.
  */
@@ -376,6 +415,7 @@ function TabsContent({
   className,
   value,
   forceMount,
+  asChild,
   children,
   ...props
 }: ComponentProps<typeof TabsPrimitive.Content>) {
@@ -388,6 +428,7 @@ function TabsContent({
         data-slot="tabs-content"
         value={value}
         forceMount={forceMount}
+        asChild={asChild}
         className={classes}
         {...props}
       >
@@ -410,7 +451,7 @@ function TabsContent({
           forceMount
           asChild
         >
-          <TabsPanel className={classes} motionState={motionState} reduceMotion={reduceMotion}>
+          <TabsPanel className={classes} motionState={motionState} reduceMotion={reduceMotion} asChild={asChild}>
             {children}
           </TabsPanel>
         </TabsPrimitive.Content>
