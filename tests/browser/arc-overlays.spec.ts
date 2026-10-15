@@ -88,11 +88,33 @@ test("should wait before the first tooltip and open the next one at once, only f
   expect(Date.now() - startedAt).toBeGreaterThanOrEqual(TOOLTIP_MINIMUM_WAIT_MS);
   await expectSettled(page.locator("[data-slot=tooltip-content]"));
 
-  // Moving straight to the next trigger keeps the page warm: the bubble mounts without travel or scale.
-  await page.getByRole("button", { name: "Compartir" }).hover();
+  // Moving on to the next trigger within the skip window: the bubble mounts in place and only fades.
+  const samplesPromise = page.evaluate(async () => {
+    const samples: LayerSample[] = [];
+    for (let frameIndex = 0; frameIndex < 600 && samples.length < 4; frameIndex += 1) {
+      await new Promise(requestAnimationFrame);
+      const bubble = [...document.querySelectorAll("[data-slot=tooltip-content]")].find(
+        (element) => element.textContent === "Copiar enlace",
+      );
+      if (!bubble) continue;
+      const style = getComputedStyle(bubble);
+      const matrix = new DOMMatrixReadOnly(style.transform === "none" ? undefined : style.transform);
+      samples.push({ opacity: Number(style.opacity), translateY: matrix.m42, scale: matrix.a });
+    }
+    return samples;
+  });
+  const next = await page.getByRole("button", { name: "Compartir" }).boundingBox();
+  // Several pointer moves, as a real pointer makes: Radix keeps the first bubble open while a single jump lands inside
+  // the grace area between the first trigger and its bubble.
+  await page.mouse.move(next!.x + next!.width / 2, next!.y + next!.height / 2, { steps: 10 });
   await expect(page.getByRole("tooltip")).toHaveText("Copiar enlace");
-  const bubble = page.locator("[data-slot=tooltip-content]", { hasText: "Copiar enlace" });
-  await expectSettled(bubble);
+  const samples = await samplesPromise;
+  expect(samples[0]!.opacity).toBeLessThan(1);
+  samples.forEach((sample) => {
+    expect(sample.translateY).toBe(0);
+    expect(sample.scale).toBe(1);
+  });
+  await expectSettled(page.locator("[data-slot=tooltip-content]", { hasText: "Copiar enlace" }));
 });
 
 test("should grow the hover card from its trigger on keyboard focus and settle", async ({ page }) => {

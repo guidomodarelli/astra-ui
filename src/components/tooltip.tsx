@@ -10,7 +10,7 @@ import * as React from "react"
 import { Tooltip as TooltipPrimitive } from "radix-ui"
 
 import { ArcFloatingSlot } from "../motion/arc-floating-slot.js"
-import { createOverlayWarmth } from "../motion/overlay-warmth.js"
+import { createOverlayWarmth, useOpenedWhileWarm } from "../motion/overlay-warmth.js"
 import { MotionPresence, MotionOpenProvider, useMotionOpenState } from "../motion/presence.js"
 import { cn } from "../lib/utils.js"
 import {
@@ -24,6 +24,9 @@ import {
 
 /** Every tooltip on the page shares one skip window, whichever provider it belongs to. */
 const tooltipWarmth = createOverlayWarmth(TOOLTIP_SKIP_WINDOW_MS)
+
+/** Whether the page was already warm when the surrounding layer opened, so its entrance only fades. */
+const TooltipOpenedWhileWarmContext = React.createContext(false)
 
 /** Tells a `Tooltip` whether a `TooltipProvider` already wraps it. */
 const TooltipProviderPresenceContext = React.createContext(false)
@@ -71,6 +74,7 @@ function Tooltip({ content, side, children, delayDuration, ...props }: TooltipPr
     tooltipWarmth.isWarm,
     tooltipWarmth.isWarmOnServer
   )
+  const openedWhileWarm = useOpenedWhileWarm(motionOpen, isWarm)
   const hasProvider = React.useContext(TooltipProviderPresenceContext)
 
   React.useEffect(() => {
@@ -81,22 +85,24 @@ function Tooltip({ content, side, children, delayDuration, ...props }: TooltipPr
   const usesShorthand = content !== undefined
   const root = (
     <MotionOpenProvider scope="tooltip" open={motionOpen}>
-      <TooltipPrimitive.Root
-        data-slot="tooltip"
-        {...props}
-        delayDuration={isWarm ? 0 : delayDuration}
-        open={motionOpen}
-        onOpenChange={setMotionOpen}
-      >
-        {usesShorthand ? (
-          <>
-            <TooltipTrigger asChild>{children}</TooltipTrigger>
-            <TooltipContent side={side}>{content}</TooltipContent>
-          </>
-        ) : (
-          children
-        )}
-      </TooltipPrimitive.Root>
+      <TooltipOpenedWhileWarmContext.Provider value={openedWhileWarm}>
+        <TooltipPrimitive.Root
+          data-slot="tooltip"
+          {...props}
+          delayDuration={isWarm ? 0 : delayDuration}
+          open={motionOpen}
+          onOpenChange={setMotionOpen}
+        >
+          {usesShorthand ? (
+            <>
+              <TooltipTrigger asChild>{children}</TooltipTrigger>
+              <TooltipContent side={side}>{content}</TooltipContent>
+            </>
+          ) : (
+            children
+          )}
+        </TooltipPrimitive.Root>
+      </TooltipOpenedWhileWarmContext.Provider>
     </MotionOpenProvider>
   )
   return hasProvider ? root : <TooltipProvider>{root}</TooltipProvider>
@@ -106,11 +112,6 @@ function TooltipTrigger({
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
-}
-
-/** Picks the entrance when the bubble mounts: within the skip window it only fades. */
-function resolveTooltipMotion() {
-  return tooltipWarmth.isWarm() ? TOOLTIP_INSTANT_MOTION : TOOLTIP_MOTION
 }
 
 /**
@@ -125,10 +126,12 @@ function TooltipContent({
   children,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+  // Within the skip window the layer opens in place and only fades.
+  const openedWhileWarm = React.useContext(TooltipOpenedWhileWarmContext)
   return (
     <TooltipPrimitive.Portal forceMount>
       <MotionPresence scope="tooltip" forceMount={props.forceMount}>
-        <ArcFloatingSlot motion={resolveTooltipMotion}>
+        <ArcFloatingSlot motion={() => (openedWhileWarm ? TOOLTIP_INSTANT_MOTION : TOOLTIP_MOTION)}>
           <TooltipPrimitive.Content
             forceMount
             data-slot="tooltip-content"
