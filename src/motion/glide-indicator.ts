@@ -10,6 +10,7 @@ import {
   SPRING_LAYOUT,
   SPRING_TABS,
 } from "./tokens.js";
+import { ARC_SPRING_MORPH } from "./arc-tokens.js";
 
 /** Which part of the active item carries the highlight that must travel. */
 type GlideSurface = "background" | "after";
@@ -26,7 +27,11 @@ export interface GlidePreset {
   attributes: string[];
   isActive: (item: Element) => boolean;
   surface: (container: HTMLElement) => GlideSurface;
-  spring: typeof SPRING_LAYOUT | typeof SPRING_TABS | typeof SPRING_HIGHLIGHT;
+  spring:
+    | typeof SPRING_LAYOUT
+    | typeof SPRING_TABS
+    | typeof SPRING_HIGHLIGHT
+    | typeof ARC_SPRING_MORPH;
   /**
    * Highlights that follow the pointer (menus, listboxes) jump straight to the hovered item:
    * the pointer already marks the position, so a travelling copy would only trail behind it.
@@ -43,7 +48,8 @@ export const GLIDE_PRESETS = {
     isActive: (item) => item.getAttribute("data-state") === "active",
     surface: (container) =>
       container.getAttribute("data-variant") === "line" ? "after" : "background",
-    spring: SPRING_TABS,
+    // Arc glides the tab highlight and the current page mark with its morph spring.
+    spring: ARC_SPRING_MORPH,
   },
   pagination: {
     itemSelector: '[data-slot="pagination-link"]',
@@ -51,7 +57,7 @@ export const GLIDE_PRESETS = {
     attributes: ["aria-current"],
     isActive: (item) => item.getAttribute("aria-current") === "page",
     surface: () => "background",
-    spring: SPRING_LAYOUT,
+    spring: ARC_SPRING_MORPH,
   },
   suggestions: {
     itemSelector: '[role="option"]',

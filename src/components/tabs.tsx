@@ -1,38 +1,140 @@
 "use client"
 
-import * as React from "react"
+/**
+ * Arc's Tabs (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): its segmented list on Arc's tokens, a
+ * highlight that glides between triggers with Arc's morph spring, a list that scrolls sideways and keeps the active
+ * tab in view, and panels that slide in from the side of the chosen tab while their height morphs from the previous
+ * panel. Radix keeps the roles, keyboard navigation and controlled or uncontrolled value.
+ */
+import {
+  createContext,
+  useContext,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+  type FocusEvent,
+  type RefObject,
+} from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Tabs as TabsPrimitive } from "radix-ui"
+import {
+  AnimatePresence,
+  animate,
+  motion,
+  useIsPresent,
+  type AnimationPlaybackControls,
+  type Variants,
+} from "motion/react"
 
-import { GlideSlot } from "../motion/glide-slot.js"
-import { MotionSlot } from "../motion/motion-slot.js"
+import {
+  TABS_DIRECTION,
+  TABS_PANEL_HEIGHT_TOLERANCE_PX,
+  TABS_PANEL_OFFSET_PX,
+  TABS_PANEL_REDUCED_EXIT_DURATION_S,
+  TABS_REVEAL_MARGIN_PX,
+} from "../constants/tabs.js"
+import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
 import { cn } from "../lib/utils.js"
+import { ARC_DURATION, ARC_EASE, ARC_SPRING_SMOOTH } from "../motion/arc-tokens.js"
+import { GlideSlot } from "../motion/glide-slot.js"
+import { useAttachedElement } from "../motion/use-attached-element.js"
 
-function Tabs({
-  className,
-  orientation = "horizontal",
-  ...props
-}: React.ComponentProps<typeof TabsPrimitive.Root>) {
-  return (
-    <TabsPrimitive.Root
-      data-slot="tabs"
-      data-orientation={orientation}
-      className={cn(
-        "group/tabs flex gap-2 data-horizontal:flex-col",
-        className
-      )}
-      {...props}
-    />
+/** Layout direction of the list, which also decides the axis panels slide along. */
+type TabsOrientation = "horizontal" | "vertical"
+
+/** Shared by the parts of one Tabs instance so panels know where the selection came from. */
+interface TabsMotionState {
+  activeValue: string
+  /** +1 when the new tab sits after the previous one, -1 when it sits before. */
+  direction: number
+  orientation: TabsOrientation
+  /** Height of the visible panel, so the next one can morph from it. */
+  panelHeightRef: RefObject<number | null>
+  /** Where the leaving panel was on screen, so it stays there while it fades out. */
+  leavingRectRef: RefObject<DOMRect | null>
+}
+
+const TabsMotionContext = createContext<TabsMotionState | null>(null)
+
+/** Returns the elements of a slot that belong to this Tabs instance, never to a nested one. */
+function getOwnElements(root: HTMLElement, selector: string): HTMLElement[] {
+  return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter(
+    (element) => element.closest('[data-slot="tabs"]') === root
   )
 }
 
+/**
+ * Groups a tab list with its panels. Accepts Radix's `value`/`defaultValue`/`onValueChange` contract unchanged.
+ * @param props - Radix root props, including `orientation` and `ref`.
+ * @returns The tabs root.
+ */
+function Tabs({
+  className,
+  orientation = "horizontal",
+  value,
+  defaultValue,
+  onValueChange,
+  ref,
+  ...props
+}: ComponentProps<typeof TabsPrimitive.Root>) {
+  const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue ?? "")
+  const [direction, setDirection] = useState<number>(TABS_DIRECTION.forward)
+  const [root, attachRoot] = useAttachedElement<HTMLDivElement>(ref)
+  const panelHeightRef = useRef<number | null>(null)
+  const leavingRectRef = useRef<DOMRect | null>(null)
+  const activeValue = value ?? uncontrolledValue
+
+  /** Records where the selection travels from before Radix and the consumer learn about it. */
+  function handleValueChange(nextValue: string) {
+    if (root) {
+      const activePanel = getOwnElements(root, '[data-slot="tabs-content"][data-state="active"]')[0]
+      leavingRectRef.current = activePanel?.getBoundingClientRect() ?? null
+      const order = getOwnElements(root, '[data-slot="tabs-trigger"]').map((trigger) =>
+        trigger.getAttribute("data-value")
+      )
+      const fromIndex = order.indexOf(activeValue)
+      const toIndex = order.indexOf(nextValue)
+      if (fromIndex >= 0 && toIndex >= 0 && fromIndex !== toIndex)
+        setDirection(toIndex > fromIndex ? TABS_DIRECTION.forward : TABS_DIRECTION.backward)
+    }
+    if (value === undefined) setUncontrolledValue(nextValue)
+    onValueChange?.(nextValue)
+  }
+
+  return (
+    <TabsMotionContext.Provider
+      value={{ activeValue, direction, orientation, panelHeightRef, leavingRectRef }}
+    >
+      <TabsPrimitive.Root
+        ref={attachRoot}
+        data-slot="tabs"
+        data-orientation={orientation}
+        orientation={orientation}
+        className={cn(
+          "group/tabs relative flex gap-(--space-4) data-horizontal:flex-col",
+          className
+        )}
+        {...props}
+        value={activeValue}
+        onValueChange={handleValueChange}
+      />
+    </TabsMotionContext.Provider>
+  )
+}
+
+/**
+ * Arc's segmented list (`default`): a muted track whose active trigger is a raised surface. `line` keeps the
+ * underline variant on the same tokens. Horizontal lists scroll sideways without a visible scrollbar.
+ */
 const tabsListVariants = cva(
-  "group/tabs-list inline-flex w-fit items-center justify-center rounded-lg p-[3px] text-muted-foreground group-data-horizontal/tabs:h-8 group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col data-[variant=line]:rounded-none",
+  "group/tabs-list inline-flex w-fit max-w-full min-w-0 items-center text-text-muted group-data-horizontal/tabs:overflow-x-auto group-data-horizontal/tabs:[scrollbar-width:none] group-data-horizontal/tabs:[&::-webkit-scrollbar]:hidden group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col",
   {
     variants: {
       variant: {
-        default: "bg-muted",
-        line: "gap-1 bg-transparent",
+        default:
+          "gap-(--space-1) rounded-(--radius-control) border border-border bg-surface-muted p-(--space-1)",
+        line: "gap-(--space-1) bg-transparent",
       },
     },
     defaultVariants: {
@@ -41,51 +143,257 @@ const tabsListVariants = cva(
   }
 )
 
+/**
+ * Scrolls a horizontally overflowing list just enough to show the trigger, never the page around it.
+ * @param list - The scrolling tab list.
+ * @param trigger - The trigger to reveal.
+ * @param reduceMotion - True jumps instead of scrolling smoothly.
+ */
+function revealTrigger(list: HTMLElement, trigger: HTMLElement | null, reduceMotion: boolean) {
+  if (!trigger || list.scrollWidth <= list.clientWidth || typeof list.scrollBy !== "function") return
+  const frame = list.getBoundingClientRect()
+  const item = trigger.getBoundingClientRect()
+  const delta =
+    item.left < frame.left + TABS_REVEAL_MARGIN_PX
+      ? item.left - frame.left - TABS_REVEAL_MARGIN_PX
+      : item.right > frame.right - TABS_REVEAL_MARGIN_PX
+        ? item.right - frame.right + TABS_REVEAL_MARGIN_PX
+        : 0
+  if (delta) list.scrollBy({ left: delta, behavior: reduceMotion ? "instant" : "smooth" })
+}
+
+/**
+ * Holds the triggers. The active highlight glides to the newly selected trigger and the list scrolls to keep the
+ * active or focused trigger visible.
+ * @param props - Radix list props, the `variant` and `ref`.
+ * @returns The tab list.
+ */
 function TabsList({
   className,
   variant = "default",
+  ref,
+  onFocusCapture,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.List> &
-  VariantProps<typeof tabsListVariants>) {
+}: ComponentProps<typeof TabsPrimitive.List> & VariantProps<typeof tabsListVariants>) {
+  const motionState = useContext(TabsMotionContext)
+  const reduceMotion = usePrefersReducedMotion()
+  const [list, attachList] = useAttachedElement<HTMLDivElement>(ref)
+  const activeValue = motionState?.activeValue
+
+  useLayoutEffect(() => {
+    if (!list || motionState?.orientation === "vertical") return
+    revealTrigger(
+      list,
+      list.querySelector<HTMLElement>('[data-slot="tabs-trigger"][data-state="active"]'),
+      reduceMotion
+    )
+  }, [list, activeValue, motionState?.orientation, reduceMotion])
+
+  /** Keyboard focus may land on a trigger scrolled out of view before it becomes active. */
+  function handleFocusCapture(event: FocusEvent<HTMLDivElement>) {
+    onFocusCapture?.(event)
+    if (!list || motionState?.orientation === "vertical") return
+    if (event.target instanceof HTMLElement && event.target.getAttribute("role") === "tab")
+      revealTrigger(list, event.target, reduceMotion)
+  }
+
   return (
-    <GlideSlot preset="tabs"><TabsPrimitive.List
-      data-slot="tabs-list"
-      data-variant={variant}
-      className={cn(tabsListVariants({ variant }), className)}
-      {...props}
-    /></GlideSlot>
+    <GlideSlot preset="tabs" ref={attachList}>
+      <TabsPrimitive.List
+        data-slot="tabs-list"
+        data-variant={variant}
+        className={cn(tabsListVariants({ variant }), className)}
+        onFocusCapture={handleFocusCapture}
+        {...props}
+      />
+    </GlideSlot>
   )
 }
 
-function TabsTrigger({
-  className,
-  ...props
-}: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+/**
+ * Selects a panel. Arc's trigger: muted label, accent label once active, hover only on fine pointers and the
+ * shared keyboard focus outline.
+ * @param props - Radix trigger props, including `value`.
+ * @returns The tab.
+ */
+function TabsTrigger({ className, value, ...props }: ComponentProps<typeof TabsPrimitive.Trigger>) {
   return (
-    <MotionSlot kind="subtle-press"><TabsPrimitive.Trigger
+    <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
+      data-value={value}
+      value={value}
       className={cn(
-        "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-sm font-medium whitespace-nowrap text-foreground/60 transition-all group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 dark:text-muted-foreground dark:hover:text-foreground group-data-[variant=default]/tabs-list:data-active:shadow-sm group-data-[variant=line]/tabs-list:data-active:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-active:bg-transparent dark:group-data-[variant=line]/tabs-list:data-active:border-transparent dark:group-data-[variant=line]/tabs-list:data-active:bg-transparent",
-        "data-active:bg-background data-active:text-foreground dark:data-active:border-input dark:data-active:bg-input/30 dark:data-active:text-foreground",
-        "after:absolute after:bg-foreground after:opacity-0 after:transition-opacity group-data-horizontal/tabs:after:inset-x-0 group-data-horizontal/tabs:after:bottom-[-5px] group-data-horizontal/tabs:after:h-0.5 group-data-vertical/tabs:after:inset-y-0 group-data-vertical/tabs:after:-right-1 group-data-vertical/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-active:after:opacity-100 data-glide-target:after:opacity-0! data-glide-freeze:after:transition-none",
+        "relative inline-flex min-h-(--control-height-sm) min-w-[5.5rem] flex-[1_0_auto] cursor-pointer items-center justify-center gap-1.5 rounded-[calc(var(--radius-control)-3px)] border border-transparent bg-transparent px-(--space-3) font-sans text-sm font-medium whitespace-nowrap text-text-muted [-webkit-tap-highlight-color:transparent] transition-[color,background-color,border-color,box-shadow] duration-(--duration-fast) ease-(--ease-standard) select-none motion-reduce:transition-none hover-fine:text-foreground active:text-foreground disabled:cursor-not-allowed disabled:opacity-50 data-active:text-(--accent-strong) group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "group-data-[variant=default]/tabs-list:data-active:border-border group-data-[variant=default]/tabs-list:data-active:bg-surface group-data-[variant=default]/tabs-list:data-active:shadow-(--shadow-resting)",
+        "after:absolute after:rounded-full after:bg-(--accent-strong) after:opacity-0 after:transition-opacity after:duration-(--duration-fast) group-data-horizontal/tabs:after:inset-x-(--space-2) group-data-horizontal/tabs:after:-bottom-px group-data-horizontal/tabs:after:h-0.5 group-data-vertical/tabs:after:inset-y-(--space-2) group-data-vertical/tabs:after:-right-px group-data-vertical/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-active:after:opacity-100 data-glide-target:after:opacity-0! data-glide-freeze:after:transition-none motion-reduce:after:transition-none",
         className
       )}
       {...props}
-    /></MotionSlot>
+    />
   )
 }
 
+/** Panel classes: Arc's body text rhythm and a rounded keyboard focus outline. */
+const tabsContentClassName =
+  "flex-1 text-sm leading-(--leading-body) [--focus-outline-offset:3px] focus-visible:rounded-(--radius-control) data-[state=inactive]:pointer-events-none"
+
+/** Values a panel's variants read: which way the selection travelled and along which axis. */
+interface PanelMotionCustom {
+  direction: number
+  orientation: TabsOrientation
+}
+
+/** Places a slide offset on the axis the list runs along. */
+function slideOffset({ orientation }: PanelMotionCustom, distance: number) {
+  return orientation === "vertical" ? { x: 0, y: distance } : { x: distance, y: 0 }
+}
+
+/** Arc's panel motion: slides in from the side of the chosen tab and leaves quickly the opposite way. */
+const panelVariants: Variants = {
+  enter: (custom: PanelMotionCustom) => ({
+    opacity: 0,
+    ...slideOffset(custom, custom.direction * TABS_PANEL_OFFSET_PX.enter),
+  }),
+  center: {
+    opacity: 1,
+    x: 0,
+    y: 0,
+    transition: {
+      opacity: { duration: ARC_DURATION.standard, ease: [...ARC_EASE.enter] },
+      x: ARC_SPRING_SMOOTH,
+      y: ARC_SPRING_SMOOTH,
+    },
+  },
+  exit: (custom: PanelMotionCustom) => ({
+    opacity: 0,
+    ...slideOffset(custom, custom.direction * -TABS_PANEL_OFFSET_PX.exit),
+    transition: { duration: ARC_DURATION.instant, ease: [...ARC_EASE.standard] },
+  }),
+}
+
+/** Reduced motion: a short crossfade in place. Keys match `panelVariants`, so server and client styles agree. */
+const reducedPanelVariants: Variants = {
+  enter: { opacity: 0, x: 0, y: 0 },
+  center: { opacity: 1, x: 0, y: 0, transition: { duration: ARC_DURATION.instant } },
+  exit: { opacity: 0, x: 0, y: 0, transition: { duration: TABS_PANEL_REDUCED_EXIT_DURATION_S } },
+}
+
+type TabsPanelProps = ComponentProps<typeof motion.div> & {
+  motionState: TabsMotionState
+  reduceMotion: boolean
+}
+
+/**
+ * The animated element behind an active panel. While present it morphs from the previous panel's height to its
+ * own; once leaving it stays pinned where it was, inert and hidden from assistive technology, until it fades out.
+ */
+function TabsPanel({ motionState, reduceMotion, ref, ...props }: TabsPanelProps) {
+  const isPresent = useIsPresent()
+  const [panel, attachPanel] = useAttachedElement<HTMLDivElement>(ref)
+  const { panelHeightRef, leavingRectRef, direction, orientation } = motionState
+
+  useLayoutEffect(() => {
+    if (!panel) return
+    if (!isPresent) {
+      // The tabs root may have resized around the leaving panel; keep it where it was on screen.
+      const before = leavingRectRef.current
+      const now = panel.getBoundingClientRect()
+      if (before) panel.style.translate = `${before.left - now.left}px ${before.top - now.top}px`
+      return
+    }
+    panel.style.translate = ""
+    const fromHeight = panelHeightRef.current
+    const toHeight = panel.offsetHeight
+    let controls: AnimationPlaybackControls | undefined
+    const release = () => {
+      panel.style.height = ""
+      panel.style.overflow = ""
+    }
+    if (
+      fromHeight !== null &&
+      Math.abs(fromHeight - toHeight) > TABS_PANEL_HEIGHT_TOLERANCE_PX &&
+      !reduceMotion
+    ) {
+      if (toHeight > fromHeight) panel.style.overflow = "clip"
+      controls = animate(panel, { height: [fromHeight, toHeight] }, { ...ARC_SPRING_SMOOTH, onComplete: release })
+    }
+    panelHeightRef.current = controls && fromHeight !== null ? fromHeight : toHeight
+    const observer = new ResizeObserver(() => {
+      panelHeightRef.current = panel.offsetHeight
+    })
+    observer.observe(panel)
+    return () => {
+      observer.disconnect()
+      controls?.stop()
+      release()
+    }
+  }, [panel, isPresent, reduceMotion, panelHeightRef, leavingRectRef])
+
+  return (
+    <motion.div
+      ref={attachPanel}
+      {...props}
+      custom={{ direction, orientation } satisfies PanelMotionCustom}
+      variants={reduceMotion ? reducedPanelVariants : panelVariants}
+      initial="enter"
+      animate="center"
+      exit="exit"
+      inert={!isPresent || undefined}
+      aria-hidden={!isPresent || undefined}
+    />
+  )
+}
+
+/**
+ * Content of one tab. Inside `Tabs` it animates between panels; with `forceMount` it stays mounted and switches
+ * without motion, as Radix renders it.
+ * @param props - Radix content props, including `value` and `forceMount`.
+ * @returns The tab panel, or nothing while another tab is active.
+ */
 function TabsContent({
   className,
+  value,
+  forceMount,
+  children,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Content>) {
+}: ComponentProps<typeof TabsPrimitive.Content>) {
+  const motionState = useContext(TabsMotionContext)
+  const reduceMotion = usePrefersReducedMotion()
+  const classes = cn(tabsContentClassName, className)
+  if (forceMount || !motionState)
+    return (
+      <TabsPrimitive.Content
+        data-slot="tabs-content"
+        value={value}
+        forceMount={forceMount}
+        className={classes}
+        {...props}
+      >
+        {children}
+      </TabsPrimitive.Content>
+    )
+  const isSelected = motionState.activeValue === value
   return (
-    <MotionSlot kind="content"><TabsPrimitive.Content
-      data-slot="tabs-content"
-      className={cn("flex-1 text-sm outline-none", className)}
-      {...props}
-    /></MotionSlot>
+    <AnimatePresence
+      initial={false}
+      mode="popLayout"
+      custom={{ direction: motionState.direction, orientation: motionState.orientation } satisfies PanelMotionCustom}
+    >
+      {isSelected && (
+        <TabsPrimitive.Content
+          key={value}
+          data-slot="tabs-content"
+          {...props}
+          value={value}
+          forceMount
+          asChild
+        >
+          <TabsPanel className={classes} motionState={motionState} reduceMotion={reduceMotion}>
+            {children}
+          </TabsPanel>
+        </TabsPrimitive.Content>
+      )}
+    </AnimatePresence>
   )
 }
 
