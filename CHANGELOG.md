@@ -4,6 +4,58 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+### Added
+
+- `Switch` acepta `label` para mostrar el texto dentro del control con la altura táctil de Arc.
+- `Checkbox` acepta `label` y `description` para mostrar el campo con etiqueta de Arc, con la descripción vinculada por `aria-describedby`.
+- `RadioGroupItem` acepta `label` y `description` para mostrar las filas de opción de Arc, con un resaltado que se desliza hacia la opción elegida, también con las flechas del teclado.
+- `Badge` acepta `tone` (`neutral`, `success`, `info`, `warning`, `danger`), `size` (`sm`, `md`) e `icon`; cuando cambia el texto, el nuevo entra animado y el ancho se ajusta con un resorte.
+- `Avatar` acepta `size="xl"` (88 px) y `status` (`online`, `offline`) con un punto de presencia animado y un texto accesible configurable con `statusLabel`.
+- `Skeleton` acepta `lines`, `avatar` y `label` para dibujar el placeholder completo de Arc, y `loading` para pasar del placeholder al contenido con una transición.
+- `CardMedia` agrega un marco para fotos en `Card` con un zoom suave al pasar el puntero.
+- `Alert` acepta `tone` con su ícono y rol accesible, `icon`, `onDismiss` con `dismissLabel` para descartarlo, y `open` para ocultarlo colapsando su altura.
+- `Tooltip` acepta `content` y `side` para envolver directamente su trigger, y funciona sin `TooltipProvider`.
+- `PopoverClose` cierra el popover desde un control dentro del panel.
+- `HoverCardProfile` muestra una vista previa de persona (retrato o iniciales, nombre, rol, bio, números y pie) dentro de `HoverCardContent`.
+- `DialogTitle`, `DialogDescription`, `AlertDialogTitle` y `AlertDialogDescription` animan el cambio de texto mientras el diálogo está abierto, sin animar el primer render y sin movimiento con `prefers-reduced-motion`.
+- `DialogHeader` deja espacio al botón de cerrar del panel para que un título largo no quede debajo.
+- Los enlaces de `Pagination` con `aria-disabled` se muestran atenuados y no reciben clics.
+- `Calendar` acepta `showToday` y `todayLabel` para mostrar un botón "Hoy" que vuelve al mes actual y selecciona el día de hoy.
+- `CarouselIndicators` muestra un indicador de puntos cuyo punto activo se estira en una píldora que acompaña el desplazamiento.
+- `Carousel` responde a `Home` y `End` para ir a la primera y la última diapositiva.
+
+### Changed
+
+- `Switch` adopta el diseño de Arc: pista de 42×24 (la variante `sm` pasa a 32×18) y thumb que se desliza con un resorte y se estira mientras se mantiene presionado.
+- `Checkbox` adopta el diseño de Arc: cuadrado de 18 px con relleno animado, tilde que se dibuja y se transforma en guion en el estado indeterminado, y zona táctil de 44 px.
+- `RadioGroupItem` adopta la marca de Arc: 17 px, rellena con el color de selección y con un punto que aparece con un resorte al elegirla.
+- `Badge` adopta el diseño de Arc: altura de 26 px por defecto, borde y fondo según el tono; las variantes actuales se dibujan con los tonos de Arc.
+- `Avatar`, `Card` y `Alert` adoptan los tokens de Arc: borde visible, superficie, radios, espaciado de 20 px en `Card` y descripción más chica en `Alert`.
+- `Card` con enlaces o botones se eleva levemente al pasar el puntero, y su footer ya no tiene banda de fondo.
+- `Skeleton` reemplaza el brillo deslizante por el pulso escalonado de Arc, que se detiene a los 20 segundos aproximadamente.
+- `Tooltip`, `Popover` y `HoverCard` adoptan el diseño de Arc: superficies con radio, borde y sombra de Arc; el tooltip pierde la flecha. Las tres capas entran desde su trigger y, con movimiento reducido, solo se desvanecen.
+- Los tooltips esperan 250 ms antes de abrir (`TooltipProvider` por defecto) y los hover cards abren a los 500 ms y cierran a los 140 ms; tras cerrar uno, el siguiente abre al instante.
+- `sideOffset` y `collisionPadding` por defecto pasan a 8/12 px en tooltip y hover card, y a 6/10 px en popover; el popover usa más padding y el hover card mide 18.5rem.
+- `DropdownMenu` adopta el diseño de Arc: panel sólido elevado (sin el efecto translúcido), filas de 36 px, tono de peligro en los ítems destructivos, ítems deshabilitados más tenues y entrada escalonada de las filas que respeta `prefers-reduced-motion`.
+- `DropdownMenuContent` usa por defecto `sideOffset` 6, `collisionPadding` 12 y `loop`, así que las flechas del teclado vuelven del último ítem al primero; `DropdownMenuSubContent` también usa `collisionPadding` 12 y `loop`. Se pueden sobrescribir.
+- `Select` adopta el diseño de Arc: el trigger usa las alturas de control de Arc (`default` igual que `Input`, `sm` de 36 px), responde al hover solo con puntero fino y marca `aria-invalid` con el borde de peligro; la lista tiene panel elevado, filas de 36 px y, con `position="popper"`, `collisionPadding` 12 y una altura máxima de 20rem.
+- `Tabs` adopta el diseño y la motion de Arc: lista segmentada con superficie elevada en el tab activo, resaltado que se desliza con el resorte de Arc y paneles que entran desde el lado del tab elegido ajustando su altura.
+- La lista de `Tabs` se desplaza de costado cuando no entra en pantalla y mantiene visible el tab activo o enfocado.
+- `Pagination` adopta el diseño de Arc: controles compactos con números tabulares, marca de la página actual que se desliza y flechas que responden al presionarlas; sigue navegando con el `Link` del provider.
+- `Pagination` usa textos por defecto en español ("Paginación", "Anterior", "Siguiente", "Ir a la página anterior", "Ir a la página siguiente", "Más páginas").
+- `Dialog` y `AlertDialog` adoptan la superficie del Dialog de Arc: velo más oscuro con desenfoque, panel elevado con radio de superficie, borde fino, sombra flotante y padding de 24 px; conservan el despliegue desde el centro.
+- El ancho máximo de `DialogContent` pasa de 384 px a 440 px, los títulos de los diálogos usan Inter a 18 px y las descripciones el color de texto secundario de Arc.
+- El botón de cerrar de `DialogContent` pasa a 32 px, con borde y fondo suave, alineado con la primera línea del título.
+- `DialogFooter` y `AlertDialogFooter` sobresalen 24 px hacia los costados y abajo, acompañando el nuevo padding.
+- El texto plano de títulos y descripciones de los diálogos se renderiza dentro de un `span` con `data-slot="dialog-swap-text"`.
+- `Calendar` adopta el diseño de Arc: días redondos de 36 px, título a la izquierda, punto bajo el día de hoy y un disco de selección que se desliza entre días.
+- Los controles anterior y siguiente de `Carousel` adoptan el diseño de Arc (redondos, con borde, 36 px) y el carrusel muestra el cursor de arrastre.
+
+### Fixed
+
+- Las flechas del teclado dentro de un campo de texto de una diapositiva ya no mueven el `Carousel`.
+- El día elegido de `Calendar` ya no pierde su color al pasar el puntero.
+
 ## [2.5.0] - 2026-10-15
 
 ### Added
