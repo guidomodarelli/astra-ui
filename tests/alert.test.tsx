@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { createRef, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -53,6 +53,27 @@ describe("Alert", () => {
     // Assert
     await waitFor(() => expect(screen.queryByText("Nueva versión")).not.toBeInTheDocument());
     expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it("should keep consumer layout props and ref on the outermost element of a dismissible alert", () => {
+    // Arrange
+    const alertRef = createRef<HTMLDivElement>();
+
+    // Act
+    const { container } = render(
+      <div className="grid">
+        <Alert ref={alertRef} tone="info" className="col-span-2" style={{ marginTop: 8 }} onDismiss={() => undefined}>
+          <AlertTitle>Nueva versión</AlertTitle>
+        </Alert>
+      </div>,
+    );
+
+    // Assert
+    const layoutChild = container.firstElementChild?.firstElementChild;
+    expect(layoutChild).toBe(screen.getByRole("status"));
+    expect(layoutChild).toHaveClass("col-span-2");
+    expect(layoutChild).toHaveStyle({ marginTop: "8px" });
+    expect(alertRef.current).toBe(layoutChild);
   });
 
   it("should let a controlled alert decide when it closes", async () => {

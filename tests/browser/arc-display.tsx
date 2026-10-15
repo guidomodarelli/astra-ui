@@ -3,6 +3,7 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Alert,
+  AlertAction,
   AlertDescription,
   AlertTitle,
   Avatar,
@@ -54,6 +55,19 @@ function DismissibleAlert() {
   );
 }
 
+/** An alert with both its own action and the dismiss button, which must sit side by side. */
+function ActionableAlert() {
+  return (
+    <div className="narrow-field">
+      <Alert tone="warning" onDismiss={() => undefined} dismissLabel="Descartar aviso de cupo">
+        <AlertTitle>Cupo casi completo</AlertTitle>
+        <AlertDescription>Quedan dos lugares en la tribu.</AlertDescription>
+        <AlertAction><Button size="sm" variant="secondary">Ampliar</Button></AlertAction>
+      </Alert>
+    </div>
+  );
+}
+
 /** Renders one fixture per component. */
 function ArcDisplay() {
   return <BeezUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
@@ -73,6 +87,7 @@ function ArcDisplay() {
       </Card>
     </section>
     <section><DismissibleAlert /></section>
+    <section><ActionableAlert /></section>
   </main></BeezUIProvider>;
 }
 

@@ -47,7 +47,7 @@ const TONE_ICON = {
  * `--alert-color` tints it by tone.
  */
 const alertVariants = cva(
-  "group/alert relative grid w-full items-start gap-x-(--space-3) gap-y-(--space-1) rounded-(--radius-control) border border-border bg-surface p-(--space-4) text-left text-sm text-foreground shadow-(--shadow-resting) [--alert-color:currentColor] has-[>svg]:grid-cols-[auto_1fr] has-data-[slot=alert-icon]:grid-cols-[auto_1fr] has-data-[slot=alert-action]:pr-18 has-data-[slot=alert-dismiss]:pr-12 *:[svg]:row-span-2 *:[svg]:mt-px *:[svg]:text-(--alert-color) *:[svg:not([class*='size-'])]:size-[18px]",
+  "group/alert relative grid w-full items-start gap-x-(--space-3) gap-y-(--space-1) rounded-(--radius-control) border border-border bg-surface p-(--space-4) text-left text-sm text-foreground shadow-(--shadow-resting) [--alert-color:currentColor] has-[>svg]:grid-cols-[auto_1fr] has-data-[slot=alert-icon]:grid-cols-[auto_1fr] has-data-[slot=alert-action]:pr-18 has-data-[slot=alert-dismiss]:pr-12 has-data-[slot=alert-action]:has-data-[slot=alert-dismiss]:pr-36 *:[svg]:row-span-2 *:[svg]:mt-px *:[svg]:text-(--alert-color) *:[svg:not([class*='size-'])]:size-[18px]",
   {
     variants: {
       variant: {
@@ -72,12 +72,22 @@ const presenceTransition: Transition = {
   height: ARC_SPRING_SMOOTH,
   opacity: { duration: ARC_DURATION.standard, ease: [...ARC_EASE.enter] },
 }
-const presenceExit: TargetAndTransition = {
+/** The alert itself collapses, so its padding, border and margins close along with the height. */
+const collapsedBox: TargetAndTransition = {
   height: 0,
-  opacity: 0,
-  transition: { height: ARC_SPRING_SMOOTH, opacity: ARC_SWAP_EXIT_TRANSITION },
+  paddingTop: 0,
+  paddingBottom: 0,
+  borderTopWidth: 0,
+  borderBottomWidth: 0,
+  marginTop: 0,
+  marginBottom: 0,
 }
-const reducedPresenceExit: TargetAndTransition = { height: 0, opacity: 0, transition: { duration: 0 } }
+const presenceExit: TargetAndTransition = {
+  ...collapsedBox,
+  opacity: 0,
+  transition: { default: ARC_SPRING_SMOOTH, opacity: ARC_SWAP_EXIT_TRANSITION },
+}
+const reducedPresenceExit: TargetAndTransition = { ...collapsedBox, opacity: 0, transition: { duration: 0 } }
 
 /** Outgoing icons are hidden from assistive technology while they fade. */
 function AlertIconSwap(props: HTMLMotionProps<"span">) {
@@ -134,8 +144,11 @@ export type AlertProps = ComponentProps<"div"> & {
 
 type AlertBoxProps = Omit<AlertProps, "open"> & {
   reduceMotion: boolean
-  /** Plays the shared message entrance; off inside the presence wrapper, which animates on its own. */
-  animatesEntrance: boolean
+  /**
+   * Presence animation played on the alert root itself, so consumer classes, styles and props keep applying to the
+   * element that takes part in the parent layout. Without it, the shared message entrance plays instead.
+   */
+  presence?: HTMLMotionProps<"div">
 }
 
 /** The alert surface itself. */
@@ -147,20 +160,21 @@ function AlertBox({
   onDismiss,
   dismissLabel = ALERT_DISMISS_LABEL,
   reduceMotion,
-  animatesEntrance,
+  presence,
   children,
   ...props
 }: AlertBoxProps) {
   const ToneIcon = tone ? TONE_ICON[tone] : null
   const resolvedIcon = icon === false ? null : (icon ?? (ToneIcon ? <ToneIcon aria-hidden="true" /> : null))
-  const box = (
-    <div
-      data-slot="alert"
-      data-tone={tone}
-      role={tone ? ALERT_TONE_ROLE[tone] : "alert"}
-      className={cn(alertVariants({ variant, tone }), className)}
-      {...props}
-    >
+  const rootProps = {
+    "data-slot": "alert",
+    "data-tone": tone,
+    role: tone ? ALERT_TONE_ROLE[tone] : "alert",
+    className: cn(alertVariants({ variant, tone }), className),
+    ...props,
+  }
+  const content = (
+    <>
       {resolvedIcon ? (
         <AlertIcon icon={resolvedIcon} iconKey={icon ? "custom" : (tone ?? "custom")} reduceMotion={reduceMotion} />
       ) : null}
@@ -176,25 +190,42 @@ function AlertBox({
           <X className="size-4" strokeWidth={1.75} aria-hidden="true" />
         </button>
       ) : null}
-    </div>
+    </>
   )
-  return animatesEntrance ? <MotionSlot kind="message">{box}</MotionSlot> : box
+  if (presence) {
+    return (
+      <motion.div {...(rootProps as HTMLMotionProps<"div">)} {...presence}>
+        {content}
+      </motion.div>
+    )
+  }
+  return (
+    <MotionSlot kind="message">
+      <div {...rootProps}>{content}</div>
+    </MotionSlot>
+  )
 }
 
 /**
  * A persistent message. Compose it with `AlertTitle`, `AlertDescription` and `AlertAction`.
  * @param props - Variant, Arc tone and icon, optional presence and dismissal, plus native div attributes.
- * @returns The alert, wrapped in a collapsing presence frame when `open` or `onDismiss` is set.
+ * @returns The alert; with `open` or `onDismiss` it collapses its own height when hidden.
  */
-function Alert({ open, onDismiss, ...props }: AlertProps) {
+function Alert({ open, onDismiss, ref: consumerRef, ...props }: AlertProps) {
   const reduceMotion = usePrefersReducedMotion()
   const [isDismissed, setIsDismissed] = useState(false)
   const presenceRef = useRef<HTMLDivElement>(null)
   const setPresenceClip = (overflow: string) => {
     if (presenceRef.current) presenceRef.current.style.overflow = overflow
   }
+  /** Shares the alert node between the consumer's ref and the clip toggled while the alert moves. */
+  const attachPresence = (node: HTMLDivElement | null) => {
+    presenceRef.current = node
+    if (typeof consumerRef === "function") consumerRef(node)
+    else if (consumerRef) consumerRef.current = node
+  }
   if (open === undefined && !onDismiss) {
-    return <AlertBox {...props} reduceMotion={reduceMotion} animatesEntrance />
+    return <AlertBox {...props} ref={consumerRef} reduceMotion={reduceMotion} />
   }
   const isOpen = open ?? !isDismissed
   const dismiss = onDismiss && (() => (open === undefined ? setIsDismissed(true) : onDismiss()))
@@ -207,21 +238,22 @@ function Alert({ open, onDismiss, ...props }: AlertProps) {
       }}
     >
       {isOpen ? (
-        <motion.div
+        <AlertBox
           key="alert"
-          data-slot="alert-presence"
-          className="min-w-0"
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: "auto", opacity: 1 }}
-          exit={reduceMotion ? reducedPresenceExit : presenceExit}
-          transition={reduceMotion ? { duration: 0 } : presenceTransition}
-          ref={presenceRef}
-          // Clips only while moving, so focus outlines on the alert are not cut off at rest.
-          onAnimationStart={() => setPresenceClip("hidden")}
-          onAnimationComplete={() => setPresenceClip("")}
-        >
-          <AlertBox {...props} onDismiss={dismiss} reduceMotion={reduceMotion} animatesEntrance={false} />
-        </motion.div>
+          {...props}
+          onDismiss={dismiss}
+          reduceMotion={reduceMotion}
+          presence={{
+            ref: attachPresence,
+            initial: { height: 0, opacity: 0 },
+            animate: { height: "auto", opacity: 1 },
+            exit: reduceMotion ? reducedPresenceExit : presenceExit,
+            transition: reduceMotion ? { duration: 0 } : presenceTransition,
+            // Clips only while moving, so focus outlines inside the alert are not cut off at rest.
+            onAnimationStart: () => setPresenceClip("hidden"),
+            onAnimationComplete: () => setPresenceClip(""),
+          }}
+        />
       ) : null}
     </AnimatePresence>
   )
@@ -260,7 +292,10 @@ function AlertAction({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       data-slot="alert-action"
-      className={cn("absolute top-(--space-3) right-(--space-3)", className)}
+      className={cn(
+        "absolute top-(--space-3) right-(--space-3) group-has-data-[slot=alert-dismiss]/alert:right-12",
+        className
+      )}
       {...props}
     />
   )

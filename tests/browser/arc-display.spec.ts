@@ -99,9 +99,22 @@ test("should collapse a dismissed alert so the content below closes the gap", as
   const marker = page.getByText("Debajo del aviso");
   const startTop = (await marker.boundingBox())!.y;
 
-  await page.getByRole("button", { name: "Descartar aviso" }).click();
+  await page.getByRole("button", { name: "Descartar aviso", exact: true }).click();
 
   await expect(page.getByText("Nueva versión disponible")).toHaveCount(0, { timeout: SETTLE_TIMEOUT_MS });
   const endTop = (await marker.boundingBox())!.y;
   expect(endTop).toBeLessThan(startTop);
+});
+
+test("should lay out an alert action beside the dismiss button without overlap", async ({ page }) => {
+  const action = page.getByRole("button", { name: "Ampliar" });
+  const dismiss = page.getByRole("button", { name: "Descartar aviso de cupo" });
+  const title = page.getByText("Cupo casi completo");
+
+  const [actionBox, dismissBox, titleBox] = await Promise.all([action.boundingBox(), dismiss.boundingBox(), title.boundingBox()]);
+
+  expect(actionBox!.x + actionBox!.width).toBeLessThanOrEqual(dismissBox!.x);
+  expect(titleBox!.x + titleBox!.width).toBeLessThanOrEqual(actionBox!.x);
+  await action.click({ trial: true });
+  await dismiss.click({ trial: true });
 });
