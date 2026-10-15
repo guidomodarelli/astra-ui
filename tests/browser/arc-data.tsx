@@ -42,6 +42,9 @@ function App() {
                   <div className="arc-data-slide">
                     <a href={`#tarjeta-${slide}`}>{`Tarjeta ${slide}`}</a>
                     <input aria-label={`Nota ${slide}`} />
+                    <div role="tablist" aria-label={`Vistas ${slide}`}>
+                      <button type="button" role="tab" aria-selected="true">{`Resumen ${slide}`}</button>
+                    </div>
                   </div>
                 </CarouselItem>
               ))}

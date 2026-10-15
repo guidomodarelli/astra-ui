@@ -18,7 +18,7 @@ import {
   CAROUSEL_EDGE_KEYS,
   CAROUSEL_INDICATOR_LENGTH_PX,
   CAROUSEL_KEYS,
-  CAROUSEL_TEXT_ENTRY_SELECTOR,
+  CAROUSEL_OWN_KEYBOARD_SELECTOR,
   type CarouselOrientation,
 } from "../constants/carousel.js"
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
@@ -101,8 +101,9 @@ function Carousel({
   const handleKeyDown = React.useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       if (event.altKey || event.ctrlKey || event.metaKey) return
-      // Text fields keep their own caret keys, as in Arc.
-      if (event.target instanceof Element && event.target.closest(CAROUSEL_TEXT_ENTRY_SELECTOR)) return
+      // Text fields and composite widgets inside the carousel keep their own navigation keys, as in Arc.
+      const keyboardOwner = event.target instanceof Element ? event.target.closest(CAROUSEL_OWN_KEYBOARD_SELECTOR) : null
+      if (keyboardOwner && event.currentTarget.contains(keyboardOwner)) return
       const keys = CAROUSEL_KEYS[orientation]
       if (event.key === keys.previous) {
         event.preventDefault()

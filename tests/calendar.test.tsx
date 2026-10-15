@@ -88,6 +88,41 @@ describe("Calendar", () => {
     expect(screen.getByRole("button", { name: /^Hoy, viernes, 11 de septiembre/i })).toHaveAttribute("data-today", "true");
   });
 
+  it("should hand onSelect the live click event after navigating to today's month", async () => {
+    // Arrange
+    const currentTargets: (EventTarget | null)[] = [];
+    render(
+      <Calendar
+        mode="single"
+        showToday
+        today={TODAY}
+        defaultMonth={new Date(2026, 0, 1)}
+        onSelect={(_selected, _triggerDate, _modifiers, event) => currentTargets.push(event.currentTarget)}
+      />,
+    );
+    const todayButton = screen.getByRole("button", { name: TODAY_BUTTON_NAME });
+
+    // Act
+    await userEvent.click(todayButton);
+
+    // Assert
+    expect(currentTargets).toEqual([todayButton]);
+  });
+
+  it("should rest dimmed and leave the selection alone when today is hidden in the displayed month", async () => {
+    // Arrange
+    const onSelect = vi.fn();
+    render(<Calendar mode="single" showToday today={TODAY} defaultMonth={TODAY} hidden={TODAY} onSelect={onSelect} />);
+    const todayButton = screen.getByRole("button", { name: TODAY_BUTTON_NAME });
+
+    // Act
+    await userEvent.click(todayButton);
+
+    // Assert
+    expect(todayButton).toHaveAttribute("aria-disabled", "true");
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
   it("should leave the selection alone when today is already selected", async () => {
     // Arrange
     const onSelect = vi.fn();

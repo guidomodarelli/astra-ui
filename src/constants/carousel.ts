@@ -12,8 +12,19 @@ export const CAROUSEL_KEYS = {
 /** Keys that jump to the first and the last slide, as in Arc. */
 export const CAROUSEL_EDGE_KEYS = { first: "Home", last: "End" } as const
 
-/** Focused elements that keep their own arrow, Home and End keys instead of moving the carousel. */
-export const CAROUSEL_TEXT_ENTRY_SELECTOR = "input, textarea, select, [contenteditable]:not([contenteditable=false])"
+/**
+ * Focused elements, and composite widgets around them, that own their arrow, Home and End keys instead of moving the
+ * carousel: text entry plus the ARIA widgets with their own keyboard navigation.
+ */
+export const CAROUSEL_OWN_KEYBOARD_SELECTOR = [
+  "input",
+  "textarea",
+  "select",
+  "[contenteditable]:not([contenteditable=false])",
+  ...["combobox", "grid", "listbox", "menu", "menubar", "radiogroup", "slider", "spinbutton", "tablist", "toolbar", "tree", "treegrid"].map(
+    (role) => `[role=${role}]`
+  ),
+].join(", ")
 
 /** Length, in px, of a resting indicator dot and of the active pill it stretches into. */
 export const CAROUSEL_INDICATOR_LENGTH_PX = { dot: 6, pill: 22 } as const

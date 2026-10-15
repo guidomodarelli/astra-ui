@@ -131,6 +131,19 @@ test.describe("Carousel", () => {
     await expect(field).toBeFocused();
   });
 
+  test("should leave arrow, Home and End keys to a composite widget inside a slide", async ({ page }) => {
+    await page.goto("/arc-data.html");
+    const carousel = page.getByRole("region", { name: "Destacados" });
+    const nestedTab = carousel.getByRole("tab", { name: "Resumen 1" });
+    await nestedTab.focus();
+
+    await page.keyboard.press("End");
+    await page.keyboard.press("ArrowRight");
+
+    await expect(carousel.getByRole("button", { name: "Diapositiva 1 de 4" })).toHaveAttribute("aria-current", "true");
+    await expect(nestedTab).toBeFocused();
+  });
+
   test("should show a grab cursor on fine pointers while the track can be dragged", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name.endsWith("-mobile"), "Phone projects emulate a touch screen without a cursor");
     await page.goto("/arc-data.html");
