@@ -8,6 +8,7 @@ type Args = {
   value: string;
   disabled: boolean;
   orientation: "horizontal" | "vertical";
+  optionRows: boolean;
 };
 const meta = {
   title: "Components/RadioGroup",
@@ -15,6 +16,7 @@ const meta = {
     value: "monthly",
     disabled: false,
     orientation: "vertical",
+    optionRows: true,
   },
   argTypes: {
     value: {
@@ -28,8 +30,12 @@ const meta = {
       control: "select",
       options: ["horizontal", "vertical"],
     },
+    optionRows: {
+      control: "boolean",
+      description: "Pasa `label` y `description` a cada `RadioGroupItem` para usar las filas de Arc.",
+    },
   },
-  parameters: { controls: { include: ["value", "disabled", "orientation"] } },
+  parameters: { controls: { include: ["value", "disabled", "orientation", "optionRows"] } },
   render: function Render(args) {
     const [, updateArgs] = useArgs<Args>();
     return (
@@ -46,9 +52,16 @@ const meta = {
               onValueChange={(value) => setValue(value)}
             >
               {[
-                { value: "weekly", label: "Semanal" },
-                { value: "monthly", label: "Mensual" },
-              ].map((option) => (
+                { value: "weekly", label: "Semanal", description: "Se cobra cada lunes." },
+                { value: "monthly", label: "Mensual", description: "Se cobra el primer día del mes." },
+              ].map((option) => args.optionRows ? (
+                <RadioGroupItem
+                  key={option.value}
+                  value={option.value}
+                  label={option.label}
+                  description={option.description}
+                />
+              ) : (
                 <div className="StoryRow" key={option.value}>
                   <RadioGroupItem value={option.value} id={`radio-${option.value}`} />
                   <Label htmlFor={`radio-${option.value}`}>{option.label}</Label>
