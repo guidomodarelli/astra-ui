@@ -63,6 +63,7 @@ test("should unfold the alert dialog from its center and keep its actions workin
 });
 
 test("should reveal popovers and hover cards from their trigger", async ({ page }) => {
+  // Arc's floating layers travel and scale from their trigger and fade; they no longer clip.
   const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
   await page.getByRole("button", { name: "Ver filtros" }).click();
@@ -70,7 +71,7 @@ test("should reveal popovers and hover cards from their trigger", async ({ page 
   await expect(popover).toBeVisible();
   await expect
     .poll(() => motion.properties({ slot: "popover-content" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform", "clipPath"]));
+    .toEqual(expect.arrayContaining(["opacity", "transform"]));
   await expectSettled(popover);
   await page.keyboard.press("Escape");
   await expect(page.getByText("Filtros disponibles")).toHaveCount(0);
@@ -80,7 +81,7 @@ test("should reveal popovers and hover cards from their trigger", async ({ page 
   await expect(card).toBeVisible();
   await expect
     .poll(() => motion.properties({ slot: "hover-card-content" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform", "clipPath"]));
+    .toEqual(expect.arrayContaining(["opacity", "transform"]));
   await expectSettled(page.locator("[data-slot=hover-card-content]"));
 });
 

@@ -3,6 +3,7 @@
  * layer of a family is open, and briefly after the last one closes, the page is warm and the next layer opens
  * without waiting and only fades. Each family (tooltips, hover cards) keeps its own store.
  */
+import { useState } from "react";
 
 /** A subscribable warm flag shared by every instance of one layer family. */
 export interface OverlayWarmth {
@@ -54,4 +55,21 @@ export function createOverlayWarmth(skipWindowMs: number): OverlayWarmth {
       };
     },
   };
+}
+
+/**
+ * Remembers whether the page was already warm when a layer opened, so its entrance picks the instant path. It is
+ * captured while rendering the open change, before the layer marks the page warm itself.
+ * @param open - Whether the layer is open.
+ * @param isWarm - The family's current warm flag, read through `useSyncExternalStore`.
+ * @returns Whether the current (or last) opening happened while warm.
+ */
+export function useOpenedWhileWarm(open: boolean, isWarm: boolean): boolean {
+  const [wasOpen, setWasOpen] = useState(open);
+  const [openedWhileWarm, setOpenedWhileWarm] = useState(open && isWarm);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setOpenedWhileWarm(isWarm);
+  }
+  return openedWhileWarm;
 }

@@ -13,7 +13,7 @@ import { motion, type HTMLMotionProps } from "motion/react"
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
 import { ArcFloatingSlot } from "../motion/arc-floating-slot.js"
 import { ARC_DURATION, ARC_EASE } from "../motion/arc-tokens.js"
-import { createOverlayWarmth } from "../motion/overlay-warmth.js"
+import { createOverlayWarmth, useOpenedWhileWarm } from "../motion/overlay-warmth.js"
 import { MotionPresence, MotionOpenProvider, useMotionOpenState } from "../motion/presence.js"
 import { cn } from "../lib/utils.js"
 import {
@@ -36,6 +36,9 @@ import {
 /** Every hover card on the page shares one skip window. */
 const hoverCardWarmth = createOverlayWarmth(HOVER_CARD_SKIP_WINDOW_MS)
 
+/** Whether the page was already warm when the surrounding layer opened, so its entrance only fades. */
+const HoverCardOpenedWhileWarmContext = React.createContext(false)
+
 /**
  * Owns the open state and timing of one hover card.
  * @param props - Radix root properties. `openDelay` defaults to Arc's 500ms and `closeDelay` to 140ms; within the
@@ -53,6 +56,7 @@ function HoverCard({
     hoverCardWarmth.isWarm,
     hoverCardWarmth.isWarmOnServer
   )
+  const openedWhileWarm = useOpenedWhileWarm(motionOpen, isWarm)
 
   React.useEffect(() => {
     if (!motionOpen) return
@@ -61,14 +65,16 @@ function HoverCard({
 
   return (
     <MotionOpenProvider scope="hover-card" open={motionOpen}>
-      <HoverCardPrimitive.Root
-        data-slot="hover-card"
-        {...props}
-        openDelay={isWarm ? Math.min(openDelay, HOVER_CARD_WARM_OPEN_DELAY_MS) : openDelay}
-        closeDelay={closeDelay}
-        open={motionOpen}
-        onOpenChange={setMotionOpen}
-      />
+      <HoverCardOpenedWhileWarmContext.Provider value={openedWhileWarm}>
+        <HoverCardPrimitive.Root
+          data-slot="hover-card"
+          {...props}
+          openDelay={isWarm ? Math.min(openDelay, HOVER_CARD_WARM_OPEN_DELAY_MS) : openDelay}
+          closeDelay={closeDelay}
+          open={motionOpen}
+          onOpenChange={setMotionOpen}
+        />
+      </HoverCardOpenedWhileWarmContext.Provider>
     </MotionOpenProvider>
   )
 }
@@ -79,11 +85,6 @@ function HoverCardTrigger({
   return (
     <HoverCardPrimitive.Trigger data-slot="hover-card-trigger" {...props} />
   )
-}
-
-/** Picks the entrance when the card mounts: within the skip window it opens in place and only fades. */
-function resolveHoverCardMotion() {
-  return hoverCardWarmth.isWarm() ? HOVER_CARD_INSTANT_MOTION : HOVER_CARD_MOTION
 }
 
 /**
@@ -99,10 +100,12 @@ function HoverCardContent({
   collisionPadding = HOVER_CARD_COLLISION_PADDING_PX,
   ...props
 }: React.ComponentProps<typeof HoverCardPrimitive.Content>) {
+  // Within the skip window the layer opens in place and only fades.
+  const openedWhileWarm = React.useContext(HoverCardOpenedWhileWarmContext)
   return (
     <HoverCardPrimitive.Portal data-slot="hover-card-portal" forceMount>
       <MotionPresence scope="hover-card" forceMount={props.forceMount}>
-        <ArcFloatingSlot motion={resolveHoverCardMotion}>
+        <ArcFloatingSlot motion={() => (openedWhileWarm ? HOVER_CARD_INSTANT_MOTION : HOVER_CARD_MOTION)}>
           <HoverCardPrimitive.Content
             forceMount
             data-slot="hover-card-content"
