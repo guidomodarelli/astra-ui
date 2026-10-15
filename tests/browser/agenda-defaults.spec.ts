@@ -33,10 +33,10 @@ for (const kind of ["dialog", "alert-dialog"] as const) {
     await page.getByRole("button", { name: kind === "dialog" ? "Abrir diálogo" : "Abrir confirmación" }).click();
     const content = page.locator(`[data-slot="${kind}-content"]`);
     const footer = page.locator(`[data-slot="${kind}-footer"]`);
-    await expect(content).toHaveCSS("padding", "16px");
+    await expect(content).toHaveCSS("padding", "24px");
     await expect(footer).toHaveCSS("border-top-width", "1px");
-    await expect(footer).toHaveCSS("margin-bottom", "-16px");
-    await expect(footer).toHaveCSS("padding", "16px");
+    await expect(footer).toHaveCSS("margin-bottom", "-24px");
+    await expect(footer).toHaveCSS("padding", "16px 24px");
     await footer.getByRole("button", { name: kind === "dialog" ? "Cerrar" : "Cancelar", exact: true }).click();
     await expect(content).not.toBeVisible();
   });
