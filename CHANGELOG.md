@@ -19,7 +19,7 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 - `HoverCardProfile` muestra una vista previa de persona (retrato o iniciales, nombre, rol, bio, números y pie) dentro de `HoverCardContent`.
 - `DialogTitle`, `DialogDescription`, `AlertDialogTitle` y `AlertDialogDescription` animan el cambio de texto mientras el diálogo está abierto, sin animar el primer render y sin movimiento con `prefers-reduced-motion`.
 - `DialogHeader` deja espacio al botón de cerrar del panel para que un título largo no quede debajo.
-- Los enlaces de `Pagination` con `aria-disabled` se muestran atenuados y no reciben clics.
+- Los enlaces de `Pagination` con `aria-disabled` se muestran atenuados y no navegan ni con clic ni con el teclado.
 - `Calendar` acepta `showToday` y `todayLabel` para mostrar un botón "Hoy" que vuelve al mes actual y selecciona el día de hoy.
 - `CarouselIndicators` muestra un grupo de botones de puntos, con el activo marcado por `aria-current`, cuyo punto activo se estira en una píldora que acompaña el desplazamiento.
 - `Carousel` responde a `Home` y `End` para ir a la primera y la última diapositiva.
