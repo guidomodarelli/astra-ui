@@ -4,6 +4,11 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+### Added
+
+- `ActionButton` (y `beez-ui/action-button`), de Arc: corre una acción asíncrona y muestra el resultado en el propio botón, con el label que cambia letra por letra de la flecha al spinner (`pendingLabel`, "Guardando" por defecto) y al check (`successLabel`, "Guardado"), y vuelve solo a idle después de `resetAfterMs` (2400 ms). Mientras corre sigue enfocable e ignora nuevas pulsaciones; si falla, vuelve a idle y entrega el error a `onActionError`. Acepta las variantes y tamaños de `Button`.
+- `SplitButton` (y `beez-ui/split-button`), de Arc: una acción principal unida a un menú de acciones relacionadas (`actions`, con `destructive`, `disabled` e `icon`), en variante `primary` o `secondary` (compacta). El ícono y el label de la acción principal cambian en el lugar y los lectores de pantalla anuncian el label nuevo; la mitad del menú se nombra "Más acciones de {label}" o con `menuLabel`.
+
 ## [2.3.1] - 2026-10-14
 
 ### Changed

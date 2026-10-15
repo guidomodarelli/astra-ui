@@ -18,6 +18,11 @@
     "assets"
   ],
   "exports": {
+    "./action-button": {
+      "types": "./dist/components/action-button.d.ts",
+      "import": "./dist/components/action-button.js",
+      "default": "./dist/components/action-button.js"
+    },
     "./alert-dialog": {
       "types": "./dist/components/alert-dialog.d.ts",
       "import": "./dist/components/alert-dialog.js",
@@ -107,6 +112,11 @@
       "types": "./dist/components/skeleton.d.ts",
       "import": "./dist/components/skeleton.js",
       "default": "./dist/components/skeleton.js"
+    },
+    "./split-button": {
+      "types": "./dist/components/split-button.d.ts",
+      "import": "./dist/components/split-button.js",
+      "default": "./dist/components/split-button.js"
     },
     "./switch": {
       "types": "./dist/components/switch.d.ts",

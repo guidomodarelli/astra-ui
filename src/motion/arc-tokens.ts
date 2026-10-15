@@ -22,6 +22,11 @@ export const ARC_SPRING_SNAPPY = { type: "spring", visualDuration: 0.26, bounce:
 /** Shape morphs and width changes that follow new content. */
 export const ARC_SPRING_MORPH = { type: "spring", visualDuration: 0.42, bounce: 0.16 } as const;
 
+/** Stagger steps in seconds; keep a whole staggered entrance under roughly 0.4s. */
+export const ARC_STAGGER = {
+  char: 0.016,
+} as const;
+
 /** Blur radii in pixels for brief content crossfades. */
 export const ARC_BLUR = {
   subtle: 2,
