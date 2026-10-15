@@ -4,6 +4,8 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-10-15
+
 ### Added
 
 - `Input` y `Textarea` aceptan `label`, `description` y `error`, de Arc: si se pasa cualquiera de ellos (aunque valga `undefined`, así el control no se vuelve a montar cuando aparece la validación) renderizan el campo completo, con el label asociado al control, la ayuda y el error enlazados por `aria-describedby`, y filas que se abren con un resorte y cambian solo las palabras que cambiaron; los números de la ayuda (por ejemplo un contador de caracteres) giran solo los dígitos que cambian. El error marca `aria-invalid` y se anuncia con `role="alert"`. Con movimiento reducido los cambios son instantáneos. Sin esas props siguen renderizando solo el control.
