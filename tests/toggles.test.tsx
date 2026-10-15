@@ -217,6 +217,30 @@ describe("RadioGroup", () => {
     expect(screen.getByLabelText("Elegida")).toHaveTextContent("monthly");
   });
 
+  it("should render the consumer element as the group with asChild and keep its options selectable", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    render(
+      <RadioGroup asChild defaultValue="monthly">
+        <fieldset>
+          <legend>Facturación</legend>
+          <RadioGroupItem value="monthly" label="Mensual" />
+          <RadioGroupItem value="yearly" label="Anual" />
+        </fieldset>
+      </RadioGroup>,
+    );
+    const group = screen.getByRole("radiogroup");
+
+    // Act
+    await user.click(screen.getByText("Anual"));
+
+    // Assert
+    expect(group.tagName).toBe("FIELDSET");
+    expect(group).toHaveAccessibleName("Facturación");
+    expect(screen.getByRole("radio", { name: "Anual" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Mensual" })).not.toBeChecked();
+  });
+
   it("should not choose a disabled option", async () => {
     // Arrange
     const user = userEvent.setup();

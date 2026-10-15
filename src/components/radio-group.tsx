@@ -77,6 +77,7 @@ function RadioGroup({
   defaultValue,
   onValueChange,
   ref,
+  asChild,
   ...props
 }: ComponentProps<typeof RadioGroupPrimitive.Root>) {
   const reduceMotion = usePrefersReducedMotion();
@@ -93,7 +94,8 @@ function RadioGroup({
     const hasChanged = shownValue.current !== null && shownValue.current !== selectedValue;
     placeHighlight(highlightRef.current, findCheckedRow(), placedAt, hasChanged && !reduceMotion);
     shownValue.current = selectedValue;
-    groupRef.current?.setAttribute(RADIO_GROUP_READY_ATTRIBUTE, "");
+    // Without a highlight (an `asChild` group) the checked row keeps its static fallback look.
+    if (highlightRef.current) groupRef.current?.setAttribute(RADIO_GROUP_READY_ATTRIBUTE, "");
   }, [selectedValue, reduceMotion]);
 
   useEffect(() => {
@@ -106,30 +108,38 @@ function RadioGroup({
   });
 
   return (
-    <RadioGroupPrimitive.Root
-      data-slot="radio-group"
-      className={cn("relative grid w-full gap-2", className)}
-      {...props}
-      ref={(node) => {
-        groupRef.current = node;
-        if (typeof ref === "function") return ref(node);
-        if (ref) ref.current = node;
-      }}
-      value={selectedValue}
-      onValueChange={(nextValue) => {
-        if (value === undefined) setUncontrolledValue(nextValue);
-        onValueChange?.(nextValue);
-      }}
-    >
-      {/* Above the rows' borders and fills, below their copy, so it never crosses a label. */}
-      <span
-        ref={highlightRef}
-        data-slot="radio-group-highlight"
-        aria-hidden="true"
-        className="pointer-events-none absolute top-0 left-0 z-1 box-border rounded-(--radius-control) border border-(--control-on) bg-[color-mix(in_oklab,var(--control-on)_5%,transparent)] opacity-0"
-      />
-      <RadioGroupValueContext.Provider value={selectedValue}>{children}</RadioGroupValueContext.Provider>
-    </RadioGroupPrimitive.Root>
+    <RadioGroupValueContext.Provider value={selectedValue}>
+      <RadioGroupPrimitive.Root
+        data-slot="radio-group"
+        className={cn("relative grid w-full gap-2", className)}
+        {...props}
+        asChild={asChild}
+        ref={(node) => {
+          groupRef.current = node;
+          if (typeof ref === "function") return ref(node);
+          if (ref) ref.current = node;
+        }}
+        value={selectedValue}
+        onValueChange={(nextValue) => {
+          if (value === undefined) setUncontrolledValue(nextValue);
+          onValueChange?.(nextValue);
+        }}
+      >
+        {/* Radix's Slot needs the consumer element as the only child, so an `asChild` group gets no highlight. */}
+        {asChild ? children : (
+          <>
+            {/* Above the rows' borders and fills, below their copy, so it never crosses a label. */}
+            <span
+              ref={highlightRef}
+              data-slot="radio-group-highlight"
+              aria-hidden="true"
+              className="pointer-events-none absolute top-0 left-0 z-1 box-border rounded-(--radius-control) border border-(--control-on) bg-[color-mix(in_oklab,var(--control-on)_5%,transparent)] opacity-0"
+            />
+            {children}
+          </>
+        )}
+      </RadioGroupPrimitive.Root>
+    </RadioGroupValueContext.Provider>
   );
 }
 
