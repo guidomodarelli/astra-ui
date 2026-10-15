@@ -1,5 +1,11 @@
 "use client"
 
+/**
+ * Arc's Dialog (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): a focused surface for decisions that need
+ * attention, on Arc's overlay, raised panel, title and description type and bordered close button, with Arc's swap of
+ * a title or description changed while open. It keeps beez-ui's composable parts, the center morph entrance and the
+ * viewport close button placement instead of Arc's single `title`/`description` content and rise entrance.
+ */
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
@@ -9,6 +15,15 @@ import { cn } from "../lib/utils.js"
 import { Button } from "./button.js"
 import { ControlButton } from "./control-button.js"
 import { XIcon } from "lucide-react"
+import {
+  withDialogSwapText,
+  dialogCloseButtonClassName,
+  dialogDescriptionClassName,
+  dialogFooterClassName,
+  dialogOverlayClassName,
+  dialogSurfaceClassName,
+  dialogTitleClassName,
+} from "./dialog-surface.js"
 
 function Dialog({
   ...props
@@ -43,10 +58,7 @@ function DialogOverlay({
   return (
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
-      className={cn(
-        "fixed inset-0 isolate z-50 bg-black/30 supports-backdrop-filter:backdrop-blur-md ",
-        className
-      )}
+      className={cn(dialogOverlayClassName, className)}
       {...props}
     />
   )
@@ -68,7 +80,7 @@ function DialogViewportCloseButton() {
     <DialogPrimitive.Close data-slot="dialog-close" asChild>
       <ControlButton
         variant="ghost"
-        className="fixed top-4 right-4 transition-opacity duration-200 ease-out in-data-motion-entering:invisible in-data-motion-entering:opacity-0 in-data-motion-entering:transition-none in-data-[state=closed]:invisible in-data-[state=closed]:opacity-0 in-data-[state=closed]:transition-none motion-reduce:transition-none"
+        className={cn(dialogCloseButtonClassName, "fixed top-4 right-4 transition-opacity duration-200 ease-out in-data-motion-entering:invisible in-data-motion-entering:opacity-0 in-data-motion-entering:transition-none in-data-[state=closed]:invisible in-data-[state=closed]:opacity-0 in-data-[state=closed]:transition-none motion-reduce:transition-none")}
         size="icon-sm"
       >
         <XIcon />
@@ -102,8 +114,10 @@ function DialogContent({
       <MotionSlot kind="overlay"><DialogOverlay forceMount /></MotionSlot>
       <MotionSlot kind="center-morph"><DialogPrimitive.Content forceMount
         data-slot="dialog-content"
+        data-close-button-placement={showCloseButton ? closeButtonPlacement : undefined}
         className={cn(
-          "fixed z-50 grid w-full max-w-[calc(100%-2rem)] max-h-[calc(100svh-2rem)] gap-4 overflow-y-auto rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 outline-none sm:max-w-sm ",
+          dialogSurfaceClassName,
+          "fixed grid w-full max-w-[calc(100%-2rem)] max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain sm:max-w-[440px]",
           // A resting `translate` would make the panel the containing block of the
           // viewport-pinned close button, so that placement centers with margins instead.
           closeButtonPlacement === "viewport"
@@ -119,7 +133,11 @@ function DialogContent({
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
             <MotionSlot kind="delayed-pop"><ControlButton
               variant="ghost"
-              className="absolute top-2 right-2"
+              className={cn(
+                dialogCloseButtonClassName,
+                // Centred on the first line of an 18px title, as in Arc's header row.
+                "absolute top-[calc(var(--space-6)+(var(--text-lg)*var(--leading-body)-var(--space-8))/2)] right-(--space-6)"
+              )}
               size="icon-sm"
             >
               <XIcon
@@ -133,18 +151,27 @@ function DialogContent({
   )
 }
 
+/**
+ * Stacks the title and description. While the panel shows its own close button, the header keeps Arc's gap to it so
+ * long copy never runs under the button.
+ * @param props - Native div properties and optional consumer overrides.
+ * @returns The header block.
+ */
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2", className)}
+      className={cn(
+        "flex flex-col gap-(--space-2) in-data-[close-button-placement=content]:pr-[calc(var(--space-8)+var(--space-5))]",
+        className
+      )}
       {...props}
     />
   )
 }
 
 /**
- * Separates dialog actions with a bordered footer matching the content padding.
+ * Separates dialog actions with an edge-to-edge footer under a hairline, bleeding through the panel padding.
  * @param props - Primitive properties and optional consumer overrides.
  * @returns The styled primitive with its original interaction contract.
  */
@@ -159,10 +186,7 @@ function DialogFooter({
   return (
     <div
       data-slot="dialog-footer"
-      className={cn(
-        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end",
-        className
-      )}
+      className={cn(dialogFooterClassName, className)}
       {...props}
     >
       {children}
@@ -176,36 +200,44 @@ function DialogFooter({
 }
 
 /**
- * Renders dialog headings with the shared font at the compact default size.
+ * Renders the dialog heading in Arc's title type. Plain text that changes while open swaps with Arc's rise.
  * @param props - Primitive properties and optional consumer overrides.
  * @returns The styled primitive with its original interaction contract.
  */
 function DialogTitle({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Title>) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("font-heading text-base leading-none font-medium", className)}
+      className={cn(dialogTitleClassName, className)}
       {...props}
-    />
+    >
+      {withDialogSwapText(children, props.asChild)}
+    </DialogPrimitive.Title>
   )
 }
 
+/**
+ * Renders the dialog description in Arc's secondary text. Plain text that changes while open swaps with Arc's rise.
+ * @param props - Primitive properties and optional consumer overrides.
+ * @returns The styled primitive with its original interaction contract.
+ */
 function DialogDescription({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Description>) {
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn(
-        "text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
-        className
-      )}
+      className={cn(dialogDescriptionClassName, className)}
       {...props}
-    />
+    >
+      {withDialogSwapText(children, props.asChild)}
+    </DialogPrimitive.Description>
   )
 }
 
