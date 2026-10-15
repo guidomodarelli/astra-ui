@@ -117,6 +117,20 @@ test("should glide the tab indicator and hand the highlight back to the active t
   const activeBackground = await page
     .getByRole("tab", { name: "Resumen" })
     .evaluate((tab) => getComputedStyle(tab).backgroundColor);
+  // Arc slides the entering panel with Motion's `x`, driven per frame rather than through
+  // Element.animate, so its painted offset is sampled on every frame from before the click.
+  await page.evaluate(() => {
+    const offsets: number[] = [];
+    Object.assign(window, { __panelOffsets: offsets });
+    const sample = () => {
+      const panel = document.querySelector<HTMLElement>(
+        '[role="tabpanel"]:not([aria-hidden="true"])',
+      );
+      if (panel) offsets.push(new DOMMatrix(getComputedStyle(panel).transform).m41);
+      requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  });
   await detail.click();
   await expect.poll(motion.glides).toContain("tabs-list");
   await expect(page.locator("[data-glide-indicator]")).toHaveCount(0);
@@ -124,9 +138,15 @@ test("should glide the tab indicator and hand the highlight back to the active t
   await expect(detail).not.toHaveAttribute("data-glide-target");
   await expect(detail).toHaveCSS("background-color", activeBackground);
   await expect(page.getByText("Contenido del detalle")).toBeVisible();
+  // Moving to a later tab slides the panel in from the right and settles it in place.
   await expect
-    .poll(() => motion.properties({ role: "tabpanel" }))
-    .toContain("transform");
+    .poll(() =>
+      page.evaluate(() =>
+        Math.max(...(window as unknown as { __panelOffsets: number[] }).__panelOffsets),
+      ),
+    )
+    .toBeGreaterThan(0);
+  await expect(page.getByRole("tabpanel")).toHaveCSS("transform", "none");
 });
 
 test("should glide the menu highlight between items with the keyboard", async ({
