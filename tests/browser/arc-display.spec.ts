@@ -47,6 +47,8 @@ test("should pop the presence dot in and out of the avatar corner", async ({ pag
   const dot = avatar.locator('[data-slot="avatar-status"]');
   await expect(dot).toBeVisible();
   await expect(avatar.getByText("En línea")).toBeAttached();
+  // The dot pops in from a smaller scale, so its box is only measured once the spring has settled.
+  await expect(dot).toHaveCSS("transform", "none", { timeout: SETTLE_TIMEOUT_MS });
   const [avatarBox, dotBox] = await Promise.all([avatar.boundingBox(), dot.boundingBox()]);
   expect(Math.abs(dotBox!.x + dotBox!.width - (avatarBox!.x + avatarBox!.width))).toBeLessThan(2);
   await toggle.click();
