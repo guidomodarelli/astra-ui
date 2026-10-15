@@ -308,12 +308,18 @@ function TabsPanel({ motionState, reduceMotion, ref, ...props }: TabsPanelProps)
     const release = () => {
       panel.style.height = ""
       panel.style.overflow = ""
+      panel.style.flex = ""
+      panel.style.minHeight = ""
     }
     if (
       fromHeight !== null &&
       Math.abs(fromHeight - toHeight) > TABS_PANEL_HEIGHT_TOLERANCE_PX &&
       !reduceMotion
     ) {
+      // A flex item's automatic minimum size is its content height, which would override the animated height in a
+      // column of horizontal tabs; the panel gives up flexing until the morph ends.
+      panel.style.flex = "none"
+      panel.style.minHeight = "0"
       if (toHeight > fromHeight) panel.style.overflow = "clip"
       controls = animate(panel, { height: [fromHeight, toHeight] }, { ...ARC_SPRING_SMOOTH, onComplete: release })
     }

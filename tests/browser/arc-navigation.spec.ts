@@ -1,6 +1,6 @@
 /** Exercises Arc's Tabs and Pagination in real engines, where layout, scrolling and motion exist. */
 import { expect, test } from "@playwright/test";
-import type { Locator } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 
 import { recordMotion } from "./motion-recorder.js";
 
@@ -26,6 +26,45 @@ async function samplePanel(panel: Locator): Promise<{ x: number; height: number 
   );
 }
 
+/** One painted frame of the panel exposed to assistive technology. */
+type PanelFrame = { text: string; x: number; height: number };
+
+/**
+ * Starts sampling, on every animation frame, the visible panel of the panel tabs. Sampling inside the page catches the
+ * whole entrance even when the round trips of the test runner take longer than the spring itself.
+ * @param page - Page that holds the tabs; a previous recording is discarded.
+ */
+async function recordPanelFrames(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const recorder = window as unknown as { __panelFrames?: PanelFrame[]; __panelFrameId?: number };
+    if (recorder.__panelFrameId !== undefined) cancelAnimationFrame(recorder.__panelFrameId);
+    const frames: PanelFrame[] = [];
+    recorder.__panelFrames = frames;
+    const sample = () => {
+      const panel = document.querySelector<HTMLElement>(
+        '[data-testid="panel-tabs"] [role="tabpanel"]:not([aria-hidden="true"])',
+      );
+      if (panel)
+        frames.push({
+          text: panel.textContent ?? "",
+          x: new DOMMatrix(getComputedStyle(panel).transform).m41,
+          height: panel.getBoundingClientRect().height,
+        });
+      recorder.__panelFrameId = requestAnimationFrame(sample);
+    };
+    recorder.__panelFrameId = requestAnimationFrame(sample);
+  });
+}
+
+/**
+ * Returns the frames recorded since the last call to `recordPanelFrames`.
+ * @param page - Page that holds the tabs.
+ * @returns The sampled frames, oldest first.
+ */
+async function readPanelFrames(page: Page): Promise<PanelFrame[]> {
+  return page.evaluate(() => [...((window as unknown as { __panelFrames?: PanelFrame[] }).__panelFrames ?? [])]);
+}
+
 test.describe("with motion", () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -35,23 +74,29 @@ test.describe("with motion", () => {
     await page.goto("/arc-navigation.html");
     const tabs = page.getByTestId("panel-tabs");
     const initialHeight = (await tabs.getByRole("tabpanel").boundingBox())!.height;
+    await recordPanelFrames(page);
 
     await tabs.getByRole("tab", { name: "Actividad" }).click();
-    const forward = await samplePanel(tabs.getByRole("tabpanel"));
-    expect(forward.x).toBeGreaterThan(0);
-    expect(forward.height).toBeLessThan(240);
-    expect(forward.height).toBeGreaterThanOrEqual(initialHeight - 1);
+    await expect(tabs.getByRole("tabpanel")).toHaveText("Actividad reciente de la tribu.");
     await expect
-      .poll(async () => (await samplePanel(tabs.getByRole("tabpanel"))).height, { timeout: SETTLE_TIMEOUT_MS })
+      .poll(async () => (await readPanelFrames(page)).at(-1)?.height ?? 0, { timeout: SETTLE_TIMEOUT_MS })
       .toBeGreaterThanOrEqual(239);
+    const forward = (await readPanelFrames(page)).filter((frame) => frame.text.startsWith("Actividad"));
+    // The panel enters from the right of the previous one and grows from its height, never jumping to the end.
+    expect(Math.max(...forward.map((frame) => frame.x))).toBeGreaterThan(0);
+    expect(Math.min(...forward.map((frame) => frame.height))).toBeGreaterThanOrEqual(initialHeight - 1);
+    expect(
+      forward.some((frame) => frame.height > initialHeight + 1 && frame.height < 239),
+    ).toBe(true);
 
+    await recordPanelFrames(page);
     await tabs.getByRole("tab", { name: "Resumen" }).click();
-    const backward = await samplePanel(tabs.getByRole("tabpanel"));
-    expect(backward.x).toBeLessThan(0);
     await expect(tabs.getByRole("tabpanel")).toHaveText("Resumen breve.");
     await expect
       .poll(async () => (await samplePanel(tabs.getByRole("tabpanel"))).x, { timeout: SETTLE_TIMEOUT_MS })
       .toBe(0);
+    const backward = (await readPanelFrames(page)).filter((frame) => frame.text.startsWith("Resumen"));
+    expect(Math.min(...backward.map((frame) => frame.x))).toBeLessThan(0);
   });
 
   test("should glide the tab highlight and hand it back to the active tab", async ({ page }) => {
