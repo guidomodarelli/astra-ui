@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
@@ -30,6 +30,10 @@ function SingleDateCalendar({ defaultMonth, onSelect }: { defaultMonth: Date; on
 }
 
 describe("Calendar", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("should bring today's month into view and select today from the Today button", async () => {
     // Arrange
     const onSelect = vi.fn();
@@ -43,6 +47,45 @@ describe("Calendar", () => {
     expect(screen.getByText("septiembre 2026")).toBeInTheDocument();
     expect(onSelect).toHaveBeenCalledWith(TODAY);
     expect(screen.getByRole("button", { name: TODAY_BUTTON_NAME })).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("should hand onSelect the modifiers DayPicker gives today, including custom ones", async () => {
+    // Arrange
+    const onSelect = vi.fn();
+    render(
+      <Calendar
+        mode="single"
+        showToday
+        today={TODAY}
+        defaultMonth={new Date(2026, 0, 1)}
+        modifiers={{ booked: TODAY }}
+        onSelect={onSelect}
+      />,
+    );
+
+    // Act
+    await userEvent.click(screen.getByRole("button", { name: TODAY_BUTTON_NAME }));
+
+    // Assert
+    const [selectedDate, triggerDate, modifiers] = onSelect.mock.calls[0];
+    expect(selectedDate).toEqual(TODAY);
+    expect(triggerDate).toEqual(TODAY);
+    expect(modifiers).toMatchObject({ today: true, booked: true, disabled: false });
+  });
+
+  it("should select today in the calendar time zone rather than the viewer's", async () => {
+    // Arrange: 20:00 UTC on September 10 is already September 11 in Kiritimati (UTC+14).
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date(Date.UTC(2026, 8, 10, 20)) });
+    const onSelect = vi.fn();
+    render(<Calendar mode="single" showToday timeZone="Pacific/Kiritimati" defaultMonth={TODAY} onSelect={onSelect} />);
+
+    // Act
+    await userEvent.click(screen.getByRole("button", { name: TODAY_BUTTON_NAME }));
+
+    // Assert
+    const selectedDate: Date = onSelect.mock.calls[0][0];
+    expect([selectedDate.getMonth(), selectedDate.getDate()]).toEqual([8, 11]);
+    expect(screen.getByRole("button", { name: /^Hoy, viernes, 11 de septiembre/i })).toHaveAttribute("data-today", "true");
   });
 
   it("should leave the selection alone when today is already selected", async () => {

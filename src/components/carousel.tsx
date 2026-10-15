@@ -336,8 +336,9 @@ type CarouselIndicatorsProps = Omit<React.ComponentProps<"div">, "children"> & {
 
 /**
  * Arc's page indicator for a carousel: one dot per snap point, where the current one stretches into a pill that
- * follows the track frame by frame while it is dragged or scrolled. The list is a tab list with a roving tab stop;
- * activating a dot scrolls to its slide, and the carousel's arrow, Home and End keys move the focus along. It renders
+ * follows the track frame by frame while it is dragged or scrolled. The dots are buttons in a named group and the
+ * current one carries `aria-current`; activating a dot scrolls to its slide, and when a dot has focus the carousel's
+ * arrow, Home and End keys move the focus to the dot of the new slide. It renders
  * once Embla has measured the slides. Place it inside `Carousel`.
  * @param props - Optional accessible copy plus native attributes of the list.
  * @returns The indicator list, or nothing until there is more than one snap point.
@@ -406,9 +407,8 @@ function CarouselIndicators({
   return (
     <div
       ref={listRef}
-      role="tablist"
+      role="group"
       aria-label={label}
-      aria-orientation={orientation}
       data-slot="carousel-indicators"
       className={cn(
         "flex min-w-0 items-center justify-center",
@@ -470,10 +470,8 @@ function CarouselIndicator({
     <button
       ref={indicatorRef}
       type="button"
-      role="tab"
-      aria-selected={isSelected}
+      aria-current={isSelected || undefined}
       aria-label={label}
-      tabIndex={isSelected ? 0 : -1}
       data-slot="carousel-indicator"
       className={cn(
         "group/indicator grid shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 outline-none [-webkit-tap-highlight-color:transparent] focus-visible:ring-3 focus-visible:ring-ring/50",

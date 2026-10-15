@@ -87,17 +87,18 @@ test.describe("Calendar", () => {
 test.describe("Carousel", () => {
   test("should stretch the active indicator into a pill that follows the selected slide", async ({ page }) => {
     await page.goto("/arc-data.html");
-    const indicators = page.getByRole("tablist", { name: "Elegir una diapositiva" });
-    const first = indicators.getByRole("tab", { name: "Diapositiva 1 de 4" });
-    const third = indicators.getByRole("tab", { name: "Diapositiva 3 de 4" });
+    const indicators = page.getByRole("group", { name: "Elegir una diapositiva" });
+    const first = indicators.getByRole("button", { name: "Diapositiva 1 de 4" });
+    const third = indicators.getByRole("button", { name: "Diapositiva 3 de 4" });
     const pillWidth = (tab: Locator) =>
       tab.locator("span").first().evaluate((element) => Math.round(element.getBoundingClientRect().width));
-    await expect(first).toHaveAttribute("aria-selected", "true");
+    await expect(first).toHaveAttribute("aria-current", "true");
     await expect.poll(() => pillWidth(first)).toBe(22);
 
     await third.click();
 
-    await expect(third).toHaveAttribute("aria-selected", "true");
+    await expect(third).toHaveAttribute("aria-current", "true");
+    await expect(first).not.toHaveAttribute("aria-current");
     await expect.poll(() => pillWidth(third)).toBe(22);
     await expect.poll(() => pillWidth(first)).toBe(6);
   });
@@ -105,13 +106,13 @@ test.describe("Carousel", () => {
   test("should jump to the edges with Home and End and keep the indicator focus in step", async ({ page }) => {
     await page.goto("/arc-data.html");
     const carousel = page.getByRole("region", { name: "Destacados" });
-    const first = carousel.getByRole("tab", { name: "Diapositiva 1 de 4" });
+    const first = carousel.getByRole("button", { name: "Diapositiva 1 de 4" });
     await first.focus();
 
     await page.keyboard.press("End");
 
     await expect(carousel.getByRole("button", { name: "Next slide" })).toBeDisabled();
-    await expect(carousel.getByRole("tab", { name: "Diapositiva 4 de 4" })).toBeFocused();
+    await expect(carousel.getByRole("button", { name: "Diapositiva 4 de 4" })).toBeFocused();
     await page.keyboard.press("Home");
     await expect(carousel.getByRole("button", { name: "Previous slide" })).toBeDisabled();
     await expect(first).toBeFocused();
@@ -126,7 +127,7 @@ test.describe("Carousel", () => {
     await page.keyboard.press("ArrowLeft");
     await page.keyboard.press("ArrowRight");
 
-    await expect(carousel.getByRole("tab", { name: "Diapositiva 1 de 4" })).toHaveAttribute("aria-selected", "true");
+    await expect(carousel.getByRole("button", { name: "Diapositiva 1 de 4" })).toHaveAttribute("aria-current", "true");
     await expect(field).toBeFocused();
   });
 

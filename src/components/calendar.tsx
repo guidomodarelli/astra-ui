@@ -14,10 +14,11 @@ import {
   dateMatchModifiers,
   getDefaultClassNames,
   useDayPicker,
+  type CalendarDay,
+  type CalendarMonth as DayPickerMonth,
   type CustomComponents,
   type DayButton,
   type Locale,
-  type Modifiers,
   type MonthProps,
   type NavProps,
   type SelectHandler,
@@ -35,7 +36,7 @@ import {
   CALENDAR_SELECTION_EXIT_DURATION_S,
 } from "../constants/calendar.js"
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
-import { useToday } from "../hooks/use-today.js"
+import { useIsHydrated } from "../hooks/use-is-hydrated.js"
 import { ARC_DURATION, ARC_EASE, ARC_SPRING_MORPH, ARC_SPRING_SNAPPY } from "../motion/arc-tokens.js"
 import { MOTION_MONTH_DISTANCE } from "../motion/tokens.js"
 import { cn } from "../lib/utils.js"
@@ -315,16 +316,35 @@ function isSameMonth(firstDate: Date, secondDate: Date): boolean {
   return firstDate.getFullYear() === secondDate.getFullYear() && firstDate.getMonth() === secondDate.getMonth()
 }
 
+/** Whether two dates fall on the same calendar day, read in the dates' own time zone. */
+function isSameDate(firstDate: Date, secondDate: Date): boolean {
+  return isSameMonth(firstDate, secondDate) && firstDate.getDate() === secondDate.getDate()
+}
+
 /**
- * Arc's Today button. Today is read on the client only (or from the `today` prop), so server markup never depends on
- * the server clock; until then the button rests dimmed.
+ * Finds the rendered day of a date inside the displayed months, so its modifiers can be read from DayPicker.
+ * @param months - Months DayPicker displays.
+ * @param date - Date to look for.
+ * @returns The day in its own month, or `undefined` when that month is not displayed.
+ */
+function findDisplayedDay(months: DayPickerMonth[], date: Date): CalendarDay | undefined {
+  return months
+    .flatMap((month) => month.weeks.flatMap((week) => week.days))
+    .find((day) => !day.outside && isSameDate(day.date, date))
+}
+
+/**
+ * Arc's Today button. Today is DayPicker's own (the `today` prop, or today in its `timeZone`), so the button always
+ * agrees with the day marked as today; it is only read once hydrated, so server markup never depends on the server
+ * clock, and until then the button rests dimmed.
  * @returns A button that brings today into view and selects it in single mode when it is not disabled.
  */
 function CalendarTodayButton() {
-  const { months, goToMonth, select, isSelected, dayPickerProps } = useDayPicker()
+  const { months, goToMonth, getModifiers, select, isSelected, dayPickerProps } = useDayPicker()
   const { todayLabel } = React.useContext(CalendarSettingsContext)
-  const viewerToday = useToday()
-  const today = dayPickerProps.today ?? viewerToday
+  const isHydrated = useIsHydrated()
+  const today = isHydrated ? dayPickerProps.today : undefined
+  const pendingSelectionRef = React.useRef<React.MouseEvent<HTMLButtonElement> | null>(null)
   const isTodayShown = Boolean(today && months.some((month) => isSameMonth(month.date, today)))
   const isTodaySelectable = Boolean(
     today &&
@@ -335,14 +355,34 @@ function CalendarTodayButton() {
   const isTodaySelected = Boolean(today && isSelected?.(today))
   const isIdle = !today || (isTodayShown && (!isTodaySelectable || isTodaySelected))
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    if (isIdle || !today) return
-    if (!isTodayShown) goToMonth(today)
-    if (!isTodaySelectable || isTodaySelected) return
-    const todayModifiers: Modifiers = { today: true }
+  /** Selects today's displayed day with the modifiers DayPicker gives it, as a click on that day would. */
+  const selectDisplayedToday = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const todayDay = today && findDisplayedDay(months, today)
+    if (!todayDay) return
+    const modifiers = getModifiers(todayDay)
+    if (modifiers.disabled || modifiers.hidden) return
     // Only single mode selects today, so the handler is react-day-picker's single selection handler.
     const selectSingle = select as SelectHandler<{ mode: "single" }> | undefined
-    selectSingle?.(today, todayModifiers, event)
+    selectSingle?.(todayDay.date, modifiers, event)
+  }
+
+  // A selection asked for while today's month was hidden waits one render for DayPicker to display that month.
+  React.useEffect(() => {
+    const pendingEvent = pendingSelectionRef.current
+    if (!pendingEvent) return
+    pendingSelectionRef.current = null
+    selectDisplayedToday(pendingEvent)
+  })
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (isIdle || !today) return
+    const shouldSelect = isTodaySelectable && !isTodaySelected
+    if (isTodayShown) {
+      if (shouldSelect) selectDisplayedToday(event)
+      return
+    }
+    if (shouldSelect) pendingSelectionRef.current = event
+    goToMonth(today)
   }
 
   return (

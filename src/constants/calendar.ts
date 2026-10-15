@@ -22,6 +22,3 @@ export const CALENDAR_SELECTION_DISC_ATTRIBUTE = "data-selection-disc"
 export const CALENDAR_COPY = {
   today: "Hoy",
 } as const
-
-/** Extra wait, in milliseconds, after local midnight before reading the new date, so the clock has turned over. */
-export const CALENDAR_TODAY_REFRESH_DELAY_MS = 1000
