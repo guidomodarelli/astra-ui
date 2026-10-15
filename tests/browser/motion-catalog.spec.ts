@@ -116,32 +116,43 @@ test("should press radios and pop their dot on selection", async ({ page }) => {
   const yearly = page.getByRole("radio", { name: "Anual" });
   const dot = yearly.locator("[data-slot=radio-group-indicator]");
   await expect(dot).toHaveCSS("opacity", "0");
-  // Held down, the mark dips and previews a faint dot before anything is chosen.
-  await yearly.hover();
+  // Held down, the mark dips and previews a faint dot before anything is chosen. The press waits for the mark to stop
+  // moving, since a busy page can still shift layout around it.
+  await expect
+    .poll(async () => {
+      const before = JSON.stringify(await yearly.boundingBox());
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      return before === JSON.stringify(await yearly.boundingBox());
+    })
+    .toBe(true);
+  const pressBox = (await yearly.boundingBox())!;
+  await page.mouse.move(pressBox.x + pressBox.width / 2, pressBox.y + pressBox.height / 2);
   await page.mouse.down();
   await expect.poll(() => yearly.evaluate((mark) => getComputedStyle(mark).scale)).toBe("0.88");
   await expect
     .poll(() => yearly.evaluate((mark) => Number(getComputedStyle(mark, "::before").opacity)))
     .toBeCloseTo(0.22, 2);
   await expect(yearly).not.toBeChecked();
-  // Samples the dot's scale on every frame from the release on, inside the page so test latency skips none.
+  // Reads the dot's scale at the very moment the radio reports the new choice, before any frame can advance it.
   await dot.evaluate((element) => {
-    const samples: number[] = [];
-    const sample = () => {
+    const observer = new MutationObserver(() => {
+      if (element.getAttribute("data-state") !== "checked") return;
       const transform = getComputedStyle(element).transform;
-      samples.push(transform === "none" ? 1 : new DOMMatrixReadOnly(transform).a);
-      if (samples.length < 120) requestAnimationFrame(sample);
-    };
-    requestAnimationFrame(sample);
-    Object.assign(window, { __dotScales: samples });
+      Object.assign(window, { __dotScaleOnCheck: transform === "none" ? 1 : new DOMMatrixReadOnly(transform).a });
+      observer.disconnect();
+    });
+    observer.observe(element, { attributes: true, attributeFilter: ["data-state"] });
   });
+  // Releases over where the mark is now: a busy page can still shift layout while the button is held.
+  const releaseBox = (await yearly.boundingBox())!;
+  await page.mouse.move(releaseBox.x + releaseBox.width / 2, releaseBox.y + releaseBox.height / 2);
   await page.mouse.up();
   await expect(yearly).toBeChecked();
   await expectSettled(yearly);
   await expectSettled(dot);
-  // The new dot springs up from a smaller scale instead of appearing at full size.
-  const dotScales = await page.evaluate(() => (window as unknown as { __dotScales: number[] }).__dotScales);
-  expect(dotScales.some((scale) => scale > 0.45 && scale < 0.99)).toBe(true);
+  // The new dot springs up from its smaller hidden scale to full size instead of appearing at full size.
+  const dotScaleOnCheck = await page.evaluate(() => (window as unknown as { __dotScaleOnCheck: number }).__dotScaleOnCheck);
+  expect(dotScaleOnCheck).toBeCloseTo(0.4, 2);
 });
 
 test("should shake the whole input group and textarea when they turn invalid", async ({
@@ -210,30 +221,34 @@ test("should not jump a switch thumb that was hidden when the page loaded", asyn
   const toggle = page.getByRole("switch", { name: "Avisos por correo" });
   await expect(toggle).toBeVisible();
   const thumb = page.locator("#catalog-switch [data-slot=switch-thumb]");
-  const uncheckedLeft = (await thumb.boundingBox())!.x;
-  // Samples the thumb's left edge on every frame from the press on, inside the page so test latency skips none.
+  // Positions are read against the track, so a page that still shifts around the switch cannot skew them.
+  const offsetInTrack = () =>
+    thumb.evaluate((element) => {
+      const track = element.closest("[data-slot=switch-track]")!;
+      return element.getBoundingClientRect().left - track.getBoundingClientRect().left;
+    });
+  const uncheckedOffset = await offsetInTrack();
+  // Reads the thumb's offset at the very moment the switch reports the new state, before any frame can advance it.
   await thumb.evaluate((element) => {
-    const lefts: number[] = [];
-    const sample = () => {
-      lefts.push(element.getBoundingClientRect().left);
-      if (lefts.length < 120) requestAnimationFrame(sample);
-    };
-    requestAnimationFrame(sample);
-    Object.assign(window, { __thumbLefts: lefts });
+    const track = element.closest("[data-slot=switch-track]")!;
+    const observer = new MutationObserver(() => {
+      if (element.getAttribute("data-state") !== "checked") return;
+      Object.assign(window, { __thumbOffsetOnCheck: element.getBoundingClientRect().left - track.getBoundingClientRect().left });
+      observer.disconnect();
+    });
+    observer.observe(element, { attributes: true, attributeFilter: ["data-state"] });
   });
   await toggle.click();
   await expect(toggle).toBeChecked();
   // Arc's thumb rests at the far end of the track: 18px of travel, held by its transform.
-  await expect.poll(async () => (await thumb.boundingBox())!.x - uncheckedLeft).toBeCloseTo(18, 0);
+  await expect.poll(async () => (await offsetInTrack()) - uncheckedOffset).toBeCloseTo(18, 0);
   await expect
     .poll(() => thumb.evaluate((element) => new DOMMatrixReadOnly(getComputedStyle(element).transform).e))
     .toBeCloseTo(18, 0);
-  // The glide starts where the thumb was, never from the track's left edge beyond it, and travels over several frames.
-  const lefts = await page.evaluate(() => (window as unknown as { __thumbLefts: number[] }).__thumbLefts);
-  expect(Math.min(...lefts)).toBeGreaterThan(uncheckedLeft - 0.5);
-  expect(lefts.some((left) => left - uncheckedLeft > 1 && left - uncheckedLeft < 17)).toBe(true);
+  // The glide starts where the thumb was painted, never from the track's edge beyond it, and travels from there.
+  const offsetOnCheck = await page.evaluate(() => (window as unknown as { __thumbOffsetOnCheck: number }).__thumbOffsetOnCheck);
+  expect(offsetOnCheck).toBeCloseTo(uncheckedOffset, 0);
 });
-
 test("should glide the underline of line tabs and restore it", async ({ page }) => {
   const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
