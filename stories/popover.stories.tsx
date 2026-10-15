@@ -8,6 +8,7 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverDescription,
+  PopoverClose,
 } from "beez-ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
@@ -65,6 +66,9 @@ const meta = {
                   <PopoverTitle>{args.title}</PopoverTitle>
                   <PopoverDescription>{args.description}</PopoverDescription>
                 </PopoverHeader>
+                <PopoverClose asChild>
+                  <Button size="sm">Listo</Button>
+                </PopoverClose>
               </PopoverContent>
             </Popover>
           );
