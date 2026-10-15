@@ -71,3 +71,27 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Playground: Story = {};
+
+/** Sections of a list wider than a phone screen: the list scrolls sideways and keeps the active tab in view. */
+const OVERFLOW_SECTIONS = Array.from({ length: 10 }, (_, index) => `Sección ${index + 1}`);
+
+export const Overflow: Story = {
+  render: () => (
+    <div style={{ maxWidth: 320 }}>
+      <Tabs defaultValue={OVERFLOW_SECTIONS[0]}>
+        <TabsList aria-label="Secciones largas">
+          {OVERFLOW_SECTIONS.map((section) => (
+            <TabsTrigger key={section} value={section}>
+              {section}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {OVERFLOW_SECTIONS.map((section) => (
+          <TabsContent key={section} value={section}>
+            Contenido de {section.toLowerCase()}.
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
+  ),
+};
