@@ -4,6 +4,8 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-10-14
+
 ### Added
 
 - `ActionButton` (y `beez-ui/action-button`), de Arc: corre una acción asíncrona y muestra el resultado en el propio botón, con el label que cambia letra por letra de la flecha al spinner (`pendingLabel`, "Guardando" por defecto) y al check (`successLabel`, "Guardado"), y vuelve solo a idle después de `resetAfterMs` (2400 ms). Mientras corre sigue enfocable e ignora nuevas pulsaciones; si falla, vuelve a idle y entrega el error a `onActionError`. Acepta las variantes y tamaños de `Button`.
