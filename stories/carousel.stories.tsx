@@ -1,72 +1,59 @@
 /** Demonstrates Carousel with editable content and real interactions. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselPrevious,
-  CarouselNext,
-  CarouselIndicators,
-} from "beez-ui";
+import { Carousel } from "beez-ui";
 
 /** Editable inputs specific to this example. */
 type Args = {
-  orientation: "horizontal" | "vertical";
-  loop: boolean;
   slides: number;
-  indicators: boolean;
+  loop: boolean;
+  slideSize: string;
+  interval: number;
+  autoplay: boolean;
+  showControls: boolean;
+  showIndicators: boolean;
 };
 const meta = {
   title: "Components/Carousel",
   args: {
-    orientation: "horizontal",
-    loop: false,
     slides: 4,
-    indicators: true,
+    loop: false,
+    slideSize: "min(80cqw, 340px)",
+    interval: 0,
+    autoplay: false,
+    showControls: true,
+    showIndicators: true,
   },
   argTypes: {
-    orientation: {
-      control: "select",
-      options: ["horizontal", "vertical"],
-    },
-    loop: {
-      control: "boolean",
-    },
-    slides: {
-      control: {
-        type: "range",
-        min: 2,
-        max: 8,
-        step: 1,
-      },
-    },
-    indicators: {
-      control: "boolean",
-    },
+    slides: { control: { type: "range", min: 1, max: 8, step: 1 } },
+    loop: { control: "boolean" },
+    slideSize: { control: "select", options: ["min(80cqw, 340px)", "100%", "60%"] },
+    interval: { control: { type: "number", min: 0, step: 500 } },
+    autoplay: { control: "boolean" },
+    showControls: { control: "boolean" },
+    showIndicators: { control: "boolean" },
   },
-  parameters: { controls: { include: ["orientation", "loop", "slides", "indicators"] } },
-  render: ({ orientation, loop, slides, indicators }) => (
-    <Carousel
-      key={`${orientation}-${loop}`}
-      orientation={orientation}
-      opts={{ loop }}
-      className="StoryCarousel"
-    >
-      <CarouselContent
-        className={
-          orientation === "vertical" ? "StoryCarousel__vertical" : undefined
-        }
+  parameters: {
+    controls: { include: ["slides", "loop", "slideSize", "interval", "autoplay", "showControls", "showIndicators"] },
+  },
+  render: ({ slides, loop, slideSize, interval, autoplay, showControls, showIndicators }) => (
+    <div className="StoryCarousel">
+      <Carousel
+        key={`${loop}-${autoplay}`}
+        label="Tarjetas destacadas"
+        loop={loop}
+        slideSize={slideSize}
+        interval={interval > 0 ? interval : undefined}
+        autoplay={autoplay}
+        showControls={showControls}
+        showIndicators={showIndicators}
       >
         {Array.from({ length: slides }, (_, index) => (
-          <CarouselItem key={index} className="StorySlide">
-            <div className="StorySlide__content">Tarjeta {index + 1}</div>
-          </CarouselItem>
+          <div key={index} className="StorySlide__content">
+            Tarjeta {index + 1}
+          </div>
         ))}
-      </CarouselContent>
-      <CarouselPrevious />
-      <CarouselNext />
-      {indicators ? <CarouselIndicators /> : null}
-    </Carousel>
+      </Carousel>
+    </div>
   ),
 } satisfies Meta<Args>;
 export default meta;

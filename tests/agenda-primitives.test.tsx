@@ -45,11 +45,10 @@ describe("Agenda primitives", () => {
   });
 
   it("should select a calendar date while preserving the Spanish locale", async () => {
-    const onSelect = vi.fn();
-    render(<Calendar mode="single" defaultMonth={new Date(2026, 8, 1)} onSelect={onSelect} />);
+    const onChange = vi.fn();
+    render(<Calendar month={new Date(2026, 8, 1)} onChange={onChange} />);
     await userEvent.click(screen.getByRole("button", { name: /jueves, 10 de septiembre/i }));
-    expect(onSelect).toHaveBeenCalled();
-    expect(onSelect.mock.calls[0][0]).toEqual(new Date(2026, 8, 10));
+    expect(onChange).toHaveBeenCalledWith(new Date(2026, 8, 10));
   });
 
   it("should apply the dark theme without requiring the View Transition API", async () => {

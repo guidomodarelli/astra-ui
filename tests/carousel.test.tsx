@@ -1,0 +1,137 @@
+import { describe, expect, it } from "vitest";
+import { render, screen, within } from "@testing-library/react";
+
+import { Carousel } from "beez-ui";
+
+const SLIDES = ["Uno", "Dos", "Tres"];
+
+/** A carousel with one text slide per entry of {@link SLIDES}. */
+function renderCarousel(props: Partial<Parameters<typeof Carousel>[0]> = {}) {
+  return render(
+    <Carousel label="Destacados" {...props}>
+      {SLIDES.map((slide) => (
+        <p key={slide}>{slide}</p>
+      ))}
+    </Carousel>,
+  );
+}
+
+describe("Carousel", () => {
+  it("should name the carousel and describe its role in Spanish", () => {
+    // Arrange & Act
+    renderCarousel();
+
+    // Assert
+    const carousel = screen.getByRole("region", { name: "Destacados" });
+    expect(carousel.tagName).toBe("SECTION");
+    expect(carousel).toHaveAttribute("aria-roledescription", "carrusel");
+    expect(within(carousel).getByRole("group", { name: "Diapositivas" })).toHaveAttribute("tabindex", "0");
+  });
+
+  it("should render one named slide panel per child and keep only the active one interactive", () => {
+    // Arrange & Act
+    renderCarousel({ defaultIndex: 1 });
+
+    // Assert
+    const panels = screen.getAllByRole("tabpanel", { hidden: true });
+    expect(panels).toHaveLength(SLIDES.length);
+    expect(panels.map((panel) => panel.getAttribute("aria-label"))).toEqual([
+      "Diapositiva 1 de 3",
+      "Diapositiva 2 de 3",
+      "Diapositiva 3 de 3",
+    ]);
+    expect(panels.map((panel) => panel.hasAttribute("inert"))).toEqual([true, false, true]);
+    expect(panels[1]).toHaveAttribute("aria-roledescription", "diapositiva");
+    expect(panels[1]).toHaveTextContent("Dos");
+  });
+
+  it("should take the active slide from a controlled index", () => {
+    // Arrange & Act
+    renderCarousel({ index: 2 });
+
+    // Assert
+    const panels = screen.getAllByRole("tabpanel", { hidden: true });
+    expect(panels.map((panel) => panel.hasAttribute("inert"))).toEqual([true, true, false]);
+  });
+
+  it("should clamp an initial slide beyond the last one", () => {
+    // Arrange & Act
+    renderCarousel({ defaultIndex: 9 });
+
+    // Assert
+    expect(screen.getAllByRole("tabpanel", { hidden: true })[2]).not.toHaveAttribute("inert");
+  });
+
+  it("should name slides with a custom slide label", () => {
+    // Arrange & Act
+    renderCarousel({ slideLabel: (index, count) => `Foto ${index + 1} de ${count}` });
+
+    // Assert
+    expect(screen.getByRole("tabpanel", { name: "Foto 1 de 3" })).toBeInTheDocument();
+  });
+
+  it("should label the arrows in Spanish and accept custom names", () => {
+    // Arrange & Act
+    const { unmount } = renderCarousel();
+    expect(screen.getByRole("button", { name: "Diapositiva anterior" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Diapositiva siguiente" })).toBeInTheDocument();
+    unmount();
+    renderCarousel({ previousLabel: "Medio anterior", nextLabel: "Siguiente medio" });
+
+    // Assert
+    expect(screen.getByRole("button", { name: "Medio anterior" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Siguiente medio" })).toBeInTheDocument();
+  });
+
+  it("should hide the arrows and the control row when asked", () => {
+    // Arrange & Act
+    const { container } = renderCarousel({ showControls: false, showIndicators: false });
+
+    // Assert
+    expect(screen.queryByRole("button", { name: "Diapositiva anterior" })).not.toBeInTheDocument();
+    expect(container.querySelector('[data-slot="carousel-controls"]')).not.toBeInTheDocument();
+  });
+
+  it("should leave out the control row for a single slide", () => {
+    // Arrange & Act
+    const { container } = render(
+      <Carousel label="Una foto">
+        <p>Única</p>
+      </Carousel>,
+    );
+
+    // Assert
+    expect(container.querySelector('[data-slot="carousel-controls"]')).not.toBeInTheDocument();
+    expect(screen.getByRole("tabpanel", { name: "Diapositiva 1 de 1" })).not.toHaveAttribute("inert");
+  });
+
+  it("should add a rotation control only when an interval is given", () => {
+    // Arrange & Act
+    const { unmount } = renderCarousel();
+    expect(screen.queryByRole("button", { name: /rotación/ })).not.toBeInTheDocument();
+    unmount();
+    renderCarousel({ interval: 4000 });
+
+    // Assert
+    expect(screen.getByRole("button", { name: "Iniciar la rotación de diapositivas" })).toBeInTheDocument();
+  });
+
+  it("should offer to pause when it starts rotating on mount", () => {
+    // Arrange & Act
+    renderCarousel({ interval: 4000, autoplay: true });
+
+    // Assert
+    expect(screen.getByRole("button", { name: "Pausar la rotación de diapositivas" })).toBeInTheDocument();
+  });
+
+  it("should apply the root, slide and size settings", () => {
+    // Arrange & Act
+    renderCarousel({ className: "Gallery", slideClassName: "Gallery__slide", slideSize: "100%" });
+
+    // Assert
+    const carousel = screen.getByRole("region", { name: "Destacados" });
+    expect(carousel).toHaveClass("Gallery");
+    expect(carousel.style.getPropertyValue("--carousel-slide")).toBe("100%");
+    for (const panel of screen.getAllByRole("tabpanel", { hidden: true })) expect(panel).toHaveClass("Gallery__slide");
+  });
+});

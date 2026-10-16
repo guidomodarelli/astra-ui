@@ -4,6 +4,7 @@
  */
 export { useIsMobile } from "./hooks/use-mobile.js";
 export { useIsHydrated } from "./hooks/use-is-hydrated.js";
+export { useToday } from "./hooks/use-today.js";
 export { usePrefersReducedMotion } from "./hooks/use-prefers-reduced-motion.js";
 export { useViewerTimeZone } from "./hooks/use-viewer-time-zone.js";
 export { useHorizontalSwipe, type HorizontalSwipeHandlers } from "./hooks/use-horizontal-swipe.js";

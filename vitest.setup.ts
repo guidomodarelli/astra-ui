@@ -71,5 +71,26 @@ if (typeof window !== "undefined" && typeof window.ResizeObserver !== "function"
   };
 }
 
+/**
+ * jsdom does not implement `IntersectionObserver`, which Embla (inside `Carousel`) creates while
+ * mounting to track the slides in view. This inert shim only lets the carousel mount: it never
+ * reports an intersection, so no test can assert on visibility through it. Slide visibility and
+ * rotation pausing offscreen are verified with Playwright.
+ */
+if (typeof window !== "undefined" && typeof window.IntersectionObserver !== "function") {
+  window.IntersectionObserver = class IntersectionObserverMountShim {
+    readonly root = null;
+    readonly rootMargin = "";
+    readonly scrollMargin = "";
+    readonly thresholds: ReadonlyArray<number> = [];
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+    takeRecords(): IntersectionObserverEntry[] {
+      return [];
+    }
+  };
+}
+
 // Release DOM trees and subscriptions between real component tests.
 afterEach(cleanup);

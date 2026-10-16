@@ -8,11 +8,6 @@ import {
   Button,
   Calendar,
   Card,
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -35,9 +30,14 @@ import "./styles.css";
 
 /** Pages of the results pagination. */
 const PAGE_COUNT = 3;
-const SLIDES = ["Primera", "Segunda", "Tercera"] as const;
 /** Fixed month, so navigation and its direction are deterministic across runs. */
 const INITIAL_MONTH = new Date(2026, 0, 1);
+
+/** A calendar whose month lives in local state, so it opens on {@link INITIAL_MONTH} and navigates from there. */
+function MonthCalendar() {
+  const [month, setMonth] = useState(INITIAL_MONTH);
+  return <Calendar month={month} onMonthChange={setMonth} />;
+}
 const FILTER_CONFIGS: FilterQualifierConfig[] = [
   { key: "", kind: "text", label: "Concepto" },
   {
@@ -119,7 +119,7 @@ function PolishExamples() {
           </Card>
         </section>
         <section>
-          <Calendar mode="single" defaultMonth={INITIAL_MONTH} />
+          <MonthCalendar />
         </section>
         <section>
           <ReloadableAvatar />
@@ -154,17 +154,6 @@ function PolishExamples() {
               </DropdownMenuSub>
             </DropdownMenuContent>
           </DropdownMenu>
-        </section>
-        <section className="carousel-frame">
-          <Carousel orientation="vertical" aria-label="Novedades" className="vertical-carousel">
-            <CarouselContent className="vertical-carousel-content">
-              {SLIDES.map((slide) => (
-                <CarouselItem key={slide}>{`Diapositiva ${slide}`}</CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
         </section>
       </main>
     </BeezUIProvider>

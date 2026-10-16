@@ -106,7 +106,7 @@ function PreferencesForm() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
-            <Calendar mode="single" selected={date} onSelect={setDate} />
+            <Calendar value={date} onChange={setDate} showToday />
           </PopoverContent>
         </Popover>
         <Button type="submit">Guardar</Button>
