@@ -48,8 +48,12 @@ si ya no se usa para otros paquetes.
 
 
 ```tsx
-import { Button, Avatar, AvatarImage, DataTable, Calendar } from "beez-ui";
+import { Avatar, Button, Calendar, DataTable } from "beez-ui";
+
+<Avatar name="Ana Núñez" src="/ana.jpg" />;
 ```
+
+Desde 3.0.0 los componentes adoptados de [Arc](https://uiarc.dev) usan la API pública de Arc: `Switch`, `Checkbox`, `RadioGroup`, `Badge`, `Avatar`, `AvatarGroup`, `Skeleton`, `Card`, `Alert`, `Tooltip`, `HoverCard`, `DropdownMenu`, `Select`, `Pagination`, `Calendar` y `Carousel` son componentes cerrados que se configuran por props (`items`, `options`, `members`, `content`, `title`); `Dialog` (`Dialog`, `DialogTrigger`, `DialogContent` con `title` y `description`, `DialogClose`), `Popover` y `Tabs` conservan las partes de Arc. Cada uno suma solo las extensiones que Arc no cubre, con copy en español por defecto, por ejemplo `getHref` en `Pagination`, `trigger` e ítems con `href` en `DropdownMenu`, `onOpenChange` en `HoverCard`, `footer` y el modo `alert` en `Dialog` (reemplaza a `AlertDialog`), `hideLabel` en `Select` y `onSettle` en `Carousel`. La tabla de migración desde 2.x está en [Migración a 3.0.0](#migración-a-300).
 
 Agrupar los imports de componentes desde la raíz. El paquete publica JavaScript ESM y declaraciones TypeScript en `dist`; el consumidor no necesita transpilar el código fuente de la librería. La gramática de filtros y los helpers de mes-año son independientes de React.
 
@@ -63,11 +67,37 @@ La utilidad `cn`, también exportada desde `beez-ui`, usa el paquete `cn` para c
 
 El modo oscuro se activa con `data-theme="dark"` o la clase `dark` en `<html>`; `BeezUIProvider` escribe ambos. El acento por defecto es el azul de Arc y se cambia con `data-accent` (`neutral`, `violet`, `blue`, `green`, `amber`, `orange`, `coral` o `rose`) en `<html>`. Los nombres de tokens de shadcn (`--primary`, `--muted`, `--card`…) siguen disponibles como alias de los roles de Arc; `--accent` es el acento de Arc, no el gris de hover de shadcn. Inter se usa para texto y controles y Geist para títulos grandes mediante `--font-display`; las licencias se incluyen en `assets/fonts`. Los consumidores pueden sobrescribir tokens mediante CSS normal. Si la aplicación usa Tailwind para sus propios estilos puede mantenerlo, pero ya no necesita escanear beez-ui.
 
-`DropdownMenuContent` toma el ancho natural de sus opciones, con un mínimo de 12 rem y un máximo limitado por el espacio disponible. No hereda el ancho del botón disparador: los menús abiertos desde un icono deben mantener sus etiquetas legibles. Para un ancho específico, usar `className` y ajustar también el mínimo cuando se necesite un menú más pequeño.
+El menú de `DropdownMenu` toma el ancho natural de sus opciones, con un mínimo de 12 rem y un máximo limitado por el espacio disponible. No hereda el ancho del botón disparador: los menús abiertos desde un icono deben mantener sus etiquetas legibles. Para un ancho específico, usar `contentClassName` y ajustar también el mínimo cuando se necesite un menú más pequeño.
 
-Los componentes usan por defecto los espaciados compactos de Agenda: `Select` mide 2 rem (1.75 rem en tamaño pequeño), `TabsList` horizontal mide 2 rem y `PopoverContent` usa 0.625 rem de padding. Los menús y submenús tienen un mínimo de 12 rem, con filas compactas. `Dialog` y `AlertDialog` usan 1 rem de padding y un footer con borde superior y fondo diferenciado; `Textarea` distingue el estado deshabilitado mediante su fondo. Estos valores conservan los colores y fuentes del tema compartido. Son cambios de los defaults, sin una prop adicional para activarlos; los consumidores pueden personalizarlos mediante `className`.
+Los componentes usan por defecto los espaciados compactos de Agenda: `Select` mide 2 rem (1.75 rem en tamaño pequeño), `TabsList` horizontal mide 2 rem y `PopoverContent` usa 0.625 rem de padding. Los menús tienen un mínimo de 12 rem, con filas compactas. `Dialog` usa 1 rem de padding y un footer con borde superior y fondo diferenciado; `Textarea` distingue el estado deshabilitado mediante su fondo. Estos valores conservan los colores y fuentes del tema compartido. Son cambios de los defaults, sin una prop adicional para activarlos; los consumidores pueden personalizarlos mediante `className`.
 
 Los `Sheet` superiores e inferiores limitan su altura al viewport dinámico (`100dvh`) y permiten desplazar el contenido para mantener accesibles las acciones de paneles largos.
+
+## Migración a 3.0.0
+
+| Componente | 2.x | 3.0.0 |
+| --- | --- | --- |
+| `Switch` | `size="sm"` | Un solo tamaño, sin `size` |
+| `RadioGroup` | `RadioGroup` + `RadioGroupItem` | `<RadioGroup label options={[{ value, label, description }]} value onValueChange />` |
+| `Badge` | `variant` (`default`, `secondary`, `outline`, `ghost`, `link`, `destructive`) | `tone` (`neutral`, `success`, `info`, `warning`, `danger`); `destructive` pasa a `danger`, el resto a `neutral` |
+| `Avatar` | `Avatar` + `AvatarImage` + `AvatarFallback` (+ `AvatarBadge`) | `<Avatar name src size fallback badge />`; `size="default"` pasa a `md` |
+| `AvatarGroup` | `AvatarGroup` con `Avatar` hijos + `AvatarGroupCount` | `<AvatarGroup members={[{ name, src, status }]} max label />` |
+| `Skeleton` | `<Skeleton className="h-4 w-24" />` | `<Skeleton lines={1} className />`, `avatar`, `label`, o `loading` con hijos |
+| `Card` | `CardHeader`, `CardTitle`, `CardDescription`, `CardAction`, `CardContent`, `CardFooter`, `CardMedia` | `title`, `description`, `action`, `children`, `footer`, `media` |
+| `Alert` | `AlertTitle`, `AlertDescription`, `AlertAction`, `variant="destructive"` | `<Alert title tone="danger" action>detalle</Alert>` |
+| `Tooltip` | `TooltipProvider` + `Tooltip` + `TooltipTrigger asChild` + `TooltipContent` | `<Tooltip content side align>{trigger}</Tooltip>`, sin provider |
+| `Popover` | `PopoverAnchor`, `PopoverHeader`, `PopoverTitle`, `PopoverDescription`; `align` centrado por defecto | Solo `Popover`, `PopoverTrigger`, `PopoverContent`, `PopoverClose`; `align="start"` por defecto |
+| `HoverCard` | `HoverCard` + `HoverCardTrigger asChild` + `HoverCardContent` | `<HoverCard content onOpenChange className>{trigger}</HoverCard>` |
+| `DropdownMenu` | `DropdownMenuTrigger asChild`, `Content`, `Item`, `Separator`, `RadioGroup`, `RadioItem`, `CheckboxItem`, `Shortcut`, `Sub*` | `<DropdownMenu label trigger items={[{ label, icon, onSelect, href, destructive, separatorBefore, checked, trailing }]} selection />`; sin submenús |
+| `Select` | `SelectTrigger`, `SelectValue placeholder`, `SelectContent`, `SelectItem` | `<Select label hideLabel placeholder options={[{ value, label, disabled }]} value onValueChange triggerClassName />` |
+| `Tabs` | `TabsList variant="line"`, `tabsListVariants` | Solo la lista segmentada |
+| `Pagination` | `PaginationContent`, `PaginationItem`, `PaginationLink`, `PaginationPrevious`, `PaginationNext`, `PaginationEllipsis` | `<Pagination page pageCount onPageChange getHref label />`; sin `pageCount`, `hasNextPage` dibuja solo Anterior y Siguiente |
+| `Dialog` | `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogFooter`, `DialogPortal`, `DialogOverlay` | `<DialogContent title description footer hideTitle>`; el cierre se llama "Cerrar diálogo" |
+| `AlertDialog` | `AlertDialog`, `AlertDialogContent`, `AlertDialogAction`, `AlertDialogCancel`… y `beez-ui/alert-dialog` | `<Dialog alert>` con `DialogContent` y `DialogClose asChild` para cancelar y confirmar |
+| `Calendar` | `mode`, `selected`, `onSelect`, `disabled`, `defaultMonth`, `components`, `classNames` | `<Calendar value onChange month onMonthChange minDate maxDate disabledDates locale showToday />`; solo selección simple |
+| `Carousel` | `CarouselContent`, `CarouselItem`, `CarouselPrevious`, `CarouselNext`, `CarouselIndicators`, `opts`, `setApi`, `CarouselApi` | `<Carousel label loop defaultIndex onIndexChange onSettle slideSize>{slides}</Carousel>`; `reInit` ya no hace falta |
+| `AccountMenu` | `children` con `DropdownMenuItem` | `items` con los ítems de `DropdownMenu` |
+| `DataTable` | `columnVisibilityMenuExtraContent` | `columnVisibilityMenuExtraItems` |
 
 ## Movimiento
 
@@ -102,26 +132,26 @@ y del temblor de campos inválidos quedan deprecados y conservan su valor.
 - `Checkbox` y `RadioGroup` se comprimen a 0.92. La marca del checkbox aparece
   con pop y trazo (`pathLength`); el punto del radio aparece con spring.
 - El thumb de `Switch` viaja con el spring `smooth`, sin rebote, y se aplasta mientras se presiona.
-- `Input`, `Textarea`, `InputGroup` y `SelectTrigger` no se mueven al pasar a
+- `Input`, `Textarea`, `InputGroup` y el trigger de `Select` no se mueven al pasar a
   `aria-invalid="true"`: el error se indica con el color y el mensaje. `FormMessage` y
   `Alert` aparecen con un fundido y una escala breves (desde 0.98), sin desenfoque.
 - `Tooltip` sube 3 px desde 0.97 mientras aparece y sale en el lugar, sin desenfoque.
   `Popover` y `HoverCard` se acercan desde su trigger con escala y fundido; `DropdownMenu`
   y `Select` escalan desde 0.96 y se revelan con un clip desde la esquina más cercana al trigger.
-- `Dialog` y `AlertDialog` entran como el diálogo de Arc: el fondo se oscurece en 0.24 s y el
+- `Dialog`, también en su modo `alert`, entra como el diálogo de Arc: el fondo se oscurece en 0.24 s y el
   panel sube 8 px y crece desde 0.96 con el spring `smooth` mientras aparece en 0.16 s; al
   cerrar baja 4 px hasta 0.98 y se desvanece en 0.16 s, y una reapertura parte de donde
   está. `Sheet` entra desde su borde con spring y sale con la curva de cajón (0.24 s), sin
   demorar la siguiente interacción.
 - `GlideSlot` desliza el indicador activo entre ítems como un `layoutId` compartido:
-  la pestaña activa de `Tabs` (fondo o subrayado), la
-  página actual de `PaginationContent`, y al navegar con teclado el ítem resaltado de
+  la pestaña activa de `Tabs`, la
+  página actual de `Pagination`, y al navegar con teclado el ítem resaltado de
   `DropdownMenu` y `Select` y la sugerencia activa de `FilterQueryBar`. Con el puntero,
   esos resaltados lo siguen al instante: el propio puntero ya marca la posición.
 - Las superficies que se revelan con clip dejan 24 px libres fuera de la
   caja, así su borde (`ring`) y su sombra se ven desde el primer frame. Una copia
   transitoria viaja entre ítems y se elimina al llegar, devolviendo el estilo al ítem.
-- El chevron de `SelectTrigger` gira 180° al abrir y los chevrons de `DataTable`
+- El chevron del trigger de `Select` gira 180° al abrir y los chevrons de `DataTable`
   (grupos y columnas) giran en lugar de cambiar de ícono; CSS define el ángulo final.
 - Las opciones del `Select` entran todas juntas con un fundido y una escala breves, sin
   escalonarse ni desenfocarse, y los checks de ítems de `Select` y `DropdownMenu` aparecen con pop.
@@ -136,7 +166,7 @@ y del temblor de campos inválidos quedan deprecados y conservan su valor.
   eleva. Un brillo recorre el `Skeleton` desde su `::after` con reproducción nativa,
   sin trabajo por frame en JavaScript.
 - `Calendar` desliza el mes entrante desde el lado de la navegación (invertido en RTL).
-- `AvatarImage` se revela con blur y un zoom de 1.06 al terminar de cargar; las imágenes
+- La foto de `Avatar` se revela con blur y un zoom de 1.06 al terminar de cargar; las imágenes
   ya cargadas al montar no se animan.
 - El cursor de `TypingAnimation` queda fijo mientras escribe y parpadea en reposo. Las animaciones especializadas
   existentes de Embla, Sonner y rough-notation se conservan.
@@ -195,19 +225,19 @@ Next y TanStack Router son peers opcionales aislados en sus entrypoints. El prov
 ## Responsabilidades del consumidor
 
 - Tema: `AnimatedThemeToggler` y `ThemedToaster` consumen el contexto compartido. Sus props explícitas de tema siguen disponibles para usos controlados.
-- Navegación: `PaginationNext`, `PaginationPrevious` y `PaginationLink` usan anclas nativas. El prop opcional `component` admite el adaptador del router que elija la app. Sin proveedor usa el elemento nativo; con el proveedor de Next usa su navegación cliente.
-- Sidebar: en `SidebarProvider`, `defaultOpen` y el modo controlado conservan la semántica de LaTribu. Los ítems con `href` navegan con el adaptador de router del proveedor. `storageKey` activa opcionalmente persistencia local segura tras hidratar, sin cambiar la cookie pública `sidebar_state` ni sus siete días de duración; `cookieName` y `cookieMaxAge` la reemplazan cuando la app ya lee su propia cookie en el servidor. Para el contenido propio: `SidebarBrandButton` arma la fila de marca (sirve como `DropdownMenuTrigger asChild`), `SidebarLabel` saca del riel de íconos el texto que solo tiene sentido expandido, `useSidebarPanel()` expone `collapsed` y `AccountMenu` con `triggerVariant="sidebar"` se reduce solo al avatar. No dependas de los atributos `data-*` internos del sidebar: pueden cambiar entre versiones.
+- Navegación: con `getHref`, `Pagination` dibuja enlaces con el `Link` del provider. Sin proveedor usa anclas nativas; con el proveedor de Next usa su navegación cliente.
+- Sidebar: en `SidebarProvider`, `defaultOpen` y el modo controlado conservan la semántica de LaTribu. Los ítems con `href` navegan con el adaptador de router del proveedor. `storageKey` activa opcionalmente persistencia local segura tras hidratar, sin cambiar la cookie pública `sidebar_state` ni sus siete días de duración; `cookieName` y `cookieMaxAge` la reemplazan cuando la app ya lee su propia cookie en el servidor. Para el contenido propio: `SidebarBrandButton` arma la fila de marca (sirve como `trigger` de `DropdownMenu`), `SidebarLabel` saca del riel de íconos el texto que solo tiene sentido expandido, `useSidebarPanel()` expone `collapsed` y `AccountMenu` con `triggerVariant="sidebar"` se reduce solo al avatar. No dependas de los atributos `data-*` internos del sidebar: pueden cambiar entre versiones.
 - Formularios y tablas: el consumidor provee sus datos, validaciones y callbacks. No se importan servicios, modelos de negocio ni endpoints de agenda-mensual.
 
 ## Componentes incorporados desde agenda-mensual
 
-`Alert`, `AnimatedThemeToggler`, `Calendar`, `DataTable`, `FilterQueryBar`, `Form`, `Highlighter`, `InputGroup`, `Label`, `RadioGroup`, `TypingAnimation` y `ThemedToaster`, junto con sus subcomponentes, tipos y gramática de filtros.
+`Alert`, `AnimatedThemeToggler`, `Calendar`, `DataTable`, `FilterQueryBar`, `Form`, `Highlighter`, `InputGroup`, `Label`, `RadioGroup`, `TypingAnimation` y `ThemedToaster`, junto con sus tipos y gramática de filtros.
 
 `FilterQueryBar` mantiene el foco en el input mientras se recorren las sugerencias con el puntero o las flechas. Enter aplica la opción activa; interactuar con el input no cierra la lista.
 
 La tabla conserva agrupación estable, columnas configurables, memoización, exclusiones y sincronización de qualifiers por identificadores. La barra conserva navegación por teclado, autocompletado y filtros de texto, rangos, fechas, presencia y carpetas. `Calendar` usa español por defecto y acepta otra locale. Los textos y configuraciones de filtros se pueden personalizar por props.
 
-Los componentes compartidos conservan el tema de LaTribu. Se incorporaron atributos `data-variant`/`data-size` del botón, scroll para paneles largos y persistencia opcional del sidebar. `Button` sigue la API de Arc: `variant` `primary`, `secondary`, `ghost` o `danger`, `size` `sm`, `md` o `lg` y `loading`; renderiza un `<button>` nativo con `type="button"` por defecto y no admite `asChild`: un link con aspecto de botón se estiliza como link. Se mantienen los estados deshabilitados y los skeletons deterministas. `AvatarImage` delega carga y fallback a Base UI; conserva carga diferida y recuperación al cambiar `src`. El export `Toaster` conserva el aspecto y las props de Sonner, y sus toasts responden al click y al teclado (Alt+T) con un `Dialog`, `AlertDialog` o `Sheet` abierto; `ThemedToaster` se apoya en él y agrega los estilos e iconos compartidos.
+Los componentes compartidos conservan el tema de LaTribu. Se incorporaron atributos `data-variant`/`data-size` del botón, scroll para paneles largos y persistencia opcional del sidebar. `Button` sigue la API de Arc: `variant` `primary`, `secondary`, `ghost` o `danger`, `size` `sm`, `md` o `lg` y `loading`; renderiza un `<button>` nativo con `type="button"` por defecto y no admite `asChild`: un link con aspecto de botón se estiliza como link. Se mantienen los estados deshabilitados y los skeletons deterministas. La foto de `Avatar` delega carga y fallback a Base UI; conserva carga diferida y recuperación al cambiar `src`. El export `Toaster` conserva el aspecto y las props de Sonner, y sus toasts responden al click y al teclado (Alt+T) con un `Dialog` o `Sheet` abierto; `ThemedToaster` se apoya en él y agrega los estilos e iconos compartidos.
 
 ## Componentes de producto reutilizables
 
