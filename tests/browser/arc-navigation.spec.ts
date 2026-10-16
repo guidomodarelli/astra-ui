@@ -134,6 +134,33 @@ test.describe("with motion", () => {
     expect(Math.max(...backward.map((frame) => frame.x))).toBeLessThanOrEqual(0);
   });
 
+  test("should keep the panel's own inline style once its height morph settles", async ({ page }) => {
+    await page.goto("/arc-navigation.html");
+    const tabs = page.getByTestId("panel-tabs");
+    const initialHeight = (await tabs.getByRole("tabpanel").boundingBox())!.height;
+    await recordPanelFrames(page);
+
+    await tabs.getByRole("tab", { name: "Miembros" }).click();
+    const members = tabs.getByRole("tabpanel");
+    await expect(members).toHaveText("Miembros activos.");
+    await expect
+      .poll(
+        async () => {
+          const last = (await readPanelFrames(page)).at(-1);
+          return last?.text.startsWith("Miembros") === true && last.x === 0 && last.height >= 119;
+        },
+        { timeout: SETTLE_TIMEOUT_MS },
+      )
+      .toBe(true);
+    // The morph ran: the panel grew from the previous height through intermediate values.
+    const frames = (await readPanelFrames(page)).filter((frame) => frame.text.startsWith("Miembros"));
+    expect(frames.some((frame) => frame.height > initialHeight + 1 && frame.height < 119)).toBe(true);
+    // The consumer's `style` survives the morph that temporarily overrode it.
+    await expect(members).toHaveCSS("min-height", "120px");
+    await expect(members).toHaveCSS("overflow-y", "auto");
+    await expect(members).toHaveCSS("height", "120px");
+  });
+
   test("should glide the tab highlight and hand it back to the active tab", async ({ page }) => {
     const motion = await recordMotion(page);
     await page.goto("/arc-navigation.html");

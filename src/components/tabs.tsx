@@ -320,6 +320,9 @@ const reducedPanelVariants: Variants = {
   exit: { opacity: 0, x: 0, y: 0, transition: { duration: TABS_PANEL_REDUCED_EXIT_DURATION_S } },
 }
 
+/** Inline properties the height morph overrides on the panel and restores when it settles. */
+const MORPH_STYLE_PROPERTIES = ["height", "overflow", "flex", "min-height"] as const
+
 /** Animates the consumer's own element when `TabsContent` is used with `asChild`. */
 const MotionPanelSlot = motion.create(Slot.Root)
 
@@ -357,11 +360,15 @@ function TabsPanel({ motionState, reduceMotion, asChild, ref, ...props }: TabsPa
     const fromHeight = panelHeightRef.current
     const toHeight = panel.offsetHeight
     let controls: AnimationPlaybackControls | undefined
+    // The panel is the consumer's tabpanel, whose `style` prop may set these properties too: snapshot them before the
+    // morph overrides them and put that snapshot back once it settles.
+    const inlineStyle = MORPH_STYLE_PROPERTIES.map((property) => ({
+      property,
+      value: panel.style.getPropertyValue(property),
+      priority: panel.style.getPropertyPriority(property),
+    }))
     const release = () => {
-      panel.style.height = ""
-      panel.style.overflow = ""
-      panel.style.flex = ""
-      panel.style.minHeight = ""
+      for (const { property, value, priority } of inlineStyle) panel.style.setProperty(property, value, priority)
     }
     if (
       fromHeight !== null &&

@@ -40,7 +40,9 @@ function PanelTabs() {
       <TabsContent value="Actividad">
         <div style={{ height: 240 }}>Actividad reciente de la tribu.</div>
       </TabsContent>
-      <TabsContent value="Miembros">Miembros activos.</TabsContent>
+      <TabsContent value="Miembros" style={{ minHeight: 120, overflow: "auto" }}>
+        Miembros activos.
+      </TabsContent>
     </Tabs>
   );
 }
