@@ -21,6 +21,10 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 - `MOTION_TIMING.centerMorph`, `MOTION_TIMING.centerMorphFold`, `MOTION_EASE_UNFOLD` y `MOTION_CENTER_MORPH_FOLDED_PERCENT`: los diálogos ya no se despliegan desde el centro. Siguen exportados con su valor.
 - `MOTION_TIMING.shake` y `MOTION_INVALID_SHAKE_PX`: los campos inválidos ya no tiemblan. Siguen exportados con su valor.
 
+### Fixed
+
+- Al moverse con el teclado mientras un `Select` o un `DropdownMenu` todavía se está abriendo, el resaltado se desliza hasta el tamaño y la posición finales de la opción y ya no salta al terminar.
+
 ## [2.6.2] - 2026-10-16
 
 ### Fixed

@@ -374,6 +374,77 @@ test("should turn the select chevron and fade its options in without blur", asyn
   await expect(chevron).toHaveCSS("transform", "none");
 });
 
+/** Painted boxes of the travelling select highlight and its target option in the glide's last frame. */
+type EnteringGlide = {
+  targetTransformAtStart: string;
+  indicator: { left: number; top: number; width: number; height: number };
+  target: { left: number; top: number; width: number; height: number };
+};
+
+test("should land the select highlight on an option still entering, without a snap", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/motion.html");
+  const trigger = page.getByRole("combobox", { name: "Moneda" });
+  await waitForSettledLayout(trigger);
+  // Moves the highlight on the first frame the list shows one, while the options still settle
+  // from their entrance scale, and samples the travelling copy until it hands the highlight back.
+  const glide = page.evaluate(
+    () =>
+      new Promise<EnteringGlide>((resolve, reject) => {
+        const toBox = (rect: DOMRect) => ({
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height,
+        });
+        let movedAt: number | null = null;
+        let targetTransformAtStart: string | null = null;
+        let last: Omit<EnteringGlide, "targetTransformAtStart"> | null = null;
+        const tick = () => {
+          const highlighted = document.querySelector<HTMLElement>("[role=option][data-highlighted]");
+          if (movedAt === null && highlighted) {
+            movedAt = performance.now();
+            highlighted.dispatchEvent(
+              new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true }),
+            );
+          }
+          const indicator = document.querySelector("[data-glide-indicator]");
+          const target = document.querySelector("[data-glide-target]");
+          if (indicator && target) {
+            targetTransformAtStart ??= getComputedStyle(target).transform;
+            last = {
+              indicator: toBox(indicator.getBoundingClientRect()),
+              target: toBox(target.getBoundingClientRect()),
+            };
+          } else if (last && targetTransformAtStart !== null) {
+            resolve({ targetTransformAtStart, ...last });
+            return;
+          }
+          if (movedAt !== null && performance.now() - movedAt > 2000) {
+            reject(new Error("motion.spec:select glide never handed the highlight back"));
+            return;
+          }
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+  );
+  await trigger.focus();
+  await page.keyboard.press("Enter");
+  const { targetTransformAtStart, indicator, target } = await glide;
+  await expect(page.getByRole("option", { name: "Dólares" })).toBeFocused();
+  // The glide started while the option was still scaling in, which is the case under test.
+  expect(targetTransformAtStart).not.toBe("none");
+  // The copy lands exactly on the option it hands the highlight to, so removing it never snaps.
+  expect(Math.abs(indicator.left - target.left)).toBeLessThan(1);
+  expect(Math.abs(indicator.top - target.top)).toBeLessThan(1);
+  expect(Math.abs(indicator.width - target.width)).toBeLessThan(1);
+  expect(Math.abs(indicator.height - target.height)).toBeLessThan(1);
+  await page.keyboard.press("Escape");
+});
+
 test("should pop the check of a menu checkbox item", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   const motion = await recordMotion(page);
