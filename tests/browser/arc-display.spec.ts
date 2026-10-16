@@ -124,6 +124,25 @@ test("should grow the quick look out of its card and hand focus back to the titl
   await expect.poll(async () => Math.abs((await card.boundingBox())!.y - cardBox.y), { timeout: SETTLE_TIMEOUT_MS }).toBeLessThan(1);
 });
 
+test("should let a control in the card body take its own click while the rest of the card opens the quick look", async ({ page }) => {
+  const card = page.getByRole("article", { name: "Tarjeta con botón en el cuerpo" });
+  const bodyButton = card.getByRole("button", { name: /Me gusta/ });
+  const quickLook = page.getByRole("dialog", { name: "Tribu de huerta" });
+  await card.scrollIntoViewIfNeeded();
+  // Real pointer hit testing at the control's center, where the title's stretched hit area also lies.
+  const buttonBox = (await bodyButton.boundingBox())!;
+
+  await page.mouse.click(buttonBox.x + buttonBox.width / 2, buttonBox.y + buttonBox.height / 2);
+
+  await expect(bodyButton).toHaveText("Me gusta: 1");
+  await expect(page.locator('[data-slot="card-quick-look"]')).toHaveCount(0);
+
+  const descriptionBox = (await card.getByText("Cosechas compartidas.").boundingBox())!;
+  await page.mouse.click(descriptionBox.x + descriptionBox.width / 2, descriptionBox.y + descriptionBox.height / 2);
+
+  await expect(quickLook).toBeVisible();
+});
+
 test("should open and close the quick look with a plain fade when motion is reduced", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   const trigger = page.getByRole("button", { name: "Tribu de cocina" });

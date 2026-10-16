@@ -340,7 +340,18 @@ function Card({
               {description}
             </motion.p>
           ) : null}
-          {children}
+          {hasQuickLook && children ? (
+            // The body sits above the title's stretched hit area but lets pointers through, except on its controls, so
+            // they take their own clicks while the rest of the body still opens the quick look.
+            <div
+              data-slot="card-body"
+              className="pointer-events-none relative z-1 [&_:is(a,button,input,select,textarea,label,summary,iframe,video,audio,[tabindex],[contenteditable])]:pointer-events-auto"
+            >
+              {children}
+            </div>
+          ) : (
+            children
+          )}
           {byline("card")}
           {footerRow}
         </div>

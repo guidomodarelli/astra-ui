@@ -118,6 +118,22 @@ function FixedHeightReveal() {
   );
 }
 
+/** A quick look card with a plain, unpositioned button in its body, so the spec can check the body control stays above the title's hit area. */
+function CardWithBodyButton() {
+  const [likes, setLikes] = useState(0);
+  return (
+    <Card
+      aria-label="Tarjeta con botón en el cuerpo"
+      className="summary-card"
+      title="Tribu de huerta"
+      description="Cosechas compartidas."
+      details={<p>Riego los domingos.</p>}
+    >
+      <button type="button" onClick={() => setLikes((current) => current + 1)}>Me gusta: {likes}</button>
+    </Card>
+  );
+}
+
 /** Renders one fixture per component. */
 function ArcDisplay() {
   return <BeezUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
@@ -144,6 +160,7 @@ function ArcDisplay() {
         status="Actualizada hace 2 horas"
         details={<p>Encuentros los sábados.</p>}
       />
+      <CardWithBodyButton />
     </section>
     <section><DismissibleAlert /></section>
     <section><ActionableAlert /></section>
