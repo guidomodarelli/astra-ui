@@ -10,7 +10,7 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 - `Checkbox` acepta `label` y `description` para mostrar el campo con etiqueta de Arc, con la descripción vinculada por `aria-describedby`.
 - `RadioGroupItem` acepta `label` y `description` para mostrar las filas de opción de Arc, con un resaltado que se desliza hacia la opción elegida, también con las flechas del teclado.
 - `Badge` acepta `tone` (`neutral`, `success`, `info`, `warning`, `danger`), `size` (`sm`, `md`) e `icon`; cuando cambia el texto, el nuevo entra animado y el ancho se ajusta con un resorte.
-- `Avatar` acepta `size="xl"` (88 px) y `status` (`online`, `offline`) con un punto de presencia animado y un texto accesible configurable con `statusLabel`.
+- `Avatar` acepta `size="xl"` (88 px) y `status` (`online`, `offline`) con un punto de presencia animado y un texto accesible configurable con `statusLabel`; si el avatar también tiene un `AvatarBadge`, el punto pasa a la esquina superior.
 - `Skeleton` acepta `lines`, `avatar` y `label` para dibujar el placeholder completo de Arc, y `loading` para pasar del placeholder al contenido con una transición.
 - `CardMedia` agrega un marco para fotos en `Card` con un zoom suave al pasar el puntero.
 - `Alert` acepta `tone` con su ícono y rol accesible, `icon`, `onDismiss` con `dismissLabel` para descartarlo, y `open` para ocultarlo colapsando su altura.
