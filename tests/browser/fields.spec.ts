@@ -204,3 +204,33 @@ test.describe("with reduced motion", () => {
     await expect(page.getByRole("textbox", { name: "Correo" })).toHaveAccessibleDescription(/Ese correo ya está registrado$/);
   });
 });
+
+/**
+ * Reads the color that shows behind an element: its own background, or the first opaque one among its ancestors.
+ * @param locator - Element whose visible background is read.
+ * @returns The computed background color that paints behind it.
+ */
+async function readVisibleBackground(locator: Locator): Promise<string> {
+  return locator.evaluate((element) => {
+    for (let current: Element | null = element; current; current = current.parentElement) {
+      const color = getComputedStyle(current).backgroundColor;
+      if (color !== "rgba(0, 0, 0, 0)" && color !== "transparent") return color;
+    }
+    return getComputedStyle(document.documentElement).backgroundColor;
+  });
+}
+
+for (const theme of ["light", "dark"] as const) {
+  test(`should show the surface that hosts the rich link editor in the ${theme} theme`, async ({ page }) => {
+    await page.goto("/fields.html");
+    await page.evaluate((appliedTheme) => {
+      document.documentElement.dataset.theme = appliedTheme;
+      document.documentElement.classList.toggle("dark", appliedTheme === "dark");
+    }, theme);
+
+    const surface = page.getByTestId("raised-surface");
+    const editor = surface.getByRole("textbox", { name: "Mensaje" });
+
+    expect(await readVisibleBackground(editor)).toBe(await readVisibleBackground(surface));
+  });
+}

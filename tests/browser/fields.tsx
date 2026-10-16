@@ -1,7 +1,7 @@
 /** Mounts labelled Input and Textarea fields from the public barrel, so their layout and message motion run in real engines. */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BeezUIProvider, Button, Input, Textarea } from "beez-ui";
+import { BeezUIProvider, Button, Input, RichLinkEditor, Textarea, useRichLinkEditor } from "beez-ui";
 import "./styles.css";
 
 /** Characters the bio accepts; the count starts with three digits so a keystroke rolls only the last ones. */
@@ -115,6 +115,16 @@ function CountdownField() {
   );
 }
 
+/** A rich link editor on the raised surface of a panel, like a composer inside a dialog, whose surface it must show through. */
+function RaisedSurfaceEditor() {
+  const editor = useRichLinkEditor();
+  return (
+    <div data-testid="raised-surface" style={{ background: "var(--surface-raised)", padding: "1rem" }}>
+      <RichLinkEditor ariaLabel="Mensaje" editor={editor} placeholder="Contá una novedad" />
+    </div>
+  );
+}
+
 /** Renders the fields the spec drives. */
 function Fields() {
   return <BeezUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
@@ -125,6 +135,7 @@ function Fields() {
     <section><MembersField /></section>
     <section><NoticeField /></section>
     <section><CountdownField /></section>
+    <section><RaisedSurfaceEditor /></section>
   </main></BeezUIProvider>;
 }
 
