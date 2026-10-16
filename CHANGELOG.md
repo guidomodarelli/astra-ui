@@ -4,6 +4,10 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+### Fixed
+
+- `RichLinkEditor` ya no pinta su propio fondo: deja ver la superficie que lo contiene, así dentro de un diálogo o de una tarjeta en modo oscuro deja de verse como un bloque de otro color.
+
 ## [2.7.0] - 2026-10-16
 
 ### Added

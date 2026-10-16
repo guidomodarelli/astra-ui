@@ -28,7 +28,7 @@ const LINK_REL = "noreferrer";
  */
 const RICH_LINK_EDITOR_CLASS_NAMES = {
   editor:
-    "min-h-28 w-full cursor-text border-0 bg-background p-0 leading-[1.65] whitespace-pre-wrap text-foreground [font:inherit] [overflow-wrap:anywhere] focus:outline-0 empty:before:pointer-events-none empty:before:text-muted-foreground/75 empty:before:content-[attr(data-placeholder)] max-md:text-base",
+    "min-h-28 w-full cursor-text border-0 bg-transparent p-0 leading-[1.65] whitespace-pre-wrap text-foreground [font:inherit] [overflow-wrap:anywhere] focus:outline-0 empty:before:pointer-events-none empty:before:text-muted-foreground/75 empty:before:content-[attr(data-placeholder)] max-md:text-base",
   editorInvalid: "rounded-[0.35rem] shadow-[inset_0_-2px_0_var(--destructive)] outline-0",
   editorLink:
     "cursor-pointer rounded-[0.2rem] font-medium text-primary underline decoration-[0.08em] underline-offset-[0.18em] transition-colors hover:text-[color-mix(in_oklab,var(--primary)_72%,var(--foreground))] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
