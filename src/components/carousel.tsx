@@ -1,192 +1,453 @@
 "use client"
 
 /**
- * Carousel on Embla with Arc's carousel design (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): round
- * outlined controls on the surface that answer hover on fine pointers and press in, a grab cursor while the track can
- * be dragged, Home and End to reach the edges, and optional Arc indicators whose pill stretches and travels with the
- * slides frame by frame. Embla keeps dragging, snapping, looping and plugins.
+ * Arc's Carousel (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md) as a closed component: one child per
+ * slide, a centered slide row that is dragged, flicked or arrowed through, and a control row under it with an optional
+ * rotation control, the indicator tab list and the arrows. Embla runs inside and is never exposed; the beez-ui
+ * extensions (`loop`, `duration`, `watchFocus`, `onSettle`, deferred re-initialization, labels and visibility of the
+ * controls) cover media viewers that used Embla's API directly.
  */
 import * as React from "react"
-import useEmblaCarousel, {
-  type UseEmblaCarouselType,
-} from "embla-carousel-react"
-import { animate, motion, useMotionValue, useTransform } from "motion/react"
-import type { MotionValue } from "motion/react"
+import { AnimatePresence, animate, motion, useMotionValue } from "motion/react"
+import type { TargetAndTransition, Transition } from "motion/react"
+import { Pause, Play } from "lucide-react"
 
 import {
   CAROUSEL_COPY,
-  CAROUSEL_EDGE_KEYS,
-  CAROUSEL_INDICATOR_LENGTH_PX,
-  CAROUSEL_KEYS,
-  CAROUSEL_OWN_KEYBOARD_SELECTOR,
-  CAROUSEL_ROOT_SELECTOR,
-  type CarouselOrientation,
+  CAROUSEL_DEFAULT_SLIDE_SIZE,
+  CAROUSEL_ROTATION_ICON_ENTER_SCALE,
+  CAROUSEL_ROTATION_ICON_SIZE_PX,
+  CAROUSEL_SLIDE_SIZE_PROPERTY,
 } from "../constants/carousel.js"
+import { useIsHydrated } from "../hooks/use-is-hydrated.js"
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
-import { ARC_SPRING_SMOOTH } from "../motion/arc-tokens.js"
+import { ARC_BLUR, ARC_DURATION, ARC_EASE, ARC_SPRING_SNAPPY } from "../motion/arc-tokens.js"
 import { cn } from "../lib/utils.js"
 import { ControlButton } from "./control-button.js"
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import {
+  Carousel as CarouselRoot,
+  CarouselContent,
+  CarouselIndicators,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  defaultCarouselSlideLabel,
+  type CarouselApi,
+  type CarouselOptions,
+} from "./primitives/carousel.js"
 
-type CarouselApi = UseEmblaCarouselType[1]
-type UseCarouselParameters = Parameters<typeof useEmblaCarousel>
-type CarouselOptions = UseCarouselParameters[0]
-type CarouselPlugin = UseCarouselParameters[1]
-
+/** Props of {@link Carousel}: Arc's carousel API plus the beez-ui extensions marked below. */
 type CarouselProps = {
-  opts?: CarouselOptions
-  plugins?: CarouselPlugin
-  orientation?: CarouselOrientation
-  setApi?: (api: CarouselApi) => void
-}
-
-type CarouselContextProps = {
-  carouselRef: ReturnType<typeof useEmblaCarousel>[0]
-  api: ReturnType<typeof useEmblaCarousel>[1]
-  scrollPrev: () => void
-  scrollNext: () => void
-  canScrollPrev: boolean
-  canScrollNext: boolean
-} & CarouselProps
-
-const CarouselContext = React.createContext<CarouselContextProps | null>(null)
-
-function useCarousel() {
-  const context = React.useContext(CarouselContext)
-
-  if (!context) {
-    throw new Error("useCarousel must be used within a <Carousel />")
-  }
-
-  return context
-}
-
-/** Arc's round control on the surface: outlined, a fill on hover-capable pointers and a dimmed disabled state. */
-const carouselControlClassName =
-  "absolute touch-manipulation rounded-full border-border bg-surface text-foreground hover-fine:not-disabled:bg-surface-muted disabled:bg-surface disabled:text-text-muted disabled:opacity-50 [&_svg:not([class*='size-'])]:size-[18px]"
-
-function Carousel({
-  orientation = "horizontal",
-  opts,
-  setApi,
-  plugins,
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div"> & CarouselProps) {
-  const shouldReduceMotion = usePrefersReducedMotion()
-  const [carouselRef, api] = useEmblaCarousel(
-    {
-      ...opts,
-      axis: orientation === "horizontal" ? "x" : "y",
-    },
-    plugins
-  )
-  const [canScrollPrev, setCanScrollPrev] = React.useState(false)
-  const [canScrollNext, setCanScrollNext] = React.useState(false)
-
-  const onSelect = React.useCallback((api: CarouselApi) => {
-    if (!api) return
-    setCanScrollPrev(api.canScrollPrev())
-    setCanScrollNext(api.canScrollNext())
-  }, [])
-
-  const scrollPrev = React.useCallback(() => {
-    api?.scrollPrev(shouldReduceMotion)
-  }, [api, shouldReduceMotion])
-
-  const scrollNext = React.useCallback(() => {
-    api?.scrollNext(shouldReduceMotion)
-  }, [api, shouldReduceMotion])
-
-  const handleKeyDown = React.useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>) => {
-      if (event.altKey || event.ctrlKey || event.metaKey) return
-      // Text fields and composite widgets inside the carousel keep their own navigation keys, as in Arc.
-      const keyboardOwner = event.target instanceof Element ? event.target.closest(CAROUSEL_OWN_KEYBOARD_SELECTOR) : null
-      if (keyboardOwner && event.currentTarget.contains(keyboardOwner)) return
-      // A carousel nested in a slide handles its own keys; the outer one leaves them alone.
-      const closestCarousel = event.target instanceof Element ? event.target.closest(CAROUSEL_ROOT_SELECTOR) : null
-      if (closestCarousel && closestCarousel !== event.currentTarget) return
-      const keys = CAROUSEL_KEYS[orientation]
-      if (event.key === keys.previous) {
-        event.preventDefault()
-        scrollPrev()
-      } else if (event.key === keys.next) {
-        event.preventDefault()
-        scrollNext()
-      } else if (api && event.key === CAROUSEL_EDGE_KEYS.first) {
-        event.preventDefault()
-        api.scrollTo(0, shouldReduceMotion)
-      } else if (api && event.key === CAROUSEL_EDGE_KEYS.last) {
-        event.preventDefault()
-        api.scrollTo(api.scrollSnapList().length - 1, shouldReduceMotion)
-      }
-    },
-    [api, orientation, scrollPrev, scrollNext, shouldReduceMotion]
-  )
-
-  React.useEffect(() => {
-    if (!api || !setApi) return
-    setApi(api)
-  }, [api, setApi])
-
-  React.useEffect(() => {
-    if (!api) return
-    let isMounted = true
-
-    queueMicrotask(() => {
-      if (isMounted) {
-        onSelect(api)
-      }
-    })
-
-    api.on("reInit", onSelect)
-    api.on("select", onSelect)
-
-    return () => {
-      isMounted = false
-      api?.off("reInit", onSelect)
-      api?.off("select", onSelect)
-    }
-  }, [api, onSelect])
-
-  return (
-    <CarouselContext.Provider
-      value={{
-        carouselRef,
-        api: api,
-        opts,
-        orientation:
-          orientation || (opts?.axis === "y" ? "vertical" : "horizontal"),
-        scrollPrev,
-        scrollNext,
-        canScrollPrev,
-        canScrollNext,
-      }}
-    >
-      <div
-        onKeyDownCapture={handleKeyDown}
-        className={cn("relative", className)}
-        role="region"
-        aria-roledescription="carousel"
-        data-slot="carousel"
-        {...props}
-      >
-        {children}
-      </div>
-    </CarouselContext.Provider>
-  )
+  /** Names the carousel for assistive technology, for example "Fotos del encuentro". */
+  label: string
+  /** One child per slide. Give each a stable `key` when the list can change. */
+  children: React.ReactNode
+  /** Controlled active slide. Pair with `onIndexChange`. */
+  index?: number
+  /** Initial slide when uncontrolled. Defaults to 0. */
+  defaultIndex?: number
+  /** Called as soon as the active slide changes, when the scroll toward it starts. */
+  onIndexChange?: (index: number) => void
+  /** Width of one slide as a CSS length; `cqw` is a share of the carousel width. Defaults to `min(80cqw, 340px)`. */
+  slideSize?: string
+  /** Names each slide and its indicator. Defaults to "Diapositiva 2 de 5". */
+  slideLabel?: (index: number, count: number) => string
+  /**
+   * Milliseconds per slide. Adds a play control that rotates through the slides; rotation pauses on hover, keyboard
+   * focus, drag, offscreen and in hidden tabs; with reduced motion the control stays but is disabled.
+   */
+  interval?: number
+  /** Starts rotating on mount. Off by default, so motion begins with the viewer. */
+  autoplay?: boolean
+  /** Class of the root section. */
+  className?: string
+  /** beez-ui: wraps from the last slide to the first and back. Defaults to `false`. */
+  loop?: boolean
+  /** beez-ui: speed of a scroll between slides, in Embla's units (higher is slower). Defaults to Embla's 25. */
+  duration?: number
+  /**
+   * beez-ui: scrolls to a slide when something inside it receives focus. Defaults to `true`; turn it off when a slide
+   * holds content that keeps focus, such as an embedded player, so it never pulls the carousel back.
+   */
+  watchFocus?: boolean
+  /** beez-ui: called once a scroll has come to rest on a slide, the moment to mount heavy slide content. */
+  onSettle?: (index: number) => void
+  /** beez-ui: accessible name of the previous arrow. Defaults to "Diapositiva anterior". */
+  previousLabel?: string
+  /** beez-ui: accessible name of the next arrow. Defaults to "Diapositiva siguiente". */
+  nextLabel?: string
+  /** beez-ui: shows the previous and next arrows. Defaults to `true`. */
+  showControls?: boolean
+  /** beez-ui: shows the indicator tab list. Defaults to `true`. */
+  showIndicators?: boolean
+  /** beez-ui: class added to every slide panel. */
+  slideClassName?: string
+  /**
+   * beez-ui: class of the clipped, focusable viewport around the slide track, for example to give a media viewer a
+   * definite height.
+   */
+  viewportClassName?: string
+  /** beez-ui: class of the slide track inside the viewport, which lays the slides out in a row. */
+  trackClassName?: string
 }
 
 /**
- * The clipped viewport and the slide track. While the track can be dragged it shows Arc's grab cursor on fine
- * pointers, and a grabbing cursor while a drag is held.
+ * Clamps a slide index to the slides that exist.
+ * @param index - Requested index.
+ * @param count - Number of slides.
+ * @returns An index between 0 and the last slide.
  */
-function CarouselContent({ className, ...props }: React.ComponentProps<"div">) {
-  const { carouselRef, api, opts, orientation, canScrollPrev, canScrollNext } = useCarousel()
+function clampSlideIndex(index: number, count: number): number {
+  return Math.min(Math.max(0, count - 1), Math.max(0, index))
+}
+
+/** Rotation icon entering from a small, blurred state, as in Arc. */
+const rotationIconHidden: TargetAndTransition = {
+  opacity: 0,
+  scale: CAROUSEL_ROTATION_ICON_ENTER_SCALE,
+  filter: `blur(${ARC_BLUR.subtle}px)`,
+}
+const rotationIconRest: TargetAndTransition = { opacity: 1, scale: 1, filter: "blur(0px)" }
+const rotationIconEnter: Transition = {
+  ...ARC_SPRING_SNAPPY,
+  opacity: { duration: ARC_DURATION.fast, ease: [...ARC_EASE.enter] },
+  filter: { duration: ARC_DURATION.fast, ease: [...ARC_EASE.enter] },
+}
+const rotationIconExit: TargetAndTransition = {
+  ...rotationIconHidden,
+  transition: { duration: ARC_DURATION.fast, ease: [...ARC_EASE.standard] },
+}
+
+/**
+ * Keeps Embla in step with its slides without ever cutting a scroll short. Embla re-initializes when a slide is added,
+ * removed or resized; a re-initialization recreates the engine and aborts a running scroll, so while a scroll or a
+ * drag is in progress the request is parked and runs once the carousel comes to rest.
+ * @returns Embla's `watchResize` and `watchSlides` callbacks, stable across renders, plus the handle to bind them.
+ */
+function useDeferredReInit() {
+  const apiRef = React.useRef<CarouselApi>(undefined)
+  const isPointerDownRef = React.useRef(false)
+  const isPendingRef = React.useRef(false)
+
+  const isBusy = React.useCallback(() => {
+    const api = apiRef.current
+    // Without slides Embla has no snap to rest on, so its scroll never reads as settled.
+    if (!api || api.slideNodes().length === 0) return false
+    return isPointerDownRef.current || !api.internalEngine().scrollBody.settled()
+  }, [])
+
+  /** Embla's own handling runs when the carousel is at rest; otherwise the re-initialization waits. */
+  const deferWhileBusy = React.useCallback(() => {
+    if (!isBusy()) return true
+    isPendingRef.current = true
+    return false
+  }, [isBusy])
+
+  const flush = React.useCallback(() => {
+    const api = apiRef.current
+    if (!api || !isPendingRef.current || isBusy()) return
+    isPendingRef.current = false
+    api.reInit()
+  }, [isBusy])
+
+  const bind = React.useCallback(
+    (api: CarouselApi) => {
+      apiRef.current = api
+      if (!api) return undefined
+      const handlePointerDown = () => {
+        isPointerDownRef.current = true
+      }
+      const handlePointerUp = () => {
+        isPointerDownRef.current = false
+        // A press that never dragged leaves the track at rest without a `settle`.
+        flush()
+      }
+      // Embla emits `settle` in the middle of a jump, before it selects the new slide; the flush waits for it to finish.
+      const handleSettle = () => queueMicrotask(flush)
+      api.on("pointerDown", handlePointerDown)
+      api.on("pointerUp", handlePointerUp)
+      api.on("settle", handleSettle)
+      return () => {
+        api.off("pointerDown", handlePointerDown)
+        api.off("pointerUp", handlePointerUp)
+        api.off("settle", handleSettle)
+        isPointerDownRef.current = false
+        isPendingRef.current = false
+      }
+    },
+    [flush]
+  )
+
+  return { watch: deferWhileBusy, bind }
+}
+
+/**
+ * A centered row of slides browsed by drag, flick, the arrow keys, Home and End, the arrows or the indicator tabs, with
+ * optional rotation. Neighbouring slides stay in view as a hint that there is more, and are inert until selected.
+ * @param props - Arc's carousel props plus the beez-ui extensions.
+ * @returns The carousel section.
+ */
+function Carousel({
+  label,
+  children,
+  index: controlledIndex,
+  defaultIndex = 0,
+  onIndexChange,
+  slideSize = CAROUSEL_DEFAULT_SLIDE_SIZE,
+  slideLabel = defaultCarouselSlideLabel,
+  interval,
+  autoplay = false,
+  className,
+  loop = false,
+  duration,
+  watchFocus = true,
+  onSettle,
+  previousLabel = CAROUSEL_COPY.previous,
+  nextLabel = CAROUSEL_COPY.next,
+  showControls = true,
+  showIndicators = true,
+  slideClassName,
+  viewportClassName,
+  trackClassName,
+}: CarouselProps) {
+  const slides = React.Children.toArray(children)
+  const count = slides.length
+  const baseId = React.useId()
+  const getSlideId = React.useCallback((slideIndex: number) => `${baseId}-slide-${slideIndex}`, [baseId])
+  const reduceMotion = usePrefersReducedMotion()
+  const isHydrated = useIsHydrated()
+  const [startIndex] = React.useState(() => clampSlideIndex(controlledIndex ?? defaultIndex, count))
+  const [selectedIndex, setSelectedIndex] = React.useState(startIndex)
+  const [api, setApi] = React.useState<CarouselApi>()
+  const [announcement, setAnnouncement] = React.useState("")
+  // Slides Embla has measured, so a controlled `index` beyond them is synced again once they arrive.
+  const [engineSlideCount, setEngineSlideCount] = React.useState(0)
+  const { watch, bind } = useDeferredReInit()
+
+  // The latest callbacks, so Embla's listeners never need to be re-attached when a consumer passes new functions.
+  const callbacksRef = React.useRef({ onIndexChange, onSettle, slideLabel })
+  React.useLayoutEffect(() => {
+    callbacksRef.current = { onIndexChange, onSettle, slideLabel }
+  })
+  const reportedIndexRef = React.useRef(startIndex)
+  const settledIndexRef = React.useRef(startIndex)
+  const isRotatingRef = React.useRef(false)
+  // A `defaultIndex` beyond the slides rendered at mount waits until Embla has enough of them, and is applied once.
+  const pendingDefaultIndexRef = React.useRef(controlledIndex === undefined && defaultIndex > startIndex ? defaultIndex : undefined)
+
+  // `startIndex` is left out on purpose: Embla would re-apply it on every option change. The first slide is placed by
+  // a jump once the engine exists, and later re-initializations keep the selected slide.
+  const options: CarouselOptions = {
+    align: "center",
+    containScroll: false,
+    loop,
+    watchFocus,
+    watchResize: watch,
+    watchSlides: watch,
+    ...(duration === undefined ? {} : { duration }),
+  }
+
+  React.useEffect(() => bind(api), [api, bind])
+
+  React.useLayoutEffect(() => {
+    if (!api) return
+    api.scrollTo(reportedIndexRef.current, true)
+  }, [api])
+
+  React.useEffect(() => {
+    if (!api) return
+    const handleSettle = () => {
+      const settledIndex = api.selectedScrollSnap()
+      if (settledIndex === settledIndexRef.current) return
+      settledIndexRef.current = settledIndex
+      callbacksRef.current.onSettle?.(settledIndex)
+    }
+    const handleSelect = () => {
+      const nextIndex = api.selectedScrollSnap()
+      setSelectedIndex(nextIndex)
+      if (nextIndex !== reportedIndexRef.current) {
+        // A real selection outranks a default still waiting for its slide.
+        pendingDefaultIndexRef.current = undefined
+        reportedIndexRef.current = nextIndex
+        const { onIndexChange: reportIndex, slideLabel: nameSlide } = callbacksRef.current
+        reportIndex?.(nextIndex)
+        if (!isRotatingRef.current) setAnnouncement(nameSlide(nextIndex, api.slideNodes().length))
+      }
+      isRotatingRef.current = false
+      // A jump (reduced motion) lands before Embla selects the new slide, so its `settle` came too early to name it.
+      if (api.internalEngine().scrollBody.settled() && !api.internalEngine().dragHandler.pointerDown()) handleSettle()
+    }
+    // A re-initialization lands at rest, possibly on another slide when slides were removed: it reports both.
+    const handleReInit = () => {
+      setEngineSlideCount(api.slideNodes().length)
+      handleSelect()
+      handleSettle()
+    }
+    api.on("select", handleSelect)
+    api.on("settle", handleSettle)
+    api.on("reInit", handleReInit)
+    return () => {
+      api.off("select", handleSelect)
+      api.off("settle", handleSettle)
+      api.off("reInit", handleReInit)
+    }
+  }, [api])
+
+  React.useEffect(() => {
+    if (!api || controlledIndex === undefined) return
+    const nextIndex = clampSlideIndex(controlledIndex, api.slideNodes().length)
+    if (nextIndex === api.selectedScrollSnap()) return
+    // The parent already knows this slide, so its own change is not reported back to it.
+    reportedIndexRef.current = nextIndex
+    api.scrollTo(nextIndex, reduceMotion)
+    // `selectedIndex` re-runs the sync after every selection, so a slide the parent rejected scrolls back to `index`.
+  }, [api, controlledIndex, engineSlideCount, reduceMotion, selectedIndex])
+
+  React.useEffect(() => {
+    const pendingIndex = pendingDefaultIndexRef.current
+    if (!api || pendingIndex === undefined || api.slideNodes().length <= pendingIndex) return
+    pendingDefaultIndexRef.current = undefined
+    // Like the first slide placed at mount, the requested default is neither reported nor announced.
+    reportedIndexRef.current = pendingIndex
+    settledIndexRef.current = pendingIndex
+    api.scrollTo(pendingIndex, true)
+  }, [api, engineSlideCount])
+
+  const rotation = useRotation({ api, count, interval, autoplay, reduceMotion, isHydrated, selectedIndex, loop, isRotatingRef })
+  const visibleIndex = clampSlideIndex(selectedIndex, count)
+  const hasControlRow = count > 1 && (showControls || showIndicators || rotation.hasControl)
+  // Slides are tab panels only while indicator tabs exist to control them.
+  const hasIndicators = count > 1 && showIndicators
+  const rootStyle = { [CAROUSEL_SLIDE_SIZE_PROPERTY]: slideSize } as React.CSSProperties
+
+  return (
+    <CarouselRoot
+      opts={options}
+      setApi={setApi}
+      aria-label={label}
+      className={cn("@container/carousel grid w-full min-w-0 grid-cols-[minmax(0,1fr)] gap-4", className)}
+      style={rootStyle}
+      onPointerEnter={(event) => {
+        if (event.pointerType === "mouse") rotation.setIsHovered(true)
+      }}
+      onPointerLeave={() => rotation.setIsHovered(false)}
+      onFocus={(event) => rotation.handleFocus(event.target)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) rotation.handleFocus(null)
+      }}
+      ref={rotation.rootRef}
+    >
+      <CarouselContent
+        viewportClassName={viewportClassName}
+        className={cn("select-none [&_img]:[-webkit-user-drag:none]", trackClassName)}
+      >
+        {slides.map((slide, slideIndex) => (
+          <CarouselItem
+            key={React.isValidElement(slide) && slide.key != null ? slide.key : slideIndex}
+            id={getSlideId(slideIndex)}
+            role={hasIndicators ? "tabpanel" : "group"}
+            aria-label={slideLabel(slideIndex, count)}
+            inert={slideIndex !== visibleIndex || undefined}
+            className={cn("basis-(--carousel-slide)", slideClassName)}
+          >
+            {slide}
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+      {hasControlRow ? (
+        <div
+          data-slot="carousel-controls"
+          className="flex min-w-0 items-center gap-2 px-[calc((100cqw_-_var(--carousel-slide))/2)] @max-[340px]/carousel:gap-1 @max-[340px]/carousel:px-[max(0px,calc((100cqw_-_var(--carousel-slide))/2_-_var(--spacing)*2))]"
+        >
+          {rotation.hasControl ? (
+            <ControlButton
+              ref={rotation.playRef}
+              data-slot="carousel-rotation"
+              variant="outline"
+              size="icon"
+              className="size-(--control-height-sm) rounded-full border-border bg-surface text-foreground hover-fine:bg-surface-muted"
+              aria-label={rotation.isPlaying ? CAROUSEL_COPY.pauseRotation : CAROUSEL_COPY.startRotation}
+              disabled={!rotation.canRotate}
+              onClick={rotation.toggle}
+            >
+              <span className="grid size-4 place-items-center">
+                <AnimatePresence initial={false}>
+                  <motion.span
+                    key={rotation.isPlaying ? "pause" : "play"}
+                    className="col-start-1 row-start-1 grid place-items-center"
+                    initial={reduceMotion ? { opacity: 0 } : rotationIconHidden}
+                    animate={rotationIconRest}
+                    exit={reduceMotion ? { opacity: 0, transition: { duration: 0 } } : rotationIconExit}
+                    transition={reduceMotion ? { duration: 0 } : rotationIconEnter}
+                  >
+                    {rotation.isPlaying ? (
+                      <Pause size={CAROUSEL_ROTATION_ICON_SIZE_PX} strokeWidth={1.75} fill="currentColor" aria-hidden="true" />
+                    ) : (
+                      <Play size={CAROUSEL_ROTATION_ICON_SIZE_PX} strokeWidth={1.75} fill="currentColor" aria-hidden="true" />
+                    )}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
+            </ControlButton>
+          ) : null}
+          {showIndicators ? (
+            <CarouselIndicators
+              slideLabel={slideLabel}
+              getSlideId={getSlideId}
+              drain={rotation.drain}
+              initialCount={count}
+              initialIndex={startIndex}
+            />
+          ) : null}
+          {showControls ? (
+            <div className="ms-auto flex flex-none gap-2 @max-[340px]/carousel:gap-1">
+              <CarouselPrevious aria-label={previousLabel} />
+              <CarouselNext aria-label={nextLabel} />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+      <span className="sr-only" aria-live="polite" aria-atomic="true">
+        {announcement}
+      </span>
+    </CarouselRoot>
+  )
+}
+
+type RotationSettings = {
+  api: CarouselApi
+  count: number
+  interval?: number
+  autoplay: boolean
+  reduceMotion: boolean
+  isHydrated: boolean
+  selectedIndex: number
+  loop: boolean
+  /** Set while rotation moves the carousel, so that change is not announced. */
+  isRotatingRef: React.RefObject<boolean>
+}
+
+/**
+ * Arc's slide rotation: each slide stays for `interval` while its pill drains, then the carousel moves on, wrapping to
+ * the first slide at the end. Rotation pauses on hover, keyboard focus, drag, offscreen and in hidden tabs; pausing it
+ * with the control refills the pill. Reduced motion, once hydrated, makes rotation unavailable and disables the control,
+ * which stays in place so the control row keeps its layout after hydration.
+ * @param settings - Carousel state the rotation reads.
+ * @returns Rotation state and the handlers the carousel binds.
+ */
+function useRotation({ api, count, interval, autoplay, reduceMotion, isHydrated, selectedIndex, loop, isRotatingRef }: RotationSettings) {
+  const [isPlaying, setIsPlaying] = React.useState(autoplay)
+  const [isHovered, setIsHovered] = React.useState(false)
+  const [isFocusPaused, setIsFocusPaused] = React.useState(false)
   const [isDragging, setIsDragging] = React.useState(false)
-  const isDraggable = opts?.watchDrag !== false && (canScrollPrev || canScrollNext)
+  const [isInView, setIsInView] = React.useState(true)
+  const [isPageVisible, setIsPageVisible] = React.useState(true)
+  const drain = useMotionValue(0)
+  const rootRef = React.useRef<HTMLElement>(null)
+  const playRef = React.useRef<HTMLButtonElement>(null)
+  const hasControl = Boolean(interval) && count > 1
+  const canRotate = hasControl && !(isHydrated && reduceMotion)
+  const isRunning = canRotate && isPlaying && !isHovered && !isFocusPaused && !isDragging && isInView && isPageVisible
 
   React.useEffect(() => {
     if (!api) return
@@ -200,327 +461,77 @@ function CarouselContent({ className, ...props }: React.ComponentProps<"div">) {
     }
   }, [api])
 
-  return (
-    <div
-      ref={carouselRef}
-      className={cn(
-        "overflow-hidden",
-        isDraggable && "pointer-fine:cursor-grab pointer-fine:data-dragging:cursor-grabbing"
-      )}
-      data-slot="carousel-content"
-      data-dragging={(isDraggable && isDragging) || undefined}
-    >
-      <div
-        className={cn(
-          "flex",
-          orientation === "horizontal" ? "-ml-4" : "-mt-4 flex-col",
-          className
-        )}
-        {...props}
-      />
-    </div>
-  )
-}
-
-function CarouselItem({ className, ...props }: React.ComponentProps<"div">) {
-  const { orientation } = useCarousel()
-
-  return (
-    <div
-      role="group"
-      aria-roledescription="slide"
-      data-slot="carousel-item"
-      className={cn(
-        "min-w-0 shrink-0 grow-0 basis-full",
-        orientation === "horizontal" ? "pl-4" : "pt-4",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-function CarouselPrevious({
-  className,
-  variant = "outline",
-  size = "icon-lg",
-  ...props
-}: React.ComponentProps<typeof ControlButton>) {
-  const { orientation, scrollPrev, canScrollPrev } = useCarousel()
-
-  return (
-    <ControlButton
-      data-slot="carousel-previous"
-      variant={variant}
-      size={size}
-      className={cn(
-        carouselControlClassName,
-        orientation === "horizontal"
-          ? "top-1/2 -left-12 -translate-y-1/2"
-          : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
-        className
-      )}
-      disabled={!canScrollPrev}
-      onClick={scrollPrev}
-      {...props}
-    >
-      <ChevronLeftIcon strokeWidth={1.75} />
-      <span className="sr-only">Previous slide</span>
-    </ControlButton>
-  )
-}
-
-function CarouselNext({
-  className,
-  variant = "outline",
-  size = "icon-lg",
-  ...props
-}: React.ComponentProps<typeof ControlButton>) {
-  const { orientation, scrollNext, canScrollNext } = useCarousel()
-
-  return (
-    <ControlButton
-      data-slot="carousel-next"
-      variant={variant}
-      size={size}
-      className={cn(
-        carouselControlClassName,
-        orientation === "horizontal"
-          ? "top-1/2 -right-12 -translate-y-1/2"
-          : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
-        className
-      )}
-      disabled={!canScrollNext}
-      onClick={scrollNext}
-      {...props}
-    >
-      <ChevronRightIcon strokeWidth={1.75} />
-      <span className="sr-only">Next slide</span>
-    </ControlButton>
-  )
-}
-
-/**
- * Default accessible name of one indicator, for example "Diapositiva 2 de 5".
- * @param index - Zero-based slide position.
- * @param count - Number of slides.
- * @returns The Spanish slide label.
- */
-function defaultCarouselSlideLabel(index: number, count: number): string {
-  return `${CAROUSEL_COPY.slideLabelPrefix} ${index + 1} ${CAROUSEL_COPY.slideLabelSeparator} ${count}`
-}
-
-/**
- * Continuous slide position, in slides, of a scroll progress between Embla's snap points. Snaps are progress values,
- * so trimmed edges and slides of different sizes still map to whole slides at rest.
- * @param progress - Embla's scroll progress, from 0 to 1.
- * @param snaps - Embla's snap points, as scroll progress values.
- * @returns The fractional index of the slide in view.
- */
-function toSlidePosition(progress: number, snaps: number[]): number {
-  const lastIndex = snaps.length - 1
-  if (lastIndex < 1) return 0
-  const first = snaps[0] ?? 0
-  const last = snaps[lastIndex] ?? 1
-  if (progress <= first) return 0
-  if (progress >= last) return lastIndex
-  for (let index = 0; index < lastIndex; index += 1) {
-    const start = snaps[index] ?? 0
-    const end = snaps[index + 1] ?? 1
-    if (progress <= end) return end > start ? index + (progress - start) / (end - start) : index
-  }
-  return lastIndex
-}
-
-type CarouselIndicatorsProps = Omit<React.ComponentProps<"div">, "children"> & {
-  /** Accessible name of the indicator list. Defaults to "Elegir una diapositiva". */
-  label?: string
-  /** Names each indicator. Defaults to "Diapositiva 2 de 5". */
-  slideLabel?: (index: number, count: number) => string
-}
-
-/**
- * Arc's page indicator for a carousel: one dot per snap point, where the current one stretches into a pill that
- * follows the track frame by frame while it is dragged or scrolled. The dots are buttons in a named group and the
- * current one carries `aria-current`; activating a dot scrolls to its slide, and when a dot has focus the carousel's
- * arrow, Home and End keys move the focus to the dot of the new slide. It renders
- * once Embla has measured the slides. Place it inside `Carousel`.
- * @param props - Optional accessible copy plus native attributes of the list.
- * @returns The indicator list, or nothing until there is more than one snap point.
- */
-function CarouselIndicators({
-  className,
-  label = CAROUSEL_COPY.indicatorsLabel,
-  slideLabel = defaultCarouselSlideLabel,
-  ...props
-}: CarouselIndicatorsProps) {
-  const { api, orientation } = useCarousel()
-  const reduceMotion = usePrefersReducedMotion()
-  const [snapCount, setSnapCount] = React.useState(0)
-  const [selectedIndex, setSelectedIndex] = React.useState(0)
-  const [isLooping, setIsLooping] = React.useState(false)
-  const position = useMotionValue(0)
-  const indicatorRefs = React.useRef<(HTMLButtonElement | null)[]>([])
+  // A new slide starts with a full pill.
+  React.useEffect(() => {
+    drain.jump(0)
+  }, [drain, selectedIndex])
 
   React.useEffect(() => {
-    if (!api) return
-    let positionAnimation: ReturnType<typeof animate> | null = null
-    const isLoop = () => api.internalEngine().options.loop
-    const trackScroll = () => {
-      if (isLoop()) return
-      positionAnimation?.stop()
-      position.set(toSlidePosition(api.scrollProgress(), api.scrollSnapList()))
-    }
-    const syncSelection = () => {
-      const nextIndex = api.selectedScrollSnap()
-      const count = api.scrollSnapList().length
-      setSnapCount(count)
-      setSelectedIndex(nextIndex)
-      setIsLooping(isLoop())
-      // A looping track wraps its progress, so its pill hands over between snaps instead of following the scroll.
-      // It travels the short way round: across the loop boundary the position runs past the last dot, which the
-      // dots read on a circle, and settles back on the snap's own index once it lands.
-      if (isLoop()) {
-        positionAnimation?.stop()
-        const turns = Math.round((position.get() - nextIndex) / count)
-        const destination = nextIndex + turns * count
-        positionAnimation = reduceMotion
-          ? null
-          : animate(position, destination, { ...ARC_SPRING_SMOOTH, onComplete: () => position.jump(nextIndex) })
-        if (reduceMotion) position.set(nextIndex)
-      }
-      // Focus follows the selection only while one of the dots has it. The dots are tracked by their own refs, so the
-      // consumer's `ref` reaches the group untouched.
-      if (indicatorRefs.current.some((indicator) => indicator !== null && indicator === document.activeElement)) {
-        indicatorRefs.current[nextIndex]?.focus({ preventScroll: true })
-      }
-    }
-    const syncAll = () => {
-      syncSelection()
-      if (isLoop()) {
-        positionAnimation?.stop()
-        position.set(api.selectedScrollSnap())
-      } else {
-        trackScroll()
-      }
-    }
-    syncAll()
-    api.on("reInit", syncAll)
-    api.on("select", syncSelection)
-    api.on("scroll", trackScroll)
+    if (!isRunning || !interval || !api) return
+    const controls = animate(drain, 1, {
+      duration: ((1 - drain.get()) * interval) / 1000,
+      ease: "linear",
+      onComplete: () => {
+        isRotatingRef.current = true
+        if (loop || api.canScrollNext()) api.scrollNext()
+        else api.scrollTo(0)
+      },
+    })
+    return () => controls.stop()
+  }, [api, drain, interval, isRotatingRef, isRunning, loop, selectedIndex])
+
+  React.useEffect(() => {
+    const root = rootRef.current
+    if (!interval || !root) return
+    const observer =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver(([entry]) => {
+            if (entry) setIsInView(entry.isIntersecting)
+          })
+    observer?.observe(root)
+    const handleVisibilityChange = () => setIsPageVisible(document.visibilityState !== "hidden")
+    // A carousel mounted in a hidden tab, or re-enabled after one, starts from the current state.
+    handleVisibilityChange()
+    document.addEventListener("visibilitychange", handleVisibilityChange)
     return () => {
-      positionAnimation?.stop()
-      api.off("reInit", syncAll)
-      api.off("select", syncSelection)
-      api.off("scroll", trackScroll)
+      observer?.disconnect()
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
-  }, [api, position, reduceMotion])
+  }, [interval])
 
-  if (snapCount < 2) return null
+  /** Keyboard focus inside the carousel pauses rotation, except on the rotation control itself. */
+  const handleFocus = (target: EventTarget | null) => {
+    if (!(target instanceof Element) || target === playRef.current) {
+      setIsFocusPaused(false)
+      return
+    }
+    setIsFocusPaused(target.matches(":focus-visible"))
+  }
 
-  return (
-    <div
-      role="group"
-      aria-label={label}
-      data-slot="carousel-indicators"
-      className={cn(
-        "flex min-w-0 items-center justify-center",
-        orientation === "vertical" && "flex-col",
-        className
-      )}
-      {...props}
-    >
-      {Array.from({ length: snapCount }, (_, index) => (
-        <CarouselIndicator
-          key={index}
-          index={index}
-          lastIndex={snapCount - 1}
-          isLooping={isLooping}
-          position={position}
-          isSelected={index === selectedIndex}
-          orientation={orientation ?? "horizontal"}
-          label={slideLabel(index, snapCount)}
-          indicatorRef={(node) => {
-            indicatorRefs.current[index] = node
-          }}
-          onSelect={() => api?.scrollTo(index, reduceMotion)}
-        />
-      ))}
-    </div>
-  )
+  const toggle = () => {
+    if (!isPlaying) {
+      setIsPlaying(true)
+      return
+    }
+    setIsPlaying(false)
+    // Pausing refills the pill: this slide stays until the viewer moves on.
+    if (reduceMotion) drain.jump(0)
+    else animate(drain, 0, { duration: ARC_DURATION.standard, ease: [...ARC_EASE.standard] })
+  }
+
+  return {
+    hasControl,
+    canRotate,
+    isPlaying: canRotate && isPlaying,
+    drain: canRotate ? drain : undefined,
+    rootRef,
+    playRef,
+    setIsHovered,
+    handleFocus,
+    toggle,
+  }
 }
 
-type CarouselIndicatorProps = {
-  index: number
-  lastIndex: number
-  /** Whether the track loops, so the first and last dots are neighbours on a circle. */
-  isLooping: boolean
-  position: MotionValue<number>
-  isSelected: boolean
-  orientation: CarouselOrientation
-  label: string
-  indicatorRef: React.Ref<HTMLButtonElement>
-  onSelect: () => void
-}
-
-/** One dot that grows toward the pill as the track nears its slide, so the pill hands over continuously. */
-function CarouselIndicator({
-  index,
-  lastIndex,
-  isLooping,
-  position,
-  isSelected,
-  orientation,
-  label,
-  indicatorRef,
-  onSelect,
-}: CarouselIndicatorProps) {
-  const emphasis = useTransform(position, (value) => {
-    if (!isLooping) return Math.max(0, 1 - Math.abs(Math.min(lastIndex, Math.max(0, value)) - index))
-    const count = lastIndex + 1
-    const distance = Math.abs(value - index) % count
-    return Math.max(0, 1 - Math.min(distance, count - distance))
-  })
-  const length = useTransform(
-    emphasis,
-    (value) => CAROUSEL_INDICATOR_LENGTH_PX.dot + (CAROUSEL_INDICATOR_LENGTH_PX.pill - CAROUSEL_INDICATOR_LENGTH_PX.dot) * value
-  )
-
-  return (
-    <button
-      ref={indicatorRef}
-      type="button"
-      aria-current={isSelected || undefined}
-      aria-label={label}
-      data-slot="carousel-indicator"
-      className={cn(
-        "group/indicator grid shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 outline-none [-webkit-tap-highlight-color:transparent] focus-visible:ring-3 focus-visible:ring-ring/50",
-        orientation === "horizontal" ? "h-(--control-height-sm) px-[5px]" : "w-(--control-height-sm) py-[5px]"
-      )}
-      onClick={onSelect}
-    >
-      <motion.span
-        aria-hidden="true"
-        className={cn(
-          "relative block overflow-hidden rounded-full bg-border-strong transition-colors duration-(--duration-fast) ease-(--ease-standard) motion-reduce:transition-none group-hover/indicator:bg-text-muted",
-          orientation === "horizontal" ? "h-1.5" : "w-1.5"
-        )}
-        style={orientation === "horizontal" ? { width: length } : { height: length }}
-      >
-        <motion.span className="absolute inset-0 bg-foreground" style={{ opacity: emphasis }} />
-      </motion.span>
-    </button>
-  )
-}
-
-export {
-  type CarouselApi,
-  type CarouselIndicatorsProps,
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselPrevious,
-  CarouselNext,
-  CarouselIndicators,
-  useCarousel,
-}
+export { Carousel }
+export type { CarouselProps }

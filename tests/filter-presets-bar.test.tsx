@@ -7,7 +7,6 @@ import {
   FilterPresetSaveButton,
   FilterPresetsBar,
   FilterQueryBar,
-  TooltipProvider,
   parseFilterPresets,
   type FilterPreset,
   type FilterQualifierConfig,
@@ -24,7 +23,7 @@ function PresetsHarness({ initialPresets = [] }: { initialPresets?: FilterPreset
   const [query, setQuery] = useState("");
 
   return (
-    <TooltipProvider>
+    <>
       <FilterQueryBar ariaLabel="Filtrar gastos" configs={QUERY_FILTER_CONFIGS} onValueChange={setQuery} value={query} />
       <FilterPresetSaveButton
         canSaveCurrentQuery={query.trim().length > 0}
@@ -43,7 +42,7 @@ function PresetsHarness({ initialPresets = [] }: { initialPresets?: FilterPreset
           setPresets(presets.map((preset) => (preset.name === originalName ? { name, query: presetQuery } : preset)))
         }
       />
-    </TooltipProvider>
+    </>
   );
 }
 
@@ -56,9 +55,9 @@ describe("FilterPresetSaveButton", () => {
 
   it("forwards classes to the save button", () => {
     render(
-      <TooltipProvider>
+      <>
         <FilterPresetSaveButton canSaveCurrentQuery onSaveCurrentQuery={() => true} className="input-slot-button" />
-      </TooltipProvider>,
+      </>,
     );
 
     expect(screen.getByRole("button", { name: "Guardar filtro" })).toHaveClass("input-slot-button");

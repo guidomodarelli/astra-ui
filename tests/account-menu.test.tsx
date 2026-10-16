@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AccountMenu, BeezUIProvider, DropdownMenuItem, Sidebar, SidebarProvider, SidebarTrigger } from "beez-ui";
+import { AccountMenu, BeezUIProvider, Sidebar, SidebarProvider, SidebarTrigger } from "beez-ui";
 
 const ACCOUNT = { name: "Ana López", email: "ana@example.com" };
 
@@ -109,9 +109,8 @@ describe("AccountMenu", () => {
         showStatusBadge
         labels={{ trigger: "Cuenta de Google conectada", signOut: "Desconectar" }}
         onSignOut={vi.fn()}
-      >
-        <DropdownMenuItem onSelect={onOpenSettings}>Ajustes</DropdownMenuItem>
-      </AccountMenu>,
+        items={[{ label: "Ajustes", onSelect: onOpenSettings }]}
+      />,
     );
 
     const trigger = screen.getByRole("button", { name: "Cuenta de Google conectada" });

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm } from "react-hook-form";
-import { Alert, AlertTitle, AlertDescription, AnimatedThemeToggler, Calendar, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Highlighter, Input, InputGroup, InputGroupAddon, InputGroupInput, RadioGroup, RadioGroupItem, ThemedToaster, toast, TypingAnimation } from "beez-ui";
+import { Alert, AnimatedThemeToggler, Calendar, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Highlighter, Input, InputGroup, InputGroupAddon, InputGroupInput, RadioGroup, ThemedToaster, toast, TypingAnimation } from "beez-ui";
 
 /** Composes the shared form primitives with their actual validation provider. */
 function RequiredForm() {
@@ -20,7 +20,7 @@ afterEach(() => {
 
 describe("Agenda primitives", () => {
   it("should render an accessible alert with its actionable explanation", () => {
-    render(<Alert><AlertTitle>Revisá los datos</AlertTitle><AlertDescription>Completá los campos requeridos.</AlertDescription></Alert>);
+    render(<Alert tone="danger" title="Revisá los datos">Completá los campos requeridos.</Alert>);
     expect(screen.getByRole("alert")).toHaveTextContent("Completá los campos requeridos.");
   });
 
@@ -31,7 +31,7 @@ describe("Agenda primitives", () => {
   });
 
   it("should select a radio choice through its accessible label", async () => {
-    render(<RadioGroup><RadioGroupItem value="weekly" aria-label="Semanal" /><RadioGroupItem value="monthly" aria-label="Mensual" /></RadioGroup>);
+    render(<RadioGroup label="Frecuencia" options={[{ value: "weekly", label: "Semanal" }, { value: "monthly", label: "Mensual" }]} />);
     await userEvent.click(screen.getByRole("radio", { name: "Mensual" }));
     expect(screen.getByRole("radio", { name: "Mensual" })).toBeChecked();
     expect(screen.getByRole("radio", { name: "Semanal" })).not.toBeChecked();
@@ -45,11 +45,10 @@ describe("Agenda primitives", () => {
   });
 
   it("should select a calendar date while preserving the Spanish locale", async () => {
-    const onSelect = vi.fn();
-    render(<Calendar mode="single" defaultMonth={new Date(2026, 8, 1)} onSelect={onSelect} />);
+    const onChange = vi.fn();
+    render(<Calendar month={new Date(2026, 8, 1)} onChange={onChange} />);
     await userEvent.click(screen.getByRole("button", { name: /jueves, 10 de septiembre/i }));
-    expect(onSelect).toHaveBeenCalled();
-    expect(onSelect.mock.calls[0][0]).toEqual(new Date(2026, 8, 10));
+    expect(onChange).toHaveBeenCalledWith(new Date(2026, 8, 10));
   });
 
   it("should apply the dark theme without requiring the View Transition API", async () => {

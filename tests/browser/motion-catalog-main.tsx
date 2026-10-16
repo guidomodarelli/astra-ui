@@ -4,25 +4,13 @@ import { createRoot } from "react-dom/client";
 import { useForm } from "react-hook-form";
 import {
   Alert,
-  AlertDescription,
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-  AlertTitle,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTrigger,
   BeezUIProvider,
   Button,
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
   Form,
   FormControl,
   FormField,
@@ -30,8 +18,6 @@ import {
   FormLabel,
   FormMessage,
   HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
   Input,
   InputGroup,
   InputGroupAddon,
@@ -41,12 +27,7 @@ import {
   PopoverContent,
   PopoverTrigger,
   RadioGroup,
-  RadioGroupItem,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -158,21 +139,25 @@ function MotionCatalog() {
               <SheetDescription>Contenido del panel.</SheetDescription>
             </SheetContent>
           </Sheet>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+          <Dialog alert>
+            <DialogTrigger asChild>
               <Button>Eliminar cuenta</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogTitle>¿Eliminar la cuenta?</AlertDialogTitle>
-              <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Conservar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => setLastAction("Cuenta eliminada")}>
-                  Eliminar
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+            </DialogTrigger>
+            <DialogContent
+              title="¿Eliminar la cuenta?"
+              description="Esta acción no se puede deshacer."
+              footer={
+                <>
+                  <DialogClose asChild>
+                    <Button variant="secondary">Conservar</Button>
+                  </DialogClose>
+                  <DialogClose asChild>
+                    <Button onClick={() => setLastAction("Cuenta eliminada")}>Eliminar</Button>
+                  </DialogClose>
+                </>
+              }
+            />
+          </Dialog>
           <Popover>
             <PopoverTrigger asChild>
               <Button>Ver filtros</Button>
@@ -180,37 +165,30 @@ function MotionCatalog() {
             <PopoverContent>Filtros disponibles</PopoverContent>
           </Popover>
           <TickingPopover />
-          <HoverCard openDelay={0} closeDelay={0}>
-            <HoverCardTrigger href="#perfil">Perfil público</HoverCardTrigger>
-            <HoverCardContent>Tarjeta de perfil</HoverCardContent>
+          <HoverCard openDelay={0} closeDelay={0} content="Tarjeta de perfil">
+            <a href="#perfil">Perfil público</a>
           </HoverCard>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>Más opciones</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onSelect={() => setLastAction("Renombrado")}>Renombrar</DropdownMenuItem>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>Mover a</DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem onSelect={() => setLastAction("Movido a archivo")}>Archivo</DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setLastAction("Movido a papelera")}>Papelera</DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <DropdownMenu
+            label="Más opciones"
+            trigger={<Button>Más opciones</Button>}
+            items={[
+              { label: "Renombrar", onSelect: () => setLastAction("Renombrado") },
+              { label: "Mover a archivo", onSelect: () => setLastAction("Movido a archivo") },
+              { label: "Mover a papelera", onSelect: () => setLastAction("Movido a papelera") },
+            ]}
+          />
           <output aria-label="Última acción">{lastAction}</output>
         </section>
 
         <section className="controls">
-          <RadioGroup defaultValue="mensual" aria-label="Frecuencia">
-            <div className="controls">
-              <RadioGroupItem id="frecuencia-mensual" value="mensual" />
-              <Label htmlFor="frecuencia-mensual">Mensual</Label>
-              <RadioGroupItem id="frecuencia-anual" value="anual" />
-              <Label htmlFor="frecuencia-anual">Anual</Label>
-            </div>
-          </RadioGroup>
+          <RadioGroup
+            label="Frecuencia"
+            defaultValue="mensual"
+            options={[
+              { value: "mensual", label: "Mensual" },
+              { value: "anual", label: "Anual" },
+            ]}
+          />
           <InputGroup>
             <InputGroupAddon>#</InputGroupAddon>
             <InputGroupInput aria-label="Código" aria-invalid={isCodeInvalid || undefined} />
@@ -227,26 +205,18 @@ function MotionCatalog() {
         <section>
           <Button onClick={() => setIsNoticeShown(true)}>Mostrar aviso</Button>
           {isNoticeShown ? (
-            <Alert>
-              <AlertTitle>Cambios guardados</AlertTitle>
-              <AlertDescription>El perfil se actualizó.</AlertDescription>
-            </Alert>
+            <Alert title="Cambios guardados">El perfil se actualizó.</Alert>
           ) : null}
         </section>
 
         <section className="controls">
-          <Select>
-            <SelectTrigger aria-label="País">
-              <SelectValue placeholder="Elegir país" />
-            </SelectTrigger>
-            <SelectContent position="popper">
-              {MANY_COUNTRIES.map((country) => (
-                <SelectItem key={country} value={country}>
-                  {country}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Select
+            label="País"
+            hideLabel
+            placeholder="Elegir país"
+            className="overlay-select"
+            options={MANY_COUNTRIES.map((country) => ({ value: country, label: country }))}
+          />
           <Button onClick={() => setIsSwitchShown((shown) => !shown)}>Mostrar preferencia</Button>
           <div style={{ display: isSwitchShown ? "flex" : "none" }} className="controls">
             <Switch id="catalog-switch" />
@@ -256,7 +226,7 @@ function MotionCatalog() {
 
         <section>
           <Tabs defaultValue="activos">
-            <TabsList variant="line" aria-label="Estados">
+            <TabsList aria-label="Estados">
               <TabsTrigger value="activos">Activos</TabsTrigger>
               <TabsTrigger value="pausados">Pausados</TabsTrigger>
             </TabsList>

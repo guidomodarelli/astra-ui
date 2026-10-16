@@ -4,5 +4,5 @@ import { Skeleton } from "beez-ui";
 import "./globals.css";
 
 export default function Layout({ children }: { children: ReactNode }) {
-  return <html lang="es" suppressHydrationWarning><body><Skeleton aria-label="Carga del servidor" className="server-skeleton" />{children}</body></html>;
+  return <html lang="es" suppressHydrationWarning><body><Skeleton label="Carga del servidor" lines={1} className="server-skeleton" />{children}</body></html>;
 }

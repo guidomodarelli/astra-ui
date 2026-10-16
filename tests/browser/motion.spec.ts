@@ -499,9 +499,9 @@ test("should swap the theme icon with a fade and scale and pop in the dialog clo
   await expect(themeIcon).toHaveCSS("opacity", "1");
 
   await page.getByRole("button", { name: "Abrir diálogo" }).click();
-  const close = page.locator("[data-slot=dialog-close]");
+  const close = page.getByRole("button", { name: "Cerrar diálogo" });
   await expect
-    .poll(() => motion.properties({ buttonText: "Cerrar" }))
+    .poll(() => motion.properties({ buttonText: "Cerrar diálogo" }))
     .toEqual(expect.arrayContaining(["opacity", "scale"]));
   await expect(close).toHaveCSS("opacity", "1");
   await expect(close).toHaveCSS("transform", "none");
@@ -972,7 +972,7 @@ test("should only show a viewport-placed dialog close button at the viewport cor
   // The dialog's initial focus must never land on the close button while it is hidden,
   // or keyboard users would act on a control they cannot see.
   expect(opening.filter((sample) => sample.isFocused && sample.opacity === 0)).toEqual([]);
-  const close = page.getByRole("button", { name: "Cerrar" });
+  const close = page.getByRole("button", { name: "Cerrar diálogo" });
   await expect(close).toHaveCSS("opacity", "1");
 
   await close.click();

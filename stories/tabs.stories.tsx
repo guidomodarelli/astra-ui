@@ -7,7 +7,6 @@ import { LiveArgs } from "./live-args.js";
 type Args = {
   value: string;
   orientation: "horizontal" | "vertical";
-  variant: "default" | "line";
   disabledSecond: boolean;
 };
 const meta = {
@@ -15,7 +14,6 @@ const meta = {
   args: {
     value: "overview",
     orientation: "horizontal",
-    variant: "default",
     disabledSecond: false,
   },
   argTypes: {
@@ -27,17 +25,13 @@ const meta = {
       control: "select",
       options: ["horizontal", "vertical"],
     },
-    variant: {
-      control: "select",
-      options: ["default", "line"],
-    },
     disabledSecond: {
       control: "boolean",
     },
   },
   parameters: {
     controls: {
-      include: ["value", "orientation", "variant", "disabledSecond"],
+      include: ["value", "orientation", "disabledSecond"],
     },
   },
   render: function Render(args) {
@@ -51,7 +45,7 @@ const meta = {
               orientation={args.orientation}
               onValueChange={(value) => setValue(value)}
             >
-              <TabsList variant={args.variant} aria-label="Secciones">
+              <TabsList aria-label="Secciones">
                 <TabsTrigger value="overview">Resumen</TabsTrigger>
                 <TabsTrigger value="activity" disabled={args.disabledSecond}>
                   Actividad

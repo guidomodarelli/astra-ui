@@ -121,6 +121,34 @@ test.describe("Arc dropdown menu", () => {
     expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewportWidth - COLLISION_PADDING_PX + 1);
     expect(bounds.width).toBeGreaterThanOrEqual(Math.min(192, viewportWidth - 2 * COLLISION_PADDING_PX));
   });
+
+  test("should name the menu after its label and return focus to Arc's trigger on Escape", async ({ page }) => {
+    await page.goto("/arc-menus.html");
+    const trigger = page.getByRole("button", { name: "Acciones del documento" });
+    await trigger.click();
+    await expect(page.getByRole("menu", { name: "Acciones del documento" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("menu")).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+  });
+
+  test("should check one radio row of a single selection and toggle a checkbox row", async ({ page }) => {
+    await page.goto("/arc-menus.html");
+    const trigger = page.getByRole("button", { name: "Vista" });
+    await trigger.click();
+    await expect(page.getByRole("menuitemradio", { name: "Recientes" })).toHaveAttribute("aria-checked", "true");
+    await page.getByRole("menuitemradio", { name: "Por nombre" }).click();
+    await expect(page.getByLabel("Orden elegido")).toHaveText("name");
+
+    await trigger.click();
+    await expect(page.getByRole("menuitemradio", { name: "Por nombre" })).toHaveAttribute("aria-checked", "true");
+    await page.getByRole("menuitemcheckbox", { name: "Mostrar archivados" }).click();
+    await trigger.click();
+    await expect(page.getByRole("menuitemcheckbox", { name: "Mostrar archivados" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+  });
 });
 
 test.describe("Arc select", () => {
@@ -174,5 +202,45 @@ test.describe("Arc select", () => {
     await page.getByRole("option", { name: "Dólares" }).click();
     await expect(trigger).toHaveText("Dólares");
     await expect(listbox).not.toBeVisible();
+  });
+
+  test("should keep a hidden label out of the layout while it names the trigger", async ({ page }) => {
+    await page.goto("/arc-menus.html");
+    const trigger = page.getByRole("combobox", { name: "Moneda" });
+    const label = page.locator("label", { hasText: "Moneda" });
+    const labelBounds = (await label.boundingBox())!;
+    expect(labelBounds.width).toBeLessThanOrEqual(1);
+    expect(labelBounds.height).toBeLessThanOrEqual(1);
+    await expect(trigger).toBeVisible();
+  });
+
+  test("should show the visible label above a full-width trigger and clear the error once a value is chosen", async ({
+    page,
+  }) => {
+    await page.goto("/arc-menus.html");
+    const trigger = page.getByRole("combobox", { name: "Plan" });
+    const label = page.locator("label", { hasText: "Plan" });
+    const field = page.locator("[data-slot=field]", { has: trigger });
+    await expect(trigger).toHaveAttribute("aria-invalid", "true");
+    await expect(page.getByRole("alert")).toContainText("Elegí un plan para continuar.");
+    await expect(trigger).toHaveAccessibleDescription(/Elegí un plan para continuar\./);
+    const labelBounds = (await label.boundingBox())!;
+    const triggerBounds = (await trigger.boundingBox())!;
+    const fieldBounds = (await field.boundingBox())!;
+    expect(labelBounds.y + labelBounds.height).toBeLessThanOrEqual(triggerBounds.y + 1);
+    expect(Math.abs(triggerBounds.width - fieldBounds.width)).toBeLessThanOrEqual(1);
+
+    await trigger.click();
+    const listbox = page.getByRole("listbox");
+    await expect(listbox).toHaveCSS("transform", "none", { timeout: SETTLE_TIMEOUT_MS });
+    const listBounds = (await listbox.boundingBox())!;
+    const viewportWidth = page.viewportSize()!.width;
+    // As wide as the trigger, at least 12rem and at most min(24rem, 100vw minus 20px).
+    const expectedWidth = Math.min(Math.max(triggerBounds.width, 192), 384, viewportWidth - 20);
+    expect(Math.abs(listBounds.width - expectedWidth)).toBeLessThanOrEqual(1);
+    await page.getByRole("option", { name: "Profesional" }).click();
+    await expect(trigger).toHaveText("Profesional");
+    await expect(trigger).not.toHaveAttribute("aria-invalid", "true");
+    await expect(page.getByRole("alert")).toHaveCount(0, { timeout: SETTLE_TIMEOUT_MS });
   });
 });

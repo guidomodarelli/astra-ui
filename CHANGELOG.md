@@ -14,13 +14,49 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ### Added
 
+- `Dialog` acepta `alert` para confirmaciones: se anuncia como `alertdialog`, no se cierra al hacer click afuera, abre con el foco en el primer `DialogClose` y oculta el botón de cerrar por defecto.
+- `DialogContent` suma `footer`, `hideTitle`, `closeLabel` ("Cerrar diálogo" por defecto), `headerClassName`, `titleClassName`, `descriptionClassName` y `footerClassName`; `title` y `description` aceptan cualquier contenido.
+- `Pagination` suma `getHref` (enlaces con el `Link` del provider, sin dejar de llamar a `onPageChange`), paginación por cursor sin `pageCount` con `hasNextPage`, `previousLabel`, `nextLabel` y `className`.
+- `Tooltip` acepta `side` `left` y `right`, `align`, `sideOffset`, `collisionPadding`, `contentClassName`, `open`, `defaultOpen`, `onOpenChange` y `delayDuration`, y funciona sin provider.
+- `HoverCard` acepta `open`, `defaultOpen`, `onOpenChange`, `sideOffset`, `collisionPadding` y `contentClassName`.
+- `DropdownMenu` acepta un `trigger` propio, ítems con enlace (`href`, `target`, `rel`), `checked`, `trailing`, `id`, `className` e `itemProps`, selección única con `selection` e ítems con `value`, y `side`, `align`, `contentClassName`, `contentLabel`, `open`, `defaultOpen`, `onOpenChange` y `modal`.
+- `Select` acepta `description` y `error` con el mismo patrón que `Input`, `hideLabel` (label solo para lectores de pantalla), `size`, `triggerClassName` y `aria-invalid`; el `id` va al trigger, así un `<label htmlFor>` externo sigue funcionando.
+- `Card` incorpora la vista rápida de Arc (`details`, `open`, `defaultOpen`, `onOpenChange`), el byline con `avatar`, `meta`, `status` y `action`, y las props `media`, `footer` y `headingLevel`.
+- `AvatarGroup` recibe `members` (con `key` opcional para nombres repetidos), `max` (4 por defecto), `size` y `label` ("Integrantes" por defecto), arma solo el chip +N con un número animado y, con puntero fino, muestra el nombre de cada integrante al pasar el mouse.
+- `Avatar` suma `fallback`, `badge` y `alt`; `Alert` suma `action` e `icon`.
+- `Carousel` suma `loop`, `duration`, `watchFocus`, `onSettle` (avisa cuando termina la animación), `previousLabel`, `nextLabel`, `showControls`, `showIndicators` y `slideClassName`, y se reinicializa solo cuando cambian sus diapositivas o su tamaño, esperando a que termine el scroll o el arrastre en curso.
+- `Carousel` acepta `interval` y `autoplay` con un control para pausar o iniciar la rotación, que también se pausa con hover, foco de teclado, arrastre, fuera de pantalla y en pestañas ocultas.
+- `Calendar` acepta `todayLabel`, y el hook `useToday` se exporta desde `beez-ui` y `beez-ui/hooks`.
+- `Pagination` pasa el evento del click como segundo argumento de `onPageChange(page, event)`, en botones, enlaces y flechas; con `getHref`, llamar `event.preventDefault()` evita que el enlace navegue, por ejemplo para paginar en el lugar con clicks simples y dejar que los clicks con modificadores abran otra pestaña.
+- `Carousel` acepta `viewportClassName` y `trackClassName` para dar estilo al viewport recortado y a la pista de diapositivas, por ejemplo una altura definida en un visor de medios, sin apuntar a `[data-slot="carousel-content"]`.
+- `AvatarGroup` acepta `total` para cuando `members` es solo una vista previa: si es mayor que la cantidad de integrantes recibidos, el chip +N cuenta contra el total. También reenvía atributos nativos y ARIA a la raíz (`aria-hidden`, `style`, `data-*`, `id`…).
+- `Select` acepta `aria-describedby` en el trigger, combinado con los ids de `description` y `error`, y `options` acepta arrays de solo lectura, así una lista declarada `as const` no necesita copia.
+- `DialogContent` suma `headerContent`, contenido extra del encabezado (por ejemplo etiquetas de tipo y estado) que se dibuja después del título y fuera de él, sin cambiar el nombre accesible del diálogo, y `closeButtonRef`, el ref del botón de cerrar; con `onOpenAutoFocus` permite abrir el diálogo con el foco en ese botón.
 - `beez-ui/motion-tokens` suma los presets de Arc que faltaban: `MOTION_TIMING.instant`, `MOTION_TIMING.standard`, `MOTION_TIMING.considered`, `MOTION_EASE_EXIT`, `MOTION_EASE_STANDARD`, `MOTION_EXIT_SCALE`, `MOTION_TOOLTIP_SCALE` y `MOTION_DIALOG_EXIT_DISTANCE`.
 
 ### Changed
 
+- **Incompatible:** los componentes adoptados de Arc usan la API pública de Arc en lugar de la composición estilo shadcn: `Switch`, `RadioGroup`, `Badge`, `Avatar`, `AvatarGroup`, `Skeleton`, `Card`, `Alert`, `Tooltip`, `HoverCard`, `DropdownMenu`, `Select`, `Pagination`, `Calendar` y `Carousel` pasan a ser componentes cerrados configurados por props; `Dialog`, `Popover` y `Tabs` conservan sus partes de Arc. El diseño y la motion no cambian.
+- **Incompatible:** `DialogContent` recibe `title` (obligatorio) y `description` como props y dibuja su propio encabezado; el botón de cerrar se llama "Cerrar diálogo" en lugar de "Cerrar".
+- **Incompatible:** `Pagination` recibe `page`, `pageCount`, `onPageChange` y `label`, y dibuja Anterior, Siguiente y una ventana de 5 páginas con botones, o con enlaces si se pasa `getHref`; cada página se llama "Página N".
+- **Incompatible:** `TabsList` usa siempre la lista segmentada de Arc.
+- **Incompatible:** `Tooltip` envuelve a su trigger (`<Tooltip content="…">`) y `HoverCard` recibe `content` con el trigger como hijo, con `side="bottom"` y `align="start"` por defecto.
+- **Incompatible:** `DropdownMenu` recibe `label`, `icon` e `items`; el menú toma su nombre accesible de `label` o de `contentLabel`.
+- **Incompatible:** `Select` recibe `label` (obligatorio y visible salvo con `hideLabel`) y `options`, con el placeholder "Seleccioná una opción" por defecto; la lista se abre debajo del trigger, con su mismo ancho. `className` se aplica al campo y `triggerClassName` al trigger.
+- **Incompatible:** `PopoverContent` se alinea por defecto con el inicio del trigger (`align="start"`).
+- **Incompatible:** `AccountMenu` reemplaza `children` por `items` y `DataTable` reemplaza `columnVisibilityMenuExtraContent` por `columnVisibilityMenuExtraItems`; los dos reciben los mismos ítems que `DropdownMenu`.
+- **Incompatible:** `RadioGroup` recibe `label` (se dibuja como `legend` de un `fieldset`), `options`, `value` o `defaultValue`, `onValueChange` y `name` (se genera si falta).
+- **Incompatible:** `Badge` usa `tone` (`neutral` por defecto), `size` e `icon`.
+- **Incompatible:** `Avatar` recibe `name` (obligatorio), `src`, `size` (`sm`, `md`, `lg` o `xl`; `md` por defecto), `status` y `statusLabel`, y se anuncia como una sola imagen (por ejemplo "Ana, En línea").
+- **Incompatible:** `Skeleton` sigue a Arc: sin hijos dibuja 3 líneas por defecto, y con hijos muestra el placeholder mientras `loading` (verdadero por defecto) y después pasa al contenido; solo reenvía `className`.
+- **Incompatible:** `Card` recibe `title` (opcional), `description` y `children`.
+- **Incompatible:** `Alert` recibe `title` (obligatorio), `tone` (`info` por defecto, anunciado con `role="status"`) y el detalle como `children`; el botón de descartar se llama "Descartar aviso: <título>" por defecto.
+- **Incompatible:** `Calendar` recibe `value` y `onChange`, `month` y `onMonthChange`, `minDate`, `maxDate`, `disabledDates`, `locale` como texto (`"es-AR"` por defecto, semana desde el lunes), `showToday` y `className`.
+- **Incompatible:** `Carousel` recibe `label` (obligatorio), una diapositiva por hijo, `index`, `defaultIndex`, `onIndexChange`, `slideSize` (`min(80cqw, 340px)` por defecto) y `slideLabel`; las flechas quedan debajo de las diapositivas, junto a los indicadores.
+- **Incompatible:** los indicadores del carrusel son pestañas (`role="tab"` con `aria-selected`), las flechas usan `aria-disabled` en los extremos sin perder el foco, las diapositivas inactivas quedan inertes, el cambio de diapositiva se anuncia en una región en vivo y los nombres accesibles pasan a "Diapositiva anterior" y "Diapositiva siguiente".
 - Los tokens de `beez-ui/motion-tokens` toman los valores de los presets de Arc y conservan sus nombres: los springs pasan a `snappy`, `smooth` o `morph` (expresados con `visualDuration` y `bounce` en lugar de `stiffness`, `damping` y `mass`), las duraciones y curvas usan las de Arc y la presión baja a 0.97.
-- `Dialog` y `AlertDialog` entran como el diálogo de Arc: el panel sube 8 px y crece desde 0.96 con un resorte suave mientras aparece, y sale rápido (0.16 s), en lugar de desplegarse desde el centro. La transformación y la opacidad que el panel recibe por `className` o `style` se mantienen durante toda la animación, y reabrirlo mientras sale lo devuelve desde donde está.
-- `Input`, `Textarea`, `InputGroup` y `SelectTrigger` ya no tiemblan al pasar a `aria-invalid="true"`: el error se indica con el color y el mensaje, sin mover el campo.
+- `Dialog` (también en su modo `alert`) entra como el diálogo de Arc: el panel sube 8 px y crece desde 0.96 con un resorte suave mientras aparece, y sale rápido (0.16 s), en lugar de desplegarse desde el centro. La transformación y la opacidad que el panel recibe por `className` o `style` se mantienen durante toda la animación, y reabrirlo mientras sale lo devuelve desde donde está.
+- `Input`, `Textarea`, `InputGroup` y el trigger de `Select` ya no tiemblan al pasar a `aria-invalid="true"`: el error se indica con el color y el mensaje, sin mover el campo.
 - Las opciones de `Select`, `Alert`, `FormMessage` y el ícono de `AnimatedThemeToggler` aparecen con un fundido y una escala breves, sin desenfoque; las opciones del `Select` entran todas juntas, sin escalonarse.
 - El ancho del `Sidebar` cambia con el resorte `smooth` de Arc (0.4 s, sin rebote), más suave que antes.
 
@@ -29,9 +65,34 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 - `MOTION_TIMING.centerMorph`, `MOTION_TIMING.centerMorphFold`, `MOTION_EASE_UNFOLD` y `MOTION_CENTER_MORPH_FOLDED_PERCENT`: los diálogos ya no se despliegan desde el centro. Siguen exportados con su valor.
 - `MOTION_TIMING.shake` y `MOTION_INVALID_SHAKE_PX`: los campos inválidos ya no tiemblan. Siguen exportados con su valor.
 
+### Removed
+
+- **Incompatible:** `AlertDialog` y todas sus partes, junto con el entrypoint `beez-ui/alert-dialog`; usar `<Dialog alert>`.
+- **Incompatible:** `DialogPortal`, `DialogOverlay`, `DialogHeader`, `DialogFooter`, `DialogTitle` y `DialogDescription`.
+- **Incompatible:** `PaginationContent`, `PaginationItem`, `PaginationLink`, `PaginationPrevious`, `PaginationNext` y `PaginationEllipsis`.
+- **Incompatible:** `variant` de `TabsList` (incluida la variante `line`) y `tabsListVariants`.
+- **Incompatible:** `TooltipTrigger`, `TooltipContent` y `TooltipProvider`.
+- **Incompatible:** `PopoverAnchor`, `PopoverHeader`, `PopoverTitle` y `PopoverDescription`.
+- **Incompatible:** `HoverCardTrigger` y `HoverCardContent`.
+- **Incompatible:** toda la composición de `DropdownMenu` (`DropdownMenuTrigger`, `Content`, `Item`, `CheckboxItem`, `RadioGroup`, `RadioItem`, `Label`, `Separator`, `Shortcut`, `Group`, `Portal` y los submenús `Sub*`); Arc no tiene submenús.
+- **Incompatible:** `SelectGroup`, `SelectValue`, `SelectTrigger`, `SelectContent`, `SelectLabel`, `SelectItem`, `SelectSeparator`, `SelectScrollUpButton` y `SelectScrollDownButton`.
+- **Incompatible:** `size` de `Switch` y `RadioGroupItem`.
+- **Incompatible:** `variant`, `asChild` y `badgeVariants` de `Badge`.
+- **Incompatible:** `AvatarImage`, `AvatarFallback`, `AvatarBadge`, `AvatarGroupCount`, la composición de `AvatarGroup` y `size="default"`.
+- **Incompatible:** el bloque libre de `Skeleton`.
+- **Incompatible:** `CardHeader`, `CardTitle`, `CardDescription`, `CardAction`, `CardContent`, `CardFooter`, `CardMedia` y `size` de `Card`.
+- **Incompatible:** `AlertTitle`, `AlertDescription`, `AlertAction` y `variant` de `Alert`.
+- **Incompatible:** `mode` múltiple y de rango, `selected`, `onSelect`, los matchers de `disabled`, `components`, `classNames`, `buttonVariant`, `CalendarDayButton` y el resto de las props de react-day-picker de `Calendar`.
+- **Incompatible:** `CarouselContent`, `CarouselItem`, `CarouselPrevious`, `CarouselNext`, `CarouselIndicators`, `CarouselIndicator`, `useCarousel`, `opts`, `setApi`, `plugins`, `orientation` (ya no hay carrusel vertical) y el tipo `CarouselApi`.
+
 ### Fixed
 
+- El click de un ítem de `DropdownMenu` (también en `AccountMenu`, `SplitButton`, `AnimatedThemeToggler` y el menú de columnas de `DataTable`) ya no llega, a través del portal, a los contenedores de React que envuelven el menú: una tarjeta clickeable que contiene el menú no se abre al elegir una opción. La selección, el cierre y la navegación de los ítems con enlace no cambian.
+- Las fotos de `Avatar` con `size="xl"` se piden y se dibujan a 88px, en lugar de 40px estirados, con el provider por defecto y con el de Next.
+- Cuando alguien sale de un `AvatarGroup` (cambian `members` o baja `max`), los lectores de pantalla dejan de anunciarlo apenas empieza a cerrarse su lugar.
+- En pantallas o contenedores angostos, la `action` de un `Alert` baja debajo del texto cuando no entra al lado, en lugar de desbordar el aviso y aplastar el texto.
 - Al moverse con el teclado mientras un `Select` o un `DropdownMenu` todavía se está abriendo, el resaltado se desliza hasta el tamaño y la posición finales de la opción y ya no salta al terminar.
+- Los números de la ayuda de `Input` y `Textarea` ruedan hasta su línea sin pasarse ni rebotar al asentarse.
 
 ## [2.6.2] - 2026-10-16
 

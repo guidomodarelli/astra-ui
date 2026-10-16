@@ -22,7 +22,7 @@ import {
   Popover,
   PopoverAnchor,
   PopoverContent,
-} from "./popover.js";
+} from "./primitives/popover.js";
 import { GlideSlot } from "../motion/glide-slot.js";
 import { cn } from "../lib/utils.js";
 

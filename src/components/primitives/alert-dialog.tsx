@@ -1,25 +1,28 @@
 "use client"
 
 /**
- * Confirmation dialog on Arc's Dialog surface (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): the same
- * overlay, raised panel, title and description type and dialog transition as `Dialog`, so both read as one family. It
- * keeps beez-ui's media slot and Arc `Button` actions.
+ * Internal confirmation composition on Arc's Dialog surface (https://uiarc.dev, MIT License, see
+ * THIRD_PARTY_NOTICES.md): Radix's alert dialog parts on the same overlay, raised panel, title and description type as
+ * the dialog primitive, so both read as one family, with Arc's dialog transition, media slot and Arc `Button`
+ * actions. Not exported from the package: the public `Dialog` uses it for its `alert` mode.
  */
 import * as React from "react"
 import { AlertDialog as AlertDialogPrimitive } from "radix-ui"
 
-import { MotionSlot } from "../motion/motion-slot.js"
-import { MotionPresence, MotionOpenProvider, useMotionOpenState } from "../motion/presence.js"
-import { cn } from "../lib/utils.js"
-import { Button } from "./button.js"
+import { MotionSlot } from "../../motion/motion-slot.js"
+import { MotionPresence, MotionOpenProvider, useMotionOpenState } from "../../motion/presence.js"
+import { cn } from "../../lib/utils.js"
+import { Button } from "../button.js"
 import {
+  DialogSurfaceCloseButton,
+  type DialogCloseButtonPlacement,
   withDialogSwapText,
   dialogDescriptionClassName,
   dialogFooterClassName,
   dialogOverlayClassName,
   dialogSurfaceClassName,
   dialogTitleClassName,
-} from "./dialog-surface.js"
+} from "../dialog-surface.js"
 
 function AlertDialog({
   ...props
@@ -61,14 +64,29 @@ function AlertDialogOverlay({
 /**
  * Renders a compact confirmation while preserving the shared theme and viewport bound.
  * @param props - Primitive properties and optional consumer overrides.
+ * @param props.showCloseButton - Whether the confirmation renders a close button, which cancels it. Off by default:
+ * a confirmation is answered with its actions.
+ * @param props.closeButtonPlacement - `viewport` pins the close button to the viewport corner; `content` (default)
+ * keeps it in the panel.
+ * @param props.closeLabel - Accessible name of the close button.
+ * @param props.closeButtonRef - Ref of the close button, when it is rendered.
  * @returns The styled primitive with its original interaction contract.
  */
 function AlertDialogContent({
   className,
   size = "default",
+  children,
+  showCloseButton = false,
+  closeButtonPlacement = "content",
+  closeLabel,
+  closeButtonRef,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
   size?: "default" | "sm"
+  showCloseButton?: boolean
+  closeButtonPlacement?: DialogCloseButtonPlacement
+  closeLabel?: string
+  closeButtonRef?: React.Ref<HTMLButtonElement>
 }) {
   return (
     <AlertDialogPortal forceMount><MotionPresence scope="alert-dialog" forceMount={props.forceMount}><React.Fragment>
@@ -76,13 +94,29 @@ function AlertDialogContent({
       <MotionSlot kind="dialog"><AlertDialogPrimitive.Content forceMount
         data-slot="alert-dialog-content"
         data-size={size}
+        data-close-button-placement={showCloseButton ? closeButtonPlacement : undefined}
         className={cn(
           dialogSurfaceClassName,
-          "group/alert-dialog-content fixed top-1/2 left-1/2 grid max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain w-full -translate-x-1/2 -translate-y-1/2 data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm",
+          "group/alert-dialog-content fixed grid max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain w-full data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm",
+          // A resting `translate` would make the panel the containing block of the
+          // viewport-pinned close button, so that placement centers with margins instead.
+          showCloseButton && closeButtonPlacement === "viewport"
+            ? "inset-0 m-auto h-fit"
+            : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
           className
         )}
         {...props}
-      /></MotionSlot>
+      >
+        {children}
+        {showCloseButton && (
+          <DialogSurfaceCloseButton
+            kind="alert"
+            placement={closeButtonPlacement}
+            label={closeLabel}
+            buttonRef={closeButtonRef}
+          />
+        )}
+      </AlertDialogPrimitive.Content></MotionSlot>
     </React.Fragment></MotionPresence></AlertDialogPortal>
   )
 }
@@ -100,7 +134,7 @@ function AlertDialogHeader({
     <div
       data-slot="alert-dialog-header"
       className={cn(
-        "grid grid-rows-[auto_1fr] place-items-center gap-(--space-2) text-center has-data-[slot=alert-dialog-media]:grid-rows-[auto_auto_1fr] has-data-[slot=alert-dialog-media]:gap-x-4 sm:group-data-[size=default]/alert-dialog-content:place-items-start sm:group-data-[size=default]/alert-dialog-content:text-left sm:group-data-[size=default]/alert-dialog-content:has-data-[slot=alert-dialog-media]:grid-rows-[auto_1fr]",
+        "grid grid-rows-[auto_1fr] place-items-center gap-(--space-2) text-center in-data-[close-button-placement=content]:pr-[calc(var(--space-8)+var(--space-5))] has-data-[slot=alert-dialog-media]:grid-rows-[auto_auto_1fr] has-data-[slot=alert-dialog-media]:gap-x-4 sm:group-data-[size=default]/alert-dialog-content:place-items-start sm:group-data-[size=default]/alert-dialog-content:text-left sm:group-data-[size=default]/alert-dialog-content:has-data-[slot=alert-dialog-media]:grid-rows-[auto_1fr]",
         className
       )}
       {...props}

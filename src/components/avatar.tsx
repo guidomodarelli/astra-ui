@@ -1,190 +1,300 @@
 "use client"
 
 /**
- * Arc's Avatar (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): a compact identity marker on Arc's
- * tokens, with a hairline border, a muted fill behind the initials and an optional presence dot that pops in and out.
- * Loading, failure and fallback stay on the Base UI avatar primitive.
+ * Arc's Avatar and Avatar group (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md). The avatar is a round
+ * portrait named once for assistive technology, with the first two initials standing in until the photo loads or when
+ * it fails, and a presence dot that pops in and out. The group overlaps several avatars, collapses the rest into a +N
+ * chip whose count rolls the way it moved, opens and closes the slot of members who join or leave, and on fine
+ * pointers fans apart while the pointed-at person lifts and shows their name.
  */
-import type { ComponentProps } from "react"
-import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar"
-import { AnimatePresence, motion } from "motion/react"
+import { useState } from "react"
+import type { ComponentProps, CSSProperties, ReactNode } from "react"
+import { AnimatePresence, motion, useIsPresent } from "motion/react"
+import type { HTMLMotionProps, Variants } from "motion/react"
 
-import { AVATAR_STATUS_HIDDEN_SCALE, AVATAR_STATUS_LABEL } from "../constants/avatar.js"
-import type { AvatarStatus } from "../constants/avatar.js"
+import {
+  AVATAR_GROUP_COUNT_OFFSET_EM,
+  AVATAR_GROUP_DEFAULT_LABEL,
+  AVATAR_GROUP_DEFAULT_MAX,
+  AVATAR_GROUP_OVERFLOW_SUFFIX,
+  AVATAR_GROUP_SLOT_HIDDEN_SCALE,
+  AVATAR_LABEL_SEPARATOR,
+  AVATAR_SIZE_PX,
+  AVATAR_STATUS_LABEL,
+} from "../constants/avatar.js"
+import type { AvatarGroupSize, AvatarSize, AvatarStatus } from "../constants/avatar.js"
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
+import { getNameInitials } from "../lib/name-initials.js"
 import { cn } from "../lib/utils.js"
-import { ARC_DURATION, ARC_SPRING_SNAPPY } from "../motion/arc-tokens.js"
-import { MotionSlot } from "../motion/motion-slot.js"
-import { useBeezUIComponents } from "../providers/beez-ui-provider.js"
+import { ARC_BLUR, ARC_DURATION, ARC_EASE, ARC_SPRING_MORPH } from "../motion/arc-tokens.js"
+import { AvatarBadge, AvatarFallback, AvatarImage, AvatarRoot } from "./primitives/avatar.js"
 
-export type { AvatarStatus }
+export type { AvatarGroupSize, AvatarSize, AvatarStatus }
 
-/** Avatar diameters: 24px (`sm`), 32px (`default`), 40px (`lg`) and Arc's 88px profile size (`xl`). */
-export type AvatarSize = "default" | "sm" | "lg" | "xl"
-
-/** Accepts native image props and nullable image sources from application results. */
-export type AvatarImageProps = Omit<ComponentProps<"img">, "src"> & {
+export type AvatarProps = Omit<ComponentProps<"span">, "children"> & {
+  /** Full name: the accessible name of the avatar and the source of its first two initials. */
+  name: string
+  /** Photo URL, rendered through the provider's `Image` adapter. Falls back to the initials if it fails to load. */
   src?: string | null
-}
-
-export type AvatarProps = AvatarPrimitive.Root.Props & {
+  /** Diameter: 24px (`sm`), 32px (`md`, default), 40px (`lg`) or Arc's 88px profile size (`xl`). */
   size?: AvatarSize
-  /**
-   * Shows Arc's presence dot in the bottom corner, or the top corner when an `AvatarBadge` holds the bottom one, and
-   * adds the presence to the accessible text.
-   */
+  /** Adds a presence dot and appends the presence to the accessible name. */
   status?: AvatarStatus
-  /** Accessible presence text; defaults to "En línea" or "Desconectado". */
+  /** Presence text appended to the accessible name; defaults to "En línea" or "Desconectado". */
   statusLabel?: string
+  /** Replaces the initials, for example with an icon. */
+  fallback?: ReactNode
+  /** A custom corner badge; the presence dot moves to the top corner while it is shown. */
+  badge?: ReactNode
+  /** Accessible text to use instead of `name`, when the photo needs a different description. */
+  alt?: string
 }
-
-/** The presence ring: a surface-coloured gap plus a faint hairline, so the dot reads on photos and fills alike. */
-const presenceRingClassName =
-  "shadow-[0_0_0_2px_var(--surface),0_0_0_3px_color-mix(in_oklab,var(--border)_70%,transparent)]"
 
 /**
- * A person or account, as a photo with initials as fallback.
- * @param props - Size, optional presence and the Base UI avatar root props.
- * @returns The avatar root.
+ * Builds the avatar's accessible name: the person plus, when shown, their presence.
+ * @param name - Text that names the person.
+ * @param presence - Presence text, if any.
+ * @returns The accessible name.
  */
-function Avatar({ className, size = "default", status, statusLabel, children, ...props }: AvatarProps) {
+function buildAvatarLabel(name: string, presence: string | undefined): string {
+  return presence ? `${name}${AVATAR_LABEL_SEPARATOR}${presence}` : name
+}
+
+/**
+ * A round portrait for one person, with initials as fallback and an optional presence dot.
+ * @param props - Name, photo, size, presence, optional fallback and badge, plus native span attributes for the root.
+ * @returns The avatar, announced as one image.
+ */
+function Avatar({ name, src, size = "md", status, statusLabel, fallback, badge, alt, ...props }: AvatarProps) {
+  const presence = status ? (statusLabel ?? AVATAR_STATUS_LABEL[status]) : undefined
+  return (
+    <AvatarRoot role="img" aria-label={buildAvatarLabel(alt ?? name, presence)} size={size} status={status} {...props}>
+      {/* The image and initials are decorative: the root already names the person once. */}
+      {src ? (
+        <AvatarImage
+          src={src}
+          alt=""
+          width={AVATAR_SIZE_PX[size]}
+          height={AVATAR_SIZE_PX[size]}
+          sizes={`${AVATAR_SIZE_PX[size]}px`}
+        />
+      ) : null}
+      <AvatarFallback aria-hidden="true">{fallback ?? getNameInitials(name)}</AvatarFallback>
+      {badge ? <AvatarBadge>{badge}</AvatarBadge> : null}
+    </AvatarRoot>
+  )
+}
+
+/** One person of an avatar group. */
+export type AvatarGroupMember = {
+  /** Full name, shown on hover and used as the avatar's accessible name. */
+  name: string
+  /** Photo URL. */
+  src?: string | null
+  /** Presence dot of the avatar. */
+  status?: AvatarStatus
+  /** Stable key for members that share a name; defaults to `name`. */
+  key?: string
+}
+
+export type AvatarGroupProps = Omit<ComponentProps<"div">, "children" | "role" | "aria-label"> & {
+  /**
+   * People in display order. Pass the whole list and let `max` collapse the rest, or a preview of it together with
+   * `total`.
+   */
+  members: AvatarGroupMember[]
+  /**
+   * How many people the group has when `members` is only a preview of them. When it is larger than
+   * `members.length`, the +N chip counts the people left out against it. Defaults to `members.length`.
+   */
+  total?: number
+  /** Avatars shown before the rest collapse into the overflow count. */
+  max?: number
+  /** Size of each avatar and of the overflow chip. */
+  size?: AvatarGroupSize
+  /** Accessible name of the group, also used in the overflow label; defaults to "Integrantes". */
+  label?: string
+  /** Classes for the group. Native attributes such as `aria-hidden`, `style` or `data-*` also go to the root. */
+  className?: string
+}
+
+/** The overflow count rolls the way it moved: more people rise in from below, fewer drop in from above. */
+const countRoll: Variants = {
+  hidden: (direction: number) => ({
+    opacity: 0,
+    y: `${AVATAR_GROUP_COUNT_OFFSET_EM * direction}em`,
+    filter: `blur(${ARC_BLUR.subtle}px)`,
+  }),
+  shown: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: ARC_DURATION.standard, ease: [...ARC_EASE.enter] },
+  },
+  gone: (direction: number) => ({
+    opacity: 0,
+    y: `${-AVATAR_GROUP_COUNT_OFFSET_EM * direction}em`,
+    filter: `blur(${ARC_BLUR.subtle}px)`,
+    transition: { duration: ARC_DURATION.fast, ease: [...ARC_EASE.standard] },
+  }),
+}
+
+/** Same keys as `countRoll`, so the settled style is identical whichever branch renders on the server. */
+const countFade: Variants = {
+  hidden: { opacity: 0, y: 0, filter: "blur(0px)" },
+  shown: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: ARC_DURATION.instant } },
+  gone: { opacity: 0, y: 0, filter: "blur(0px)", transition: { duration: ARC_DURATION.instant } },
+}
+
+/** A person joining or leaving opens or closes their slot, so the rest of the stack slides instead of jumping. */
+const slotPresence = {
+  initial: { width: 0, opacity: 0, scale: AVATAR_GROUP_SLOT_HIDDEN_SCALE },
+  animate: { width: "auto", opacity: 1, scale: 1 },
+  exit: { width: 0, opacity: 0, scale: AVATAR_GROUP_SLOT_HIDDEN_SCALE },
+}
+
+/** Position of a slot in the stack and how many slots it has, read by the hover fan. */
+type StackStyle = CSSProperties & { "--index"?: number; "--count"?: number }
+
+/**
+ * Each slot is the avatar's visible width, so a slot that opens or closes moves the rest of the stack smoothly. On fine
+ * pointers it carries the hover moves as custom properties: the whole stack fans out from its center, the pointed-at
+ * slot rises above its neighbours and they ease aside.
+ */
+const slotClassName =
+  "group/avatar-group-slot peer/avatar-group-slot relative inline-flex flex-none items-center [--aside:0px] [--fan:0px] [--rise:0px] pointer-fine:group-hover/avatar-group:[--fan:calc((var(--index)-(var(--count)-1)/2)*4px)] hover-fine:z-1 hover-fine:[--rise:-2px] pointer-fine:peer-hover/avatar-group-slot:[--aside:3px] pointer-fine:has-[~[data-slot=avatar-group-slot]:hover]:[--aside:-3px]"
+
+/** One wrapper per person carries every hover move as a single translate, so the stack never changes size. */
+const liftClassName =
+  "relative -ml-1.5 inline-flex rounded-(--radius-pill) [transform:translate(calc(var(--fan)+var(--aside)),var(--rise))] transition-transform duration-(--duration-standard) ease-(--ease-standard) motion-reduce:transform-none! motion-reduce:transition-none"
+
+/** The surface ring that separates overlapping avatars, which sharpens on the pointed-at one. */
+const ringClassName =
+  "border-2 border-surface shadow-[0_0_0_1px_var(--border)] transition-shadow duration-(--duration-fast) ease-(--ease-standard) pointer-fine:group-hover/avatar-group-slot:shadow-[0_0_0_1px_var(--border-strong)]"
+
+/**
+ * One slot of the stack. A slot that is closing turns inert and hidden from assistive technology, so a person who left
+ * is no longer announced while the exit spring plays.
+ * @param props - Motion span props for the slot.
+ * @returns The slot.
+ */
+function AvatarGroupSlot(props: HTMLMotionProps<"span">) {
+  const isPresent = useIsPresent()
+  return (
+    <motion.span
+      data-slot="avatar-group-slot"
+      {...props}
+      aria-hidden={isPresent ? props["aria-hidden"] : true}
+      inert={!isPresent || undefined}
+    />
+  )
+}
+
+/**
+ * Builds the overflow chip's accessible name, as in "2 integrantes más".
+ * @param overflow - How many members are hidden.
+ * @param label - Accessible name of the group.
+ * @returns The chip's accessible name.
+ */
+function buildOverflowLabel(overflow: number, label: string): string {
+  return `${overflow} ${label.toLowerCase()} ${AVATAR_GROUP_OVERFLOW_SUFFIX}`
+}
+
+/**
+ * An overlapping stack of avatars with a +N overflow chip.
+ * @param props - Members, optional total, how many to show, size, accessible label, classes and native root attributes.
+ * @returns The group.
+ */
+function AvatarGroup({
+  members,
+  total,
+  max = AVATAR_GROUP_DEFAULT_MAX,
+  size = "md",
+  label = AVATAR_GROUP_DEFAULT_LABEL,
+  className,
+  style,
+  ...props
+}: AvatarGroupProps) {
   const reduceMotion = usePrefersReducedMotion()
-  return (
-    <MotionSlot kind="fade">
-      <AvatarPrimitive.Root
-        data-slot="avatar"
-        data-size={size}
-        className={cn(
-          "group/avatar relative inline-grid size-8 shrink-0 place-items-center rounded-(--radius-pill) border border-border bg-surface-muted text-xs font-medium text-foreground select-none data-[size=lg]:size-10 data-[size=lg]:text-sm data-[size=sm]:size-6 data-[size=sm]:text-[10px] data-[size=xl]:size-22 data-[size=xl]:text-xl",
-          className
-        )}
-        {...props}
-      >
-        {children}
-        {status ? <span className="sr-only">{statusLabel ?? AVATAR_STATUS_LABEL[status]}</span> : null}
-        <AnimatePresence initial={false}>
-          {status ? (
-            <motion.span
-              key={status}
-              data-slot="avatar-status"
-              data-status={status}
-              aria-hidden="true"
-              className={cn(
-                "absolute right-0 bottom-0 z-10 size-2.5 rounded-(--radius-pill) data-[status=offline]:bg-text-muted data-[status=online]:bg-success group-data-[size=lg]/avatar:size-3 group-data-[size=sm]/avatar:size-2 group-data-[size=xl]/avatar:right-1 group-data-[size=xl]/avatar:bottom-1 group-data-[size=xl]/avatar:size-3.5 group-has-data-[slot=avatar-badge]/avatar:top-0 group-has-data-[slot=avatar-badge]/avatar:bottom-auto group-data-[size=xl]/avatar:group-has-data-[slot=avatar-badge]/avatar:top-1",
-                presenceRingClassName
-              )}
-              initial={{ opacity: 0, scale: AVATAR_STATUS_HIDDEN_SCALE }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{
-                opacity: 0,
-                scale: AVATAR_STATUS_HIDDEN_SCALE,
-                transition: { duration: reduceMotion ? 0 : ARC_DURATION.fast },
-              }}
-              transition={reduceMotion ? { duration: 0 } : ARC_SPRING_SNAPPY}
-            />
-          ) : null}
-        </AnimatePresence>
-      </AvatarPrimitive.Root>
-    </MotionSlot>
-  )
-}
+  const visibleMembers = members.slice(0, Math.max(0, max))
+  // A total below the members received cannot hide anyone who is drawn, so the list itself is the floor.
+  const memberCount = Math.max(members.length, total ?? 0)
+  const overflow = Math.max(0, memberCount - visibleMembers.length)
+  const slotTransition = reduceMotion ? { duration: 0 } : ARC_SPRING_MORPH
+  const [shownCount, setShownCount] = useState({ overflow, direction: 1 })
+  if (shownCount.overflow !== overflow) setShownCount({ overflow, direction: overflow < shownCount.overflow ? -1 : 1 })
+  const groupStyle: StackStyle = { ...style, "--count": visibleMembers.length + (overflow > 0 ? 1 : 0) }
 
-/** Delegates loading, failure and fallback synchronization to the avatar primitive; loaded images develop in place. */
-function AvatarImage({
-  alt = "",
-  className,
-  src,
-  ...props
-}: AvatarImageProps) {
-  const { Image: ImageComponent = "img" } = useBeezUIComponents()
-  return (
-    <MotionSlot kind="reveal"><AvatarPrimitive.Image
-      render={<ImageComponent />}
-      keepMounted
-      alt={alt}
-      data-slot="avatar-image"
-      className={cn(
-        "pointer-events-none absolute inset-0 aspect-square size-full rounded-full object-cover data-[loading]:opacity-0 data-[error]:hidden",
-        className
-      )}
-      src={src ?? undefined}
-      loading="lazy"
-      decoding="async"
-      {...props}
-    /></MotionSlot>
-  )
-}
-
-function AvatarFallback({
-  className,
-  ...props
-}: AvatarPrimitive.Fallback.Props) {
-  return (
-    <AvatarPrimitive.Fallback
-      data-slot="avatar-fallback"
-      className={cn(
-        "flex size-full items-center justify-center rounded-full bg-surface-muted text-[length:inherit] font-medium text-foreground",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-/** A custom corner badge, drawn with the same ring as Arc's presence dot. Prefer `status` for presence. */
-function AvatarBadge({ className, ...props }: ComponentProps<"span">) {
-  return (
-    <span
-      data-slot="avatar-badge"
-      className={cn(
-        "absolute right-0 bottom-0 z-10 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground bg-blend-color select-none",
-        presenceRingClassName,
-        "group-data-[size=sm]/avatar:size-2 group-data-[size=sm]/avatar:[&>svg]:hidden",
-        "group-data-[size=default]/avatar:size-2.5 group-data-[size=default]/avatar:[&>svg]:size-2",
-        "group-data-[size=lg]/avatar:size-3 group-data-[size=lg]/avatar:[&>svg]:size-2",
-        "group-data-[size=xl]/avatar:right-1 group-data-[size=xl]/avatar:bottom-1 group-data-[size=xl]/avatar:size-3.5 group-data-[size=xl]/avatar:[&>svg]:size-2.5",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-/** Overlaps avatars; the hovered one lifts slightly above its neighbours. */
-function AvatarGroup({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
+      {...props}
+      role="group"
+      aria-label={label}
       data-slot="avatar-group"
-      className={cn(
-        "group/avatar-group flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background *:data-[slot=avatar]:transition-[translate] *:data-[slot=avatar]:duration-200 *:data-[slot=avatar]:ease-out *:data-[slot=avatar]:hover:z-10 *:data-[slot=avatar]:hover:-translate-y-0.5",
-        className
-      )}
-      {...props}
-    />
+      data-size={size}
+      className={cn("group/avatar-group inline-flex items-center pl-1.5", className)}
+      style={groupStyle}
+    >
+      <AnimatePresence initial={false}>
+        {visibleMembers.map((member, index) => (
+          <AvatarGroupSlot
+            key={member.key ?? member.name}
+            className={slotClassName}
+            style={{ "--index": index } as StackStyle}
+            {...slotPresence}
+            transition={slotTransition}
+          >
+            <span className={liftClassName}>
+              <Avatar className={ringClassName} name={member.name} src={member.src} status={member.status} size={size} />
+              {/* The name floats above the stack, outside the layout, so showing it never moves anything. */}
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-2 -translate-x-1/2 translate-y-[3px] rounded-(--radius-pill) bg-foreground px-2 py-1 text-xs leading-(--leading-body) font-medium whitespace-nowrap text-background opacity-0 transition-[opacity,translate] duration-(--duration-fast) ease-(--ease-standard) pointer-fine:group-hover/avatar-group-slot:translate-y-0 pointer-fine:group-hover/avatar-group-slot:opacity-100 pointer-fine:group-hover/avatar-group-slot:delay-60 motion-reduce:translate-y-0 motion-reduce:transition-none"
+              >
+                {member.name}
+              </span>
+            </span>
+          </AvatarGroupSlot>
+        ))}
+        {overflow > 0 ? (
+          <AvatarGroupSlot
+            key="overflow"
+            className={slotClassName}
+            style={{ "--index": visibleMembers.length } as StackStyle}
+            {...slotPresence}
+            transition={slotTransition}
+          >
+            <span
+              role="img"
+              aria-label={buildOverflowLabel(overflow, label)}
+              data-slot="avatar-group-count"
+              data-size={size}
+              className={cn(
+                liftClassName,
+                ringClassName,
+                "relative grid size-8 place-items-center overflow-hidden bg-surface-muted text-xs font-medium text-text-secondary tabular-nums data-[size=lg]:size-10 data-[size=lg]:text-sm data-[size=sm]:size-6 data-[size=sm]:text-[10px]"
+              )}
+            >
+              <AnimatePresence mode="popLayout" initial={false} custom={shownCount.direction}>
+                <motion.span
+                  key={overflow}
+                  aria-hidden="true"
+                  className="inline-block"
+                  custom={shownCount.direction}
+                  variants={reduceMotion ? countFade : countRoll}
+                  initial="hidden"
+                  animate="shown"
+                  exit="gone"
+                >
+                  +{overflow}
+                </motion.span>
+              </AnimatePresence>
+            </span>
+          </AvatarGroupSlot>
+        ) : null}
+      </AnimatePresence>
+    </div>
   )
 }
 
-function AvatarGroupCount({
-  className,
-  ...props
-}: ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="avatar-group-count"
-      className={cn(
-        "relative flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-surface-muted text-xs font-medium text-text-secondary ring-2 ring-background group-has-data-[size=lg]/avatar-group:size-10 group-has-data-[size=sm]/avatar-group:size-6 group-has-data-[size=xl]/avatar-group:size-22 group-has-data-[size=xl]/avatar-group:text-xl [&>svg]:size-4 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3 group-has-data-[size=xl]/avatar-group:[&>svg]:size-8",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-export {
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-  AvatarGroup,
-  AvatarGroupCount,
-  AvatarBadge,
-}
+export { Avatar, AvatarGroup }

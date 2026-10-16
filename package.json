@@ -23,11 +23,6 @@
       "import": "./dist/components/action-button.js",
       "default": "./dist/components/action-button.js"
     },
-    "./alert-dialog": {
-      "types": "./dist/components/alert-dialog.d.ts",
-      "import": "./dist/components/alert-dialog.js",
-      "default": "./dist/components/alert-dialog.js"
-    },
     "./avatar": {
       "types": "./dist/components/avatar.d.ts",
       "import": "./dist/components/avatar.js",

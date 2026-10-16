@@ -32,14 +32,8 @@
   height: 5rem;
 }
 .StoryCarousel {
-  width: min(70vw, 24rem);
+  width: min(90vw, 36rem);
   margin: 4rem auto;
-}
-.StoryCarousel__vertical {
-  height: 14rem;
-}
-.StorySlide {
-  padding: 1rem;
 }
 .StorySlide__content {
   display: grid;
@@ -66,15 +60,6 @@
   display: block;
   margin-top: 1rem;
   color: var(--muted-foreground);
-}
-.StorySkeleton {
-  width: 16rem;
-  height: 1.25rem;
-}
-.StorySkeleton--avatar {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
 }
 .StoryShowcase {
   width: min(100%, 30rem);

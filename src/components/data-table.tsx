@@ -45,7 +45,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "./dropdown-menu.js";
+} from "./primitives/dropdown-menu.js";
+import { DropdownMenuItems, type DropdownItem } from "./primitives/dropdown-menu-items.js";
 import { Input } from "./input.js";
 import {
   Table,
@@ -156,10 +157,10 @@ export interface DataTableProps<TData, TValue> {
   columnVisibilityButtonLabel?: string;
   columnVisibilityMenuLabel?: string;
   /**
-   * Ítems extra al tope del menú de columnas (p. ej. preferencias de vista);
-   * se separan de la sección de columnas con un separador.
+   * Ítems extra al tope del menú de columnas (p. ej. preferencias de vista), con la
+   * forma de los `items` de `DropdownMenu`; se separan de la sección de columnas con un separador.
    */
-  columnVisibilityMenuExtraContent?: React.ReactNode;
+  columnVisibilityMenuExtraItems?: DropdownItem[];
   sortingBadgeLabelOverrides?: Record<string, string>;
   /**
    * Ids de columnas de orden "internas" (p. ej. la posición de grupo) que el
@@ -348,7 +349,7 @@ export function DataTable<TData, TValue>({
   showColumnVisibilityToggle = false,
   columnVisibilityButtonLabel = "Columnas",
   columnVisibilityMenuLabel = "Mostrar columnas",
-  columnVisibilityMenuExtraContent,
+  columnVisibilityMenuExtraItems,
   sortingBadgeLabelOverrides,
   sortingBadgeIgnoredColumnIds,
   selectAllColumnsLabel = "Mostrar todas",
@@ -881,7 +882,7 @@ export function DataTable<TData, TValue>({
     <Badge
       aria-live="polite"
       className="inline-flex w-fit items-center gap-1.5"
-      variant="secondary"
+      tone="neutral"
     >
       <span>
         {`Ordenado por: ${activeSortingColumnLabel} ${activeSortingDirectionSymbol}`}
@@ -1272,7 +1273,7 @@ export function DataTable<TData, TValue>({
                       <Badge
                         aria-label={`Total de filas excluidas únicas: ${excludeFilterUniqueRowsCount}`}
                         className="inline-flex h-6 items-center gap-1.5 px-2.5"
-                        variant="destructive"
+                        tone="danger"
                       >
                         <span>{`${EXCLUDED_ROWS_SUMMARY_LABEL}:`}</span>
                         <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-destructive/20 px-1.5 text-[10px] leading-4 font-medium">
@@ -1296,7 +1297,7 @@ export function DataTable<TData, TValue>({
                       <Badge
                         className="inline-flex h-6 items-center gap-1.5 px-2.5"
                         key={excludeFilterValue}
-                        variant="destructive"
+                        tone="danger"
                       >
                         <span>{`− ${excludeFilterValue}`}</span>
                         {excludedRowsCount != null ? (
@@ -1353,9 +1354,9 @@ export function DataTable<TData, TValue>({
                       </ControlButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      {columnVisibilityMenuExtraContent ? (
+                      {columnVisibilityMenuExtraItems?.length ? (
                         <>
-                          {columnVisibilityMenuExtraContent}
+                          <DropdownMenuItems items={columnVisibilityMenuExtraItems} />
                           <DropdownMenuSeparator />
                         </>
                       ) : null}

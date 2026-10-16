@@ -9,22 +9,12 @@ import {
   Button,
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
   Popover,
   PopoverContent,
   PopoverTrigger,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -50,27 +40,14 @@ function FloatingLayers({ prefix }: { prefix: string }) {
         </PopoverTrigger>
         <PopoverContent aria-label={`${prefix}: panel de filtros`}>Filtros disponibles</PopoverContent>
       </Popover>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="secondary">{`${prefix}: acciones`}</Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem>Duplicar</DropdownMenuItem>
-          <DropdownMenuItem>Archivar</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <Select>
-        <SelectTrigger aria-label={`${prefix}: frecuencia`}>
-          <SelectValue placeholder="Frecuencia" />
-        </SelectTrigger>
-        <SelectContent position="popper">
-          {FREQUENCIES.map((frequency) => (
-            <SelectItem key={frequency} value={frequency}>
-              {frequency}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <DropdownMenu label={`${prefix}: acciones`} items={[{ label: "Duplicar" }, { label: "Archivar" }]} />
+      <Select
+        label={`${prefix}: frecuencia`}
+        hideLabel
+        placeholder="Frecuencia"
+        className="overlay-select"
+        options={FREQUENCIES.map((frequency) => ({ value: frequency, label: frequency }))}
+      />
       <Tooltip content={`${prefix}: ayuda`}>
         <Button variant="secondary">{`${prefix}: info`}</Button>
       </Tooltip>
@@ -86,11 +63,7 @@ function DialogWithToast() {
       <DialogTrigger asChild>
         <Button>Abrir edición</Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Editar evento</DialogTitle>
-          <DialogDescription>Los cambios se guardan al confirmar.</DialogDescription>
-        </DialogHeader>
+      <DialogContent title="Editar evento" description="Los cambios se guardan al confirmar.">
         <FloatingLayers prefix="Diálogo" />
         <Button
           onClick={() =>

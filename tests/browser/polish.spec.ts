@@ -45,8 +45,8 @@ test.describe("with motion", () => {
   test("should glide the current page highlight and hand it back to the selected page", async ({ page }) => {
     const motion = await recordMotion(page);
     await page.goto("/polish.html");
-    const firstPage = page.getByRole("link", { name: "1", exact: true });
-    const thirdPage = page.getByRole("link", { name: "3", exact: true });
+    const firstPage = page.getByRole("link", { name: "Página 1" });
+    const thirdPage = page.getByRole("link", { name: "Página 3" });
     const activeBackground = await firstPage.evaluate((link) => getComputedStyle(link).backgroundColor);
     await expect(firstPage).toHaveAttribute("aria-current", "page");
     await thirdPage.click();
@@ -59,7 +59,7 @@ test.describe("with motion", () => {
     await page.mouse.move(0, 0);
     await thirdPage.blur();
     await expect(thirdPage).toHaveCSS("background-color", activeBackground);
-    expect(page.url()).not.toContain("#pagina-3");
+    await expect(page).toHaveURL(/#pagina-3$/);
   });
 
   test("should glide the filter suggestion highlight as the keyboard moves through it", async ({ page }) => {
@@ -100,7 +100,7 @@ test.describe("with motion", () => {
     await page.goto("/polish.html");
     await expect(page.getByText("AN", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Cargar foto" }).click();
-    const image = page.getByRole("img", { name: "Foto de Ana" });
+    const image = page.getByRole("img", { name: "Foto de Ana" }).locator("img");
     await expect(image).toBeVisible();
     await expect.poll(() => motion.properties({ slot: "avatar-image" })).toEqual(
       expect.arrayContaining(["opacity", "transform", "filter"]),
@@ -110,7 +110,7 @@ test.describe("with motion", () => {
 
   test("should pulse the skeleton a finite number of times and rest fully opaque", async ({ page }) => {
     await page.goto("/polish.html");
-    const skeleton = page.getByLabel("Cargando resumen");
+    const skeleton = page.getByRole("status", { name: "Cargando resumen" }).locator('[data-slot="skeleton"]');
     // Arc's pulse dims the box itself on the compositor, then rests: it never loops forever.
     await expect
       .poll(() =>
@@ -225,17 +225,6 @@ test.describe("with motion", () => {
     await expect(page.locator("[data-glide-indicator]")).toHaveCount(0);
   });
 
-  test("should nudge the submenu chevron toward its open submenu", async ({ page }) => {
-    await page.goto("/polish.html");
-    await page.getByRole("button", { name: "Más acciones" }).click();
-    const trigger = page.getByRole("menuitem", { name: "Compartir" });
-    const chevron = trigger.locator('[data-slot="dropdown-menu-sub-trigger-icon"]');
-    await expect(chevron).toHaveCSS("translate", "none");
-    await trigger.press("ArrowRight");
-    await expect(page.getByRole("menuitem", { name: "Por enlace" })).toBeVisible();
-    await expect(chevron).toHaveCSS("translate", "2px");
-  });
-
   test("should keep the interactive card outline while its hover shadow lifts it", async ({ page }) => {
     await page.goto("/polish.html");
     const canHover = await page.evaluate(() => window.matchMedia("(hover: hover) and (pointer: fine)").matches);
@@ -252,13 +241,17 @@ test.describe("with motion", () => {
     expect(await card.evaluate((element) => getComputedStyle(element).boxShadow)).toBe(restingShadow);
   });
 
-  test("should lift the hovered avatar of a group on real hover pointers", async ({ page }) => {
+  test("should lift the hovered avatar of a group and name it on real hover pointers", async ({ page }) => {
     await page.goto("/polish.html");
     const canHover = await page.evaluate(() => window.matchMedia("(hover: hover) and (pointer: fine)").matches);
     test.skip(!canHover, "Touch viewports have no hover lift by design.");
-    const avatar = page.getByLabel("Equipo").locator('[data-slot="avatar"]').first();
+    const avatar = page.getByRole("group", { name: "Equipo" }).getByRole("img", { name: "Lucía Uriarte" });
+    const lift = avatar.locator("xpath=..");
     await avatar.hover();
-    await expect(avatar).toHaveCSS("translate", "0px -2px");
+    await expect
+      .poll(() => lift.evaluate((element) => new DOMMatrixReadOnly(getComputedStyle(element).transform).f))
+      .toBeCloseTo(-2, 1);
+    await expect(lift.getByText("Lucía Uriarte", { exact: true })).toHaveCSS("opacity", "1");
   });
 });
 
@@ -277,23 +270,6 @@ test("should draw unstyled borders with the theme border token instead of the te
   expect(borderColor).not.toBe(textColor);
 });
 
-test("should move a vertical carousel with the up and down arrow keys", async ({ page }) => {
-  await page.goto("/polish.html");
-  const carousel = page.getByRole("region", { name: "Novedades" });
-  const previous = carousel.getByRole("button", { name: "Previous slide" });
-  const next = carousel.getByRole("button", { name: "Next slide" });
-  await expect(previous).toBeDisabled();
-  await next.focus();
-  await page.keyboard.press("ArrowDown");
-  await expect(previous).toBeEnabled();
-  await page.keyboard.press("ArrowDown");
-  await expect(next).toBeDisabled();
-  await previous.focus();
-  await page.keyboard.press("ArrowUp");
-  await page.keyboard.press("ArrowUp");
-  await expect(previous).toBeDisabled();
-});
-
 test.describe("with reduced motion", () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
@@ -306,8 +282,8 @@ test.describe("with reduced motion", () => {
     await expect(page.locator('[data-slot="calendar-month"]')).toContainText("febrero 2026");
     await page.getByRole("button", { name: "Cargar foto" }).click();
     await expect(page.getByRole("img", { name: "Foto de Ana" })).toBeVisible();
-    await page.getByRole("link", { name: "2", exact: true }).click();
-    await expect(page.getByRole("link", { name: "2", exact: true })).toHaveAttribute("aria-current", "page");
+    await page.getByRole("link", { name: "Página 2" }).click();
+    await expect(page.getByRole("link", { name: "Página 2" })).toHaveAttribute("aria-current", "page");
     expect(await motion.properties({ slot: "calendar-month" })).toEqual([]);
     expect(await motion.properties({ slot: "avatar-image" })).toEqual([]);
     expect(await motion.glides()).toEqual([]);

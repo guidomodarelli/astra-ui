@@ -1,26 +1,8 @@
 /** Mounts Arc's Badge, Avatar, Skeleton, Card and Alert from the public barrel, so layout and motion run in real engines. */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-  Avatar,
-  AvatarBadge,
-  AvatarFallback,
-  AvatarGroup,
-  AvatarGroupCount,
-  Badge,
-  BeezUIProvider,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardMedia,
-  CardTitle,
-  Skeleton,
-} from "beez-ui";
+import { PlusIcon } from "lucide-react";
+import { Alert, Avatar, AvatarGroup, Badge, BeezUIProvider, Button, Card, Skeleton } from "beez-ui";
 import "./styles.css";
 
 /** A badge whose label grows, so the spec can watch the pill spring to the new width. */
@@ -39,7 +21,7 @@ function PresenceAvatar() {
   const [isOnline, setIsOnline] = useState(false);
   return (
     <div className="controls">
-      <Avatar aria-label="Ana" size="lg" status={isOnline ? "online" : undefined}><AvatarFallback>AN</AvatarFallback></Avatar>
+      <Avatar name="Ana" size="lg" status={isOnline ? "online" : undefined} />
       <Button variant="secondary" onClick={() => setIsOnline((current) => !current)}>Cambiar presencia</Button>
     </div>
   );
@@ -49,9 +31,8 @@ function PresenceAvatar() {
 function DismissibleAlert() {
   return (
     <div className="narrow-field">
-      <Alert tone="info" onDismiss={() => undefined}>
-        <AlertTitle>Nueva versión disponible</AlertTitle>
-        <AlertDescription>Recargá la página para usarla.</AlertDescription>
+      <Alert tone="info" title="Nueva versión disponible" onDismiss={() => undefined}>
+        Recargá la página para usarla.
       </Alert>
       <p>Debajo del aviso</p>
     </div>
@@ -62,23 +43,45 @@ function DismissibleAlert() {
 function ActionableAlert() {
   return (
     <div className="narrow-field">
-      <Alert tone="warning" onDismiss={() => undefined} dismissLabel="Descartar aviso de cupo">
-        <AlertTitle>Cupo casi completo</AlertTitle>
-        <AlertDescription>Quedan dos lugares en la tribu.</AlertDescription>
-        <AlertAction><Button size="sm" variant="secondary">Ampliar</Button></AlertAction>
+      <Alert
+        tone="warning"
+        title="Cupo casi completo"
+        onDismiss={() => undefined}
+        dismissLabel="Descartar aviso de cupo"
+        action={<Button size="sm" variant="secondary">Ampliar</Button>}
+      >
+        Quedan dos lugares en la tribu.
       </Alert>
     </div>
   );
 }
 
-/** A group of profile-size avatars whose overflow counter must match them. */
-function ProfileAvatarGroup() {
+/** An alert whose long action cannot sit beside its copy on a phone, so it has to move under the text. */
+function LongActionAlert() {
   return (
-    <AvatarGroup aria-label="Equipo destacado">
-      <Avatar size="xl"><AvatarFallback>AN</AvatarFallback></Avatar>
-      <Avatar size="xl"><AvatarFallback>LU</AvatarFallback></Avatar>
-      <AvatarGroupCount aria-label="Tres personas más">+3</AvatarGroupCount>
-    </AvatarGroup>
+    <Alert
+      tone="warning"
+      title="Pago pendiente"
+      onDismiss={() => undefined}
+      dismissLabel="Descartar aviso de pago"
+      action={<Button size="sm" variant="secondary">Actualizar método de pago</Button>}
+    >
+      Revisá tu tarjeta para no perder el acceso a la tribu.
+    </Alert>
+  );
+}
+
+/** A group whose members join and leave, so the spec can watch the overflow chip follow `max`. */
+function GrowingAvatarGroup() {
+  const [memberCount, setMemberCount] = useState(5);
+  const members = ["Ana Núñez", "Lucía Paz", "Tomás Gil", "Sara Ruiz", "Inés Ma", "Leo Park", "Eva Sol"]
+    .slice(0, memberCount)
+    .map((name) => ({ name }));
+  return (
+    <div className="controls">
+      <AvatarGroup label="Equipo destacado" members={members} max={3} size="lg" />
+      <Button variant="secondary" onClick={() => setMemberCount((current) => current + 1)}>Sumar integrante</Button>
+    </div>
   );
 }
 
@@ -88,20 +91,18 @@ function StyledAlert() {
   return (
     <div className="narrow-field">
       <Button variant="secondary" onClick={() => setIsOpen(true)}>Mostrar aviso alto</Button>
-      <Alert aria-label="Aviso alto" tone="info" open={isOpen} className="tall-alert" style={{ opacity: 0.5 }}>
-        <AlertTitle>Aviso con alto propio</AlertTitle>
-      </Alert>
+      <Alert aria-label="Aviso alto" tone="info" title="Aviso con alto propio" open={isOpen} className="tall-alert" style={{ opacity: 0.5 }} />
     </div>
   );
 }
 
-/** A reveal whose consumer keeps its own scrolling overflow. */
+/** A reveal whose consumer class gives it a scrolling overflow. */
 function ScrollingReveal() {
   const [isLoading, setIsLoading] = useState(true);
   return (
-    <div className="narrow-field">
+    <div className="narrow-field" data-testid="scrolling-reveal">
       <Button variant="secondary" onClick={() => setIsLoading((current) => !current)}>Alternar carga</Button>
-      <Skeleton aria-label="Resumen con desplazamiento" loading={isLoading} lines={2} style={{ overflow: "auto" }}>
+      <Skeleton label="Resumen con desplazamiento" loading={isLoading} lines={2} className="scrolling-reveal">
         <p>Resumen listo para revisar.</p>
       </Skeleton>
     </div>
@@ -112,11 +113,8 @@ function ScrollingReveal() {
 function BadgedPresenceAvatars() {
   return (
     <div className="controls">
-      {(["sm", "default", "lg", "xl"] as const).map((size) => (
-        <Avatar key={size} aria-label={`Avatar con insignia ${size}`} size={size} status="online">
-          <AvatarFallback>AN</AvatarFallback>
-          <AvatarBadge />
-        </Avatar>
+      {(["sm", "md", "lg", "xl"] as const).map((size) => (
+        <Avatar key={size} name={`Avatar con insignia ${size}`} size={size} status="online" badge={<PlusIcon aria-hidden="true" />} />
       ))}
     </div>
   );
@@ -126,12 +124,28 @@ function BadgedPresenceAvatars() {
 function FixedHeightReveal() {
   const [isLoading, setIsLoading] = useState(true);
   return (
-    <div className="narrow-field">
+    <div className="narrow-field" data-testid="fixed-reveal">
       <Button variant="secondary" onClick={() => setIsLoading((current) => !current)}>Alternar carga fija</Button>
-      <Skeleton aria-label="Resumen de alto fijo" loading={isLoading} lines={2} className="fixed-reveal">
+      <Skeleton label="Resumen de alto fijo" loading={isLoading} lines={2} className="fixed-reveal">
         <p>Resumen de alto fijo listo.</p>
       </Skeleton>
     </div>
+  );
+}
+
+/** A quick look card with a plain, unpositioned button in its body, so the spec can check the body control stays above the title's hit area. */
+function CardWithBodyButton() {
+  const [likes, setLikes] = useState(0);
+  return (
+    <Card
+      aria-label="Tarjeta con botón en el cuerpo"
+      className="summary-card"
+      title="Tribu de huerta"
+      description="Cosechas compartidas."
+      details={<p>Riego los domingos.</p>}
+    >
+      <button type="button" onClick={() => setLikes((current) => current + 1)}>Me gusta: {likes}</button>
+    </Card>
   );
 }
 
@@ -141,21 +155,31 @@ function ArcDisplay() {
     <h1>Componentes de visualización</h1>
     <section><GrowingBadge /></section>
     <section><PresenceAvatar /></section>
-    <section><ProfileAvatarGroup /></section>
+    <section><GrowingAvatarGroup /></section>
     <section className="narrow-field"><Skeleton avatar lines={3} label="Cargando miembros" /></section>
     <section className="controls">
-      <Card aria-label="Tarjeta interactiva" className="summary-card">
-        <CardMedia aria-label="Foto de la tribu"><span>Foto</span></CardMedia>
-        <CardHeader><CardTitle>Tribu de lectura</CardTitle></CardHeader>
-        <CardContent><Button variant="secondary">Unirme</Button></CardContent>
-      </Card>
-      <Card aria-label="Tarjeta estática" className="summary-card">
-        <CardHeader><CardTitle>Resumen</CardTitle></CardHeader>
-        <CardContent>Sin acciones</CardContent>
-      </Card>
+      <Card
+        aria-label="Tarjeta interactiva"
+        className="summary-card"
+        title="Tribu de lectura"
+        media={<span aria-label="Foto de la tribu" role="img">Foto</span>}
+        action={<Button variant="secondary">Unirme</Button>}
+      />
+      <Card aria-label="Tarjeta estática" className="summary-card" title="Resumen">Sin acciones</Card>
+      <Card
+        aria-label="Tarjeta con vista rápida"
+        className="summary-card"
+        title="Tribu de cocina"
+        description="Recetas de estación."
+        meta="Ana Núñez"
+        status="Actualizada hace 2 horas"
+        details={<p>Encuentros los sábados.</p>}
+      />
+      <CardWithBodyButton />
     </section>
     <section><DismissibleAlert /></section>
     <section><ActionableAlert /></section>
+    <section><LongActionAlert /></section>
     <section><StyledAlert /></section>
     <section><ScrollingReveal /></section>
     <section><BadgedPresenceAvatars /></section>

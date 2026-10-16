@@ -2,38 +2,37 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Star } from "lucide-react";
 
-import { Badge, badgeVariants } from "beez-ui";
+import { Badge } from "beez-ui";
 
 describe("Badge", () => {
-  it("should draw each shadcn variant with its Arc tone unless a tone is given", () => {
+  it("should draw Arc's neutral tone and medium size by default", () => {
+    // Arrange
+    render(<Badge>Borrador</Badge>);
+
+    // Act
+    const badge = screen.getByText("Borrador").closest("[data-slot=badge]");
+
+    // Assert
+    expect(badge).toHaveAttribute("data-tone", "neutral");
+    expect(badge).toHaveAttribute("data-size", "md");
+  });
+
+  it("should draw the tone and size it is given and forward native span attributes", () => {
     // Arrange
     render(
-      <>
-        <Badge variant="destructive">Vencido</Badge>
-        <Badge variant="secondary" tone="success">Pagado</Badge>
-      </>,
+      <Badge tone="danger" size="sm" className="consumer-badge" aria-label="Estado del pago">
+        Vencido
+      </Badge>,
     );
 
     // Act
-    const overdue = screen.getByText("Vencido").closest("[data-slot=badge]");
-    const paid = screen.getByText("Pagado").closest("[data-slot=badge]");
+    const badge = screen.getByLabelText("Estado del pago");
 
     // Assert
-    expect(overdue).toHaveAttribute("data-tone", "danger");
-    expect(paid).toHaveAttribute("data-tone", "success");
-    expect(paid).toHaveAttribute("data-variant", "secondary");
-  });
-
-  it("should style other elements like the badge of the same variant", () => {
-    // Arrange
-    const variantOnly = badgeVariants({ variant: "outline" });
-
-    // Act
-    const withImpliedTone = badgeVariants({ variant: "outline", tone: "neutral" });
-
-    // Assert
-    expect(variantOnly).toBe(withImpliedTone);
-    expect(badgeVariants({ variant: "outline", tone: "danger" })).not.toBe(variantOnly);
+    expect(badge.tagName).toBe("SPAN");
+    expect(badge).toHaveAttribute("data-tone", "danger");
+    expect(badge).toHaveAttribute("data-size", "sm");
+    expect(badge).toHaveClass("consumer-badge");
   });
 
   it("should keep only the current label readable after the text changes", () => {
@@ -61,19 +60,19 @@ describe("Badge", () => {
     expect(screen.getByText("Destacado").closest("[data-slot=badge]")).toContainElement(icon);
   });
 
-  it("should merge into its child element when asChild is set", () => {
+  it("should render node children as they are, keeping their controls usable", () => {
     // Arrange
     render(
-      <Badge asChild variant="link">
-        <a href="/novedades">Novedades</a>
+      <Badge tone="danger">
+        <span>Excluidas</span>
+        <button type="button">Quitar exclusión</button>
       </Badge>,
     );
 
     // Act
-    const link = screen.getByRole("link", { name: "Novedades" });
+    const removeButton = screen.getByRole("button", { name: "Quitar exclusión" });
 
     // Assert
-    expect(link).toHaveAttribute("data-slot", "badge");
-    expect(link).toHaveAttribute("data-tone", "info");
+    expect(removeButton.closest("[data-slot=badge]")).toContainElement(screen.getByText("Excluidas"));
   });
 });

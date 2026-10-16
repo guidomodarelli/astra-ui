@@ -5,15 +5,10 @@ import {
   BeezUIProvider,
   Button,
   DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
   Dialog,
+  DialogClose,
   DialogTrigger,
   DialogContent,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
   TypingAnimation,
   Skeleton,
   Highlighter,
@@ -26,15 +21,7 @@ import {
   TabsTrigger,
   TabsContent,
   Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
   Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-  DropdownMenuCheckboxItem,
   AnimatedThemeToggler,
   DataTable,
 } from "beez-ui";
@@ -87,28 +74,22 @@ function MotionExamples() {
           <Label htmlFor="motion-choice">Recibir novedades</Label>
         </section>
         <section>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>Abrir menú</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem
-                onSelect={() => setAction("Edición seleccionada")}
-              >
-                Editar
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setAction("Copia seleccionada")}>
-                Duplicar
-              </DropdownMenuItem>
-              <DropdownMenuCheckboxItem
-                checked={isArchivedVisible}
-                onCheckedChange={setIsArchivedVisible}
-                onSelect={(event) => event.preventDefault()}
-              >
-                Mostrar archivados
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <DropdownMenu
+            label="Abrir menú"
+            trigger={<Button>Abrir menú</Button>}
+            items={[
+              { label: "Editar", onSelect: () => setAction("Edición seleccionada") },
+              { label: "Duplicar", onSelect: () => setAction("Copia seleccionada") },
+              {
+                label: "Mostrar archivados",
+                checked: isArchivedVisible,
+                onSelect: (event) => {
+                  event.preventDefault();
+                  setIsArchivedVisible(!isArchivedVisible);
+                },
+              },
+            ]}
+          />
           <output aria-label="Acción">{action}</output>
         </section>
         <section>
@@ -116,46 +97,45 @@ function MotionExamples() {
             <DialogTrigger asChild>
               <Button>Abrir diálogo</Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogTitle>Confirmar cambios</DialogTitle>
-              <DialogDescription>
-                El foco y el cierre siguen funcionando.
-              </DialogDescription>
-              <DialogFooter showCloseButton />
-            </DialogContent>
+            <DialogContent
+              title="Confirmar cambios"
+              description="El foco y el cierre siguen funcionando."
+              footer={
+                <DialogClose asChild>
+                  <Button variant="secondary">Cerrar</Button>
+                </DialogClose>
+              }
+            />
           </Dialog>
           <Dialog>
             <DialogTrigger asChild>
               <Button>Abrir detalle</Button>
             </DialogTrigger>
-            <DialogContent closeButtonPlacement="viewport">
-              <DialogTitle>Detalle</DialogTitle>
-              <DialogDescription>
-                El botón de cerrar queda en la esquina de la pantalla.
-              </DialogDescription>
-            </DialogContent>
+            <DialogContent
+              closeButtonPlacement="viewport"
+              title="Detalle"
+              description="El botón de cerrar queda en la esquina de la pantalla."
+            />
           </Dialog>
           <Dialog>
             <DialogTrigger asChild>
               <Button>Abrir ficha</Button>
             </DialogTrigger>
-            <DialogContent style={{ borderRadius: "0 24px 24px 0" }}>
-              <DialogTitle>Ficha</DialogTitle>
-              <DialogDescription>
-                Solo el borde derecho es redondeado.
-              </DialogDescription>
-            </DialogContent>
+            <DialogContent
+              style={{ borderRadius: "0 24px 24px 0" }}
+              title="Ficha"
+              description="Solo el borde derecho es redondeado."
+            />
           </Dialog>
           <Dialog>
             <DialogTrigger asChild>
               <Button>Abrir nota</Button>
             </DialogTrigger>
-            <DialogContent style={{ transform: "rotate(2deg)", opacity: 0.9 }}>
-              <DialogTitle>Nota</DialogTitle>
-              <DialogDescription>
-                El panel descansa inclinado y algo translúcido.
-              </DialogDescription>
-            </DialogContent>
+            <DialogContent
+              style={{ transform: "rotate(2deg)", opacity: 0.9 }}
+              title="Nota"
+              description="El panel descansa inclinado y algo translúcido."
+            />
           </Dialog>
         </section>
         <section>
@@ -174,26 +154,22 @@ function MotionExamples() {
             aria-invalid={isEmailInvalid || undefined}
           />
           <Button onClick={() => setIsEmailInvalid(true)}>Validar correo</Button>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button>Ayuda</Button>
-              </TooltipTrigger>
-              <TooltipContent>Explicación breve</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip content="Explicación breve">
+            <Button>Ayuda</Button>
+          </Tooltip>
         </section>
         <section className="controls">
-          <Select>
-            <SelectTrigger aria-label="Moneda">
-              <SelectValue placeholder="Elegir moneda" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ars">Pesos</SelectItem>
-              <SelectItem value="usd">Dólares</SelectItem>
-              <SelectItem value="eur">Euros</SelectItem>
-            </SelectContent>
-          </Select>
+          <Select
+            label="Moneda"
+            hideLabel
+            placeholder="Elegir moneda"
+            className="overlay-select"
+            options={[
+              { value: "ars", label: "Pesos" },
+              { value: "usd", label: "Dólares" },
+              { value: "eur", label: "Euros" },
+            ]}
+          />
           <AnimatedThemeToggler />
         </section>
         <section>
@@ -216,7 +192,7 @@ function MotionExamples() {
         </section>
         <section>
           <Highlighter>Lectura destacada</Highlighter>
-          <Skeleton className="motion-skeleton" />
+          <Skeleton lines={1} className="motion-skeleton" />
         </section>
       </main>
     </BeezUIProvider>

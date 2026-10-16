@@ -1,11 +1,12 @@
-/** Demonstrates Tooltip as a complete, interactive composition. */
+/** Demonstrates Arc's closed Tooltip: the content wraps its trigger, without any provider. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button, Tooltip, TooltipTrigger, TooltipContent } from "beez-ui";
+import { Button, Tooltip } from "beez-ui";
 
 /** Editable inputs specific to this example. */
 type Args = {
   content: string;
   side: "top" | "right" | "bottom" | "left";
+  align: "start" | "center" | "end";
   sideOffset: number;
 };
 const meta = {
@@ -13,6 +14,7 @@ const meta = {
   args: {
     content: "Guardá los cambios pendientes",
     side: "top",
+    align: "center",
     sideOffset: 8,
   },
   argTypes: {
@@ -23,6 +25,10 @@ const meta = {
       control: "select",
       options: ["top", "right", "bottom", "left"],
     },
+    align: {
+      control: "select",
+      options: ["start", "center", "end"],
+    },
     sideOffset: {
       control: {
         type: "range",
@@ -32,26 +38,35 @@ const meta = {
       },
     },
   },
-  parameters: { controls: { include: ["content", "side", "sideOffset"] } },
-  render: ({ content, side, sideOffset }) => (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="secondary">Pasá el cursor o enfocá</Button>
-      </TooltipTrigger>
-      <TooltipContent side={side} sideOffset={sideOffset}>
-        {content}
-      </TooltipContent>
+  parameters: { controls: { include: ["content", "side", "align", "sideOffset"] } },
+  render: ({ content, side, align, sideOffset }) => (
+    <Tooltip content={content} side={side} align={align} sideOffset={sideOffset}>
+      <Button variant="secondary">Pasá el cursor o enfocá</Button>
     </Tooltip>
   ),
 } satisfies Meta<Args>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Playground: Story = {};
-/** Arc's shorthand: the only child becomes the trigger, without a provider around it. */
-export const Shorthand: Story = {
-  render: ({ content, side }) => (
-    <Tooltip content={content} side={side}>
-      <Button variant="secondary">Pasá el cursor o enfocá</Button>
-    </Tooltip>
+/** Moving between tooltips opens the next one at once, with no app-level provider. */
+export const Toolbar: Story = {
+  render: () => (
+    <div style={{ display: "flex", gap: "0.5rem" }}>
+      <Tooltip content="Negrita">
+        <Button variant="ghost" size="sm" aria-label="Negrita">
+          N
+        </Button>
+      </Tooltip>
+      <Tooltip content="Cursiva">
+        <Button variant="ghost" size="sm" aria-label="Cursiva">
+          C
+        </Button>
+      </Tooltip>
+      <Tooltip content="Subrayado">
+        <Button variant="ghost" size="sm" aria-label="Subrayado">
+          S
+        </Button>
+      </Tooltip>
+    </div>
   ),
 };

@@ -165,6 +165,19 @@ test("should glide one highlight to the chosen row and follow the arrow keys", a
   await expect(page.getByRole("radio", { name: "Trimestral" })).toBeChecked();
   await expect.poll(() => distanceToRow("Trimestral"), { timeout: SETTLE_TIMEOUT_MS }).toBeLessThan(PIXEL_TOLERANCE);
 });
+test("should lay the legend above the option rows, which stretch to the fieldset width", async ({ page }) => {
+  const group = page.getByRole("radiogroup", { name: "Facturación" });
+  const [groupBox, legendBox, firstRowBox] = await Promise.all([
+    readBox(group),
+    readBox(group.locator("legend")),
+    readBox(page.locator("[data-slot=radio-group-option]").first()),
+  ]);
+
+  expect(legendBox.y + legendBox.height).toBeLessThanOrEqual(firstRowBox.y + PIXEL_TOLERANCE);
+  expect(firstRowBox.width).toBeCloseTo(groupBox.width, 0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
 test("should place every mark and the highlight at once when motion is reduced", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.reload();

@@ -8,6 +8,9 @@ const SETTLE_TIMEOUT_MS = 15_000;
 /** Arc's tooltip open delay, minus a margin for timer and frame jitter. */
 const TOOLTIP_MINIMUM_WAIT_MS = 180;
 
+/** Distance the hover card keeps from the viewport edges. */
+const COLLISION_PADDING_PX = 12;
+
 /** One animation frame of a floating layer. */
 type LayerSample = { opacity: number; translateY: number; scale: number };
 
@@ -136,4 +139,47 @@ test("should grow the hover card from its trigger on keyboard focus and settle",
   await expectSettled(card);
   await page.keyboard.press("Escape");
   await expect(card).toHaveCount(0);
+});
+
+test("should align the popover with the start of its trigger", async ({ page }) => {
+  await page.goto("/arc-overlays.html");
+  const trigger = page.getByRole("button", { name: "Ver filtros" });
+  const triggerBounds = (await trigger.boundingBox())!;
+  await trigger.click();
+  const panel = page.getByRole("dialog", { name: "Filtros" });
+  await expectSettled(panel);
+  const panelBounds = (await panel.boundingBox())!;
+  expect(Math.abs(panelBounds.x - triggerBounds.x)).toBeLessThanOrEqual(1);
+  expect(panelBounds.y).toBeGreaterThanOrEqual(triggerBounds.y + triggerBounds.height);
+});
+
+test("should open the hover card below its trigger, aligned with its start", async ({ page }) => {
+  await page.goto("/arc-overlays.html");
+  const trigger = page.getByRole("link", { name: "Ana Pérez" });
+  const triggerBounds = (await trigger.boundingBox())!;
+  await trigger.focus();
+  const card = page.locator("[data-slot=hover-card-content]");
+  await expectSettled(card);
+  const cardBounds = (await card.boundingBox())!;
+  const viewportWidth = page.viewportSize()!.width;
+  expect(cardBounds.y).toBeGreaterThanOrEqual(triggerBounds.y + triggerBounds.height);
+  // Collision handling may shift a card that would overflow a narrow viewport.
+  if (triggerBounds.x + cardBounds.width <= viewportWidth - COLLISION_PADDING_PX) {
+    expect(Math.abs(cardBounds.x - triggerBounds.x)).toBeLessThanOrEqual(1);
+  }
+  expect(cardBounds.x + cardBounds.width).toBeLessThanOrEqual(viewportWidth);
+});
+
+test("should place a tooltip on the requested side", async ({ page }) => {
+  await page.goto("/arc-overlays.html");
+  const trigger = page.getByRole("button", { name: "Historial" });
+  const triggerBounds = (await trigger.boundingBox())!;
+  await trigger.focus();
+  const bubble = page.locator("[data-slot=tooltip-content]", { hasText: "Abre el historial" });
+  await expectSettled(bubble);
+  const side = await bubble.getAttribute("data-side");
+  const bubbleBounds = (await bubble.boundingBox())!;
+  // Radix flips the bubble when the requested side has no room, as on narrow phones.
+  if (side === "right") expect(bubbleBounds.x).toBeGreaterThanOrEqual(triggerBounds.x + triggerBounds.width);
+  else expect(side).toBe("left");
 });

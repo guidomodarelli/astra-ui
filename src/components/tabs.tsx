@@ -16,7 +16,6 @@ import {
   type FocusEvent,
   type RefObject,
 } from "react"
-import { cva, type VariantProps } from "class-variance-authority"
 import { Slot, Tabs as TabsPrimitive } from "radix-ui"
 import {
   AnimatePresence,
@@ -153,24 +152,11 @@ function Tabs({
 }
 
 /**
- * Arc's segmented list (`default`): a muted track whose active trigger is a raised surface. `line` keeps the
- * underline variant on the same tokens. Horizontal lists scroll sideways without a visible scrollbar.
+ * Arc's segmented list: a muted track whose active trigger is a raised surface. Horizontal lists scroll sideways
+ * without a visible scrollbar.
  */
-const tabsListVariants = cva(
-  "group/tabs-list inline-flex w-fit max-w-full min-w-0 items-center text-text-muted group-data-horizontal/tabs:overflow-x-auto group-data-horizontal/tabs:[scrollbar-width:none] group-data-horizontal/tabs:[&::-webkit-scrollbar]:hidden group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col",
-  {
-    variants: {
-      variant: {
-        default:
-          "gap-(--space-1) rounded-(--radius-control) border border-border bg-surface-muted p-(--space-1)",
-        line: "gap-(--space-1) bg-transparent",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  }
-)
+const tabsListClassName =
+  "group/tabs-list inline-flex w-fit max-w-full min-w-0 items-center gap-(--space-1) rounded-(--radius-control) border border-border bg-surface-muted p-(--space-1) text-text-muted group-data-horizontal/tabs:overflow-x-auto group-data-horizontal/tabs:[scrollbar-width:none] group-data-horizontal/tabs:[&::-webkit-scrollbar]:hidden group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col"
 
 /**
  * Scrolls a horizontally overflowing list just enough to show the trigger, never the page around it. The target is an
@@ -200,16 +186,15 @@ function revealTrigger(list: HTMLElement, trigger: HTMLElement | null, reduceMot
 /**
  * Holds the triggers. The active highlight glides to the newly selected trigger and the list scrolls to keep the
  * active or focused trigger visible.
- * @param props - Radix list props, the `variant` and `ref`.
+ * @param props - Radix list props, including `aria-label`, `loop` and `ref`.
  * @returns The tab list.
  */
 function TabsList({
   className,
-  variant = "default",
   ref,
   onFocusCapture,
   ...props
-}: ComponentProps<typeof TabsPrimitive.List> & VariantProps<typeof tabsListVariants>) {
+}: ComponentProps<typeof TabsPrimitive.List>) {
   const motionState = useContext(TabsMotionContext)
   const reduceMotion = usePrefersReducedMotion()
   const [list, attachList] = useAttachedElement<HTMLDivElement>(ref)
@@ -243,8 +228,7 @@ function TabsList({
     <GlideSlot preset="tabs" ref={attachList}>
       <TabsPrimitive.List
         data-slot="tabs-list"
-        data-variant={variant}
-        className={cn(tabsListVariants({ variant }), className)}
+        className={cn(tabsListClassName, className)}
         onFocusCapture={handleFocusCapture}
         {...props}
       />
@@ -266,8 +250,7 @@ function TabsTrigger({ className, value, ...props }: ComponentProps<typeof TabsP
       value={value}
       className={cn(
         "relative inline-flex min-h-(--control-height-sm) min-w-[5.5rem] flex-[1_0_auto] cursor-pointer items-center justify-center gap-1.5 rounded-[calc(var(--radius-control)-3px)] border border-transparent bg-transparent px-(--space-3) font-sans text-sm font-medium whitespace-nowrap text-text-muted [-webkit-tap-highlight-color:transparent] transition-[color,background-color,border-color,box-shadow] duration-(--duration-fast) ease-(--ease-standard) select-none motion-reduce:transition-none hover-fine:text-foreground active:text-foreground disabled:cursor-not-allowed disabled:opacity-50 data-active:text-(--accent-strong) group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        "group-data-[variant=default]/tabs-list:data-active:border-border group-data-[variant=default]/tabs-list:data-active:bg-surface group-data-[variant=default]/tabs-list:data-active:shadow-(--shadow-resting)",
-        "after:absolute after:rounded-full after:bg-(--accent-strong) after:opacity-0 after:transition-opacity after:duration-(--duration-fast) group-data-horizontal/tabs:after:inset-x-(--space-2) group-data-horizontal/tabs:after:-bottom-px group-data-horizontal/tabs:after:h-0.5 group-data-vertical/tabs:after:inset-y-(--space-2) group-data-vertical/tabs:after:-right-px group-data-vertical/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-active:after:opacity-100 data-glide-target:after:opacity-0! data-glide-freeze:after:transition-none motion-reduce:after:transition-none",
+        "data-active:border-border data-active:bg-surface data-active:shadow-(--shadow-resting)",
         className
       )}
       {...props}
@@ -467,4 +450,4 @@ function TabsContent({
   )
 }
 
-export { Tabs, TabsList, TabsTrigger, TabsContent, tabsListVariants }
+export { Tabs, TabsList, TabsTrigger, TabsContent }

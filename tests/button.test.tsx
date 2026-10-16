@@ -7,9 +7,6 @@ import userEvent from "@testing-library/user-event";
 import {
   Button,
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
 } from "beez-ui";
 
 /** Exit long enough for assertions to run while the leaving content is still mounted. */
@@ -102,14 +99,7 @@ describe("Button", () => {
   it("should not open a menu from a loading trigger by pointer or keyboard, keeping it focusable", async () => {
     const user = userEvent.setup();
     render(
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button loading>Acciones</Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem>Editar</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>,
+      <DropdownMenu label="Acciones" trigger={<Button loading>Acciones</Button>} items={[{ label: "Editar" }]} />,
     );
     const trigger = screen.getByRole("button", { name: "Acciones" });
 
@@ -128,24 +118,10 @@ describe("Button", () => {
   it("should open the menu from the same trigger once loading ends", async () => {
     const user = userEvent.setup();
     const { rerender } = render(
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button loading>Acciones</Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem>Editar</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>,
+      <DropdownMenu label="Acciones" trigger={<Button loading>Acciones</Button>} items={[{ label: "Editar" }]} />,
     );
     rerender(
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button>Acciones</Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem>Editar</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>,
+      <DropdownMenu label="Acciones" trigger={<Button>Acciones</Button>} items={[{ label: "Editar" }]} />,
     );
 
     const trigger = screen.getByRole("button", { name: "Acciones" });

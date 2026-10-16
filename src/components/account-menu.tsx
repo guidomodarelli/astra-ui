@@ -6,17 +6,18 @@ import { ChevronDownIcon, LogInIcon, LogOutIcon, PlusIcon } from "lucide-react";
 
 import { cn } from "../lib/utils.js";
 import { getNameInitials } from "../lib/name-initials.js";
-import { Avatar, AvatarBadge, AvatarFallback, AvatarImage } from "./avatar.js";
+import { AvatarBadge, AvatarFallback, AvatarImage, AvatarRoot } from "./primitives/avatar.js";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "./dropdown-menu.js";
+} from "./primitives/dropdown-menu.js";
+import { DropdownMenuItems, type DropdownItem } from "./primitives/dropdown-menu-items.js";
 import { Link } from "./link.js";
 import { useOptionalSidebarPanel } from "./sidebar-panel-context.js";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip.js";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./primitives/tooltip.js";
 
 export type AccountMenuStatus = "authenticated" | "unauthenticated";
 
@@ -83,8 +84,8 @@ export interface AccountMenuProps {
   align?: "start" | "center" | "end";
   side?: "top" | "right" | "bottom" | "left";
   sideOffset?: number;
-  /** Extra items rendered between the identity header and the session action. */
-  children?: ReactNode;
+  /** Extra rows rendered between the identity header and the session action, as in `DropdownMenu`'s `items`. */
+  items?: DropdownItem[];
 }
 
 interface AccountAvatarProps {
@@ -108,7 +109,7 @@ function AccountAvatar({ name, image, fallback, status, showStatusBadge, isDecor
   const isAuthenticated = status === "authenticated";
 
   return (
-    <Avatar className={cn(showStatusBadge && !isAuthenticated && "grayscale", className)}>
+    <AvatarRoot className={cn(showStatusBadge && !isAuthenticated && "grayscale", className)}>
       {image ? <AvatarImage alt={isDecorative ? "" : name} loading="eager" src={image} /> : null}
       <AvatarFallback aria-hidden={isDecorative || undefined}>{fallback}</AvatarFallback>
       {showStatusBadge ? (
@@ -122,7 +123,7 @@ function AccountAvatar({ name, image, fallback, status, showStatusBadge, isDecor
           {isAuthenticated ? null : <PlusIcon aria-hidden="true" />}
         </AvatarBadge>
       ) : null}
-    </Avatar>
+    </AvatarRoot>
   );
 }
 
@@ -150,7 +151,7 @@ export function AccountMenu({
   align = "end",
   side = "bottom",
   sideOffset = 4,
-  children,
+  items,
 }: AccountMenuProps) {
   const resolvedLabels = { ...ACCOUNT_MENU_DEFAULT_LABELS, ...labels };
   const isAuthenticated = status === "authenticated";
@@ -204,7 +205,7 @@ export function AccountMenu({
           </span>
         </div>
         <DropdownMenuSeparator />
-        {children}
+        {items ? <DropdownMenuItems items={items} /> : null}
         {isAuthenticated ? (
           <DropdownMenuItem className={classNames?.item} disabled={signOutDisabled} onSelect={() => void onSignOut()}>
             <LogOutIcon aria-hidden="true" />

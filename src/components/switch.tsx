@@ -21,15 +21,12 @@ import {
   SWITCH_THUMB_GLIDE_SPRING,
   SWITCH_TOGGLE_KEY,
 } from "../constants/switch.js"
-import type { SwitchSize } from "../constants/switch.js"
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
 import { cn } from "../lib/utils.js"
 import { ARC_SPRING_SNAPPY } from "../motion/arc-tokens.js"
 
 export type SwitchProps = ComponentProps<typeof SwitchPrimitive.Root> & {
-  /** Track size: Arc's 42 by 24 track (`default`) or a compact one for dense rows (`sm`). */
-  size?: SwitchSize
-  /** Visible text rendered inside the control, after the track; it also names the switch. */
+  /** Visible text rendered inside the control, after the track; also its `aria-label` when none is passed. */
   label?: string
 }
 
@@ -43,10 +40,10 @@ const switchClassName =
 
 /** Fixed box: the thumb moves inside it with transforms, so nothing around the switch shifts. */
 const trackClassName =
-  "relative isolate box-border flex flex-none items-center rounded-(--radius-pill) bg-(--control-track) transition-[background-color] duration-(--duration-fast) ease-(--ease-standard) before:absolute before:inset-0 before:-z-1 before:rounded-[inherit] before:bg-(--control-on) before:opacity-0 before:transition-opacity before:duration-(--duration-standard) before:ease-(--ease-standard) group-data-[state=checked]/switch:before:opacity-100 group-aria-invalid/switch:shadow-[0_0_0_1px_var(--danger)] group-data-[size=default]/switch:h-6 group-data-[size=default]/switch:w-[42px] group-data-[size=default]/switch:p-[3px] group-data-[size=sm]/switch:h-[18px] group-data-[size=sm]/switch:w-8 group-data-[size=sm]/switch:p-[2px] motion-reduce:transition-none motion-reduce:before:transition-none"
+  "relative isolate box-border flex flex-none items-center rounded-(--radius-pill) bg-(--control-track) transition-[background-color] duration-(--duration-fast) ease-(--ease-standard) before:absolute before:inset-0 before:-z-1 before:rounded-[inherit] before:bg-(--control-on) before:opacity-0 before:transition-opacity before:duration-(--duration-standard) before:ease-(--ease-standard) group-data-[state=checked]/switch:before:opacity-100 group-aria-invalid/switch:shadow-[0_0_0_1px_var(--danger)] h-6 w-[42px] p-[3px] motion-reduce:transition-none motion-reduce:before:transition-none"
 
 const thumbClassName =
-  "pointer-events-none block flex-none rounded-(--radius-pill) bg-(--control-thumb) shadow-(--control-thumb-shadow) will-change-transform transition-[background-color] duration-(--duration-standard) ease-(--ease-standard) group-data-[state=checked]/switch:bg-(--control-thumb-on) group-data-[size=default]/switch:h-[18px] group-data-[size=sm]/switch:h-[14px] motion-reduce:transition-none"
+  "pointer-events-none block flex-none rounded-(--radius-pill) bg-(--control-thumb) shadow-(--control-thumb-shadow) will-change-transform transition-[background-color] duration-(--duration-standard) ease-(--ease-standard) group-data-[state=checked]/switch:bg-(--control-thumb-on) h-[18px] motion-reduce:transition-none"
 
 /** The thumb values last written to the screen, which an interrupted glide continues from. */
 type PaintedThumb = { x: number; width: number; scaleX: number }
@@ -71,12 +68,11 @@ function glideFromPainted(value: MotionValue<number>, paintedValue: number, targ
 
 /**
  * A binary setting that applies at once, controlled or uncontrolled like Radix's switch.
- * @param switchProps - Every Radix switch prop, including `ref`, plus the Arc `size` and `label`.
+ * @param switchProps - Every Radix switch prop, including `ref`, plus Arc's `label`.
  * @returns The switch button, with its label inside when one is passed.
  */
 function Switch({
   className,
-  size = "default",
   label,
   checked,
   defaultChecked,
@@ -96,8 +92,8 @@ function Switch({
   const [uncontrolledChecked, setUncontrolledChecked] = useState(defaultChecked ?? false)
   const [isPressed, setIsPressed] = useState(false)
   const isChecked = checked ?? uncontrolledChecked
-  const geometry = SWITCH_THUMB_GEOMETRY_PX[size]
-  const stretch = isPressed && !reduceMotion && !disabled ? SWITCH_PRESS_STRETCH_PX[size] : 0
+  const geometry = SWITCH_THUMB_GEOMETRY_PX
+  const stretch = isPressed && !reduceMotion && !disabled ? SWITCH_PRESS_STRETCH_PX : 0
   const targetX = isChecked ? geometry.travel - stretch : 0
   const targetWidth = geometry.size + stretch
   const x = useMotionValue(targetX)
@@ -153,7 +149,6 @@ function Switch({
   return (
     <SwitchPrimitive.Root
       data-slot="switch"
-      data-size={size}
       data-labelled={label ? "" : undefined}
       className={cn(switchClassName, className)}
       {...props}

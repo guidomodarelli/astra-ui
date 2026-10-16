@@ -6,10 +6,9 @@ h1 { font-family: var(--font-display); font-size: 2rem; }
 .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
 .long-content { height: 120svh; display: flex; flex-direction: column; justify-content: space-between; }
 .motion-skeleton { width: 12rem; height: 1rem; margin-block: 1rem; }
-.carousel-frame { padding-block: 3.5rem; max-width: 16rem; margin-inline: auto; }
-.vertical-carousel-content { height: 6rem; }
 .summary-card { max-width: 20rem; }
 .narrow-field { max-width: 20rem; }
+.overlay-select { width: 12rem; }
 .clipping-scroller { height: 6rem; overflow: auto; transform: translateZ(0); border: 1px solid var(--border); }
 .clipping-scroller-content { height: 12rem; padding: 0.5rem; }
 .sheet-body { padding-inline: 1rem; }

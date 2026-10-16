@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 /** Verifies the distributed UI package through its public consumer contract. */
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Button, Avatar, AvatarImage, AvatarFallback, Checkbox } from "beez-ui";
+import { Button, Avatar, Checkbox } from "beez-ui";
 
 
 
@@ -14,14 +14,15 @@ describe("beez-ui consumer contract", () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  it("should hide a failed avatar from assistive technology and retry when its source changes", () => {
-    const { rerender } = render(<Avatar><AvatarImage src="/first.png" alt="Perfil" /></Avatar>);
-    fireEvent.error(screen.getByAltText("Perfil"));
-    expect(screen.queryByRole("img", { name: "Perfil" })).not.toBeInTheDocument();
-    rerender(<Avatar><AvatarImage src="/second.png" alt="Perfil" /></Avatar>);
-    fireEvent.load(screen.getByAltText("Perfil"));
-    expect(screen.getByRole("img", { name: "Perfil" })).toBeInTheDocument();
-    expect((screen.getByAltText("Perfil") as HTMLImageElement).src).toBe(new URL("/second.png", window.location.href).href);
+  it("should fall back to the initials when the avatar photo fails and retry when its source changes", () => {
+    const { rerender } = render(<Avatar name="Gonzalo Herrera" src="/first.png" />);
+    const findImage = () => screen.getByRole("img", { name: "Gonzalo Herrera" }).querySelector("img")!;
+    fireEvent.error(findImage());
+    expect(screen.getByText("GH")).toBeInTheDocument();
+    rerender(<Avatar name="Gonzalo Herrera" src="/second.png" />);
+    fireEvent.load(findImage());
+    expect(screen.queryByText("GH")).not.toBeInTheDocument();
+    expect(findImage().src).toBe(new URL("/second.png", window.location.href).href);
   });
 
   it("should preserve checkbox interaction", async () => {
@@ -31,10 +32,10 @@ describe("beez-ui consumer contract", () => {
     expect(checkbox).toBeChecked();
   });
 
-  it("should let the primitive replace the fallback when the image loads", () => {
-    render(<Avatar><AvatarImage src="/profile.png" alt="Perfil" /><AvatarFallback>GH</AvatarFallback></Avatar>);
-    expect(screen.getByText("GH")).toBeInTheDocument();
-    fireEvent.load(screen.getByAltText("Perfil"));
-    expect(screen.queryByText("GH")).not.toBeInTheDocument();
+  it("should let the photo replace a custom fallback when the image loads", () => {
+    render(<Avatar name="Gonzalo Herrera" src="/profile.png" fallback="G" />);
+    expect(screen.getByText("G")).toBeInTheDocument();
+    fireEvent.load(screen.getByRole("img", { name: "Gonzalo Herrera" }).querySelector("img")!);
+    expect(screen.queryByText("G")).not.toBeInTheDocument();
   });
 });
