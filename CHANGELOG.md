@@ -4,6 +4,8 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-10-15
+
 ### Added
 
 - `Switch` acepta `label` para mostrar el texto dentro del control con la altura táctil de Arc.
