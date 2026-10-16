@@ -3,152 +3,77 @@
 /**
  * Arc's Tooltip (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): a short dark bubble on Arc's tokens that
  * waits a moment, then rises a few pixels from its trigger. While a tooltip is open, and briefly after it closes, the
- * next one opens at once and only fades. It keeps the Radix composition (`Tooltip`, `TooltipTrigger`,
- * `TooltipContent`, `TooltipProvider`) and adds Arc's shorthand: `<Tooltip content="..." side="...">` wraps its child.
+ * next one opens at once and only fades, without any app-level provider: the skip window is shared by every tooltip
+ * on the page. It follows Arc's closed API, `<Tooltip content="...">` around its trigger, plus placement and open
+ * state extensions.
  */
-import * as React from "react"
-import { Tooltip as TooltipPrimitive } from "radix-ui"
+import type { ReactElement, ReactNode } from "react"
 
-import { ArcFloatingSlot } from "../motion/arc-floating-slot.js"
-import { createOverlayWarmth, useOpenedWhileWarm } from "../motion/overlay-warmth.js"
-import { MotionPresence, MotionOpenProvider, useMotionOpenState } from "../motion/presence.js"
-import { cn } from "../lib/utils.js"
-import {
-  TOOLTIP_COLLISION_PADDING_PX,
-  TOOLTIP_INSTANT_MOTION,
-  TOOLTIP_MOTION,
-  TOOLTIP_OPEN_DELAY_MS,
-  TOOLTIP_SIDE_OFFSET_PX,
-  TOOLTIP_SKIP_WINDOW_MS,
-} from "../constants/tooltip.js"
+import { Tooltip as TooltipRoot, TooltipContent, TooltipTrigger } from "./primitives/tooltip.js"
 
-/** Every tooltip on the page shares one skip window, whichever provider it belongs to. */
-const tooltipWarmth = createOverlayWarmth(TOOLTIP_SKIP_WINDOW_MS)
+/** Side of the trigger a tooltip prefers. Arc offers `top` and `bottom`; beez-ui adds `left` and `right`. */
+export type TooltipSide = "top" | "bottom" | "left" | "right"
 
-/** Whether the page was already warm when the surrounding layer opened, so its entrance only fades. */
-const TooltipOpenedWhileWarmContext = React.createContext(false)
+/** Alignment of the bubble against its trigger. */
+export type TooltipAlign = "start" | "center" | "end"
 
-/** Tells a `Tooltip` whether a `TooltipProvider` already wraps it. */
-const TooltipProviderPresenceContext = React.createContext(false)
-
-/**
- * Shares the open delay among the tooltips it wraps.
- * @param props - Radix provider properties. `delayDuration` defaults to Arc's 250ms.
- * @returns The provider.
- */
-function TooltipProvider({
-  delayDuration = TOOLTIP_OPEN_DELAY_MS,
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
-  return (
-    <TooltipProviderPresenceContext.Provider value>
-      <TooltipPrimitive.Provider
-        data-slot="tooltip-provider"
-        delayDuration={delayDuration}
-        {...props}
-      />
-    </TooltipProviderPresenceContext.Provider>
-  )
-}
-
-export type TooltipProps = React.ComponentProps<typeof TooltipPrimitive.Root> & {
-  /**
-   * Arc's shorthand: the bubble's content. When set, the only child becomes the trigger (it must accept a ref and be
-   * focusable) and the tooltip renders its own `TooltipContent`.
-   */
-  content?: React.ReactNode
-  /** Side of the trigger the shorthand bubble prefers. Defaults to `top`. */
-  side?: React.ComponentProps<typeof TooltipPrimitive.Content>["side"]
+export type TooltipProps = {
+  /** Supplemental text of the bubble. Icon-only triggers still need their own `aria-label`. */
+  content: ReactNode
+  /** The trigger. Rendered with `asChild`, so it must accept a ref and be focusable. */
+  children: ReactElement
+  /** Preferred side of the trigger. Defaults to `top`. */
+  side?: TooltipSide
+  /** Alignment against the trigger. Defaults to `center`. */
+  align?: TooltipAlign
+  /** Gap, in px, between the bubble and its trigger. Defaults to 8. */
+  sideOffset?: number
+  /** Distance, in px, the bubble keeps from the viewport edges. Defaults to 12. */
+  collisionPadding?: number
+  /** Class added to the bubble. */
+  contentClassName?: string
+  /** Controlled open state. */
+  open?: boolean
+  /** Initial open state when uncontrolled. */
+  defaultOpen?: boolean
+  /** Called when the tooltip opens or closes. */
+  onOpenChange?: (open: boolean) => void
+  /** Milliseconds of hover or focus before the first tooltip opens. Defaults to Arc's 250. */
+  delayDuration?: number
 }
 
 /**
- * Owns the open state of one tooltip. It works with or without a `TooltipProvider`: without one it brings its own,
- * as Arc's Tooltip does.
- * @param props - Radix root properties plus Arc's optional `content` and `side` shorthand.
- * @returns The tooltip root.
+ * A short label on hover or focus that opens without delay when moving between tooltips.
+ * @param props - The bubble content, the trigger and optional placement and open state.
+ * @returns The trigger with its tooltip.
  */
-function Tooltip({ content, side, children, delayDuration, ...props }: TooltipProps) {
-  const [motionOpen, setMotionOpen] = useMotionOpenState(props)
-  const isWarm = React.useSyncExternalStore(
-    tooltipWarmth.subscribe,
-    tooltipWarmth.isWarm,
-    tooltipWarmth.isWarmOnServer
-  )
-  const openedWhileWarm = useOpenedWhileWarm(motionOpen, isWarm)
-  const hasProvider = React.useContext(TooltipProviderPresenceContext)
-
-  React.useEffect(() => {
-    if (!motionOpen) return
-    return tooltipWarmth.open()
-  }, [motionOpen])
-
-  const usesShorthand = content !== undefined
-  const root = (
-    <MotionOpenProvider scope="tooltip" open={motionOpen}>
-      <TooltipOpenedWhileWarmContext.Provider value={openedWhileWarm}>
-        <TooltipPrimitive.Root
-          data-slot="tooltip"
-          {...props}
-          delayDuration={isWarm ? 0 : delayDuration}
-          open={motionOpen}
-          onOpenChange={setMotionOpen}
-        >
-          {usesShorthand ? (
-            <>
-              <TooltipTrigger asChild>{children}</TooltipTrigger>
-              <TooltipContent side={side}>{content}</TooltipContent>
-            </>
-          ) : (
-            children
-          )}
-        </TooltipPrimitive.Root>
-      </TooltipOpenedWhileWarmContext.Provider>
-    </MotionOpenProvider>
-  )
-  return hasProvider ? root : <TooltipProvider>{root}</TooltipProvider>
-}
-
-function TooltipTrigger({
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
-}
-
-/**
- * Renders Arc's bubble: inverted colors, a hairline border, the raised shadow and 15rem of maximum width.
- * @param props - Radix content properties. `sideOffset` defaults to 8px and `collisionPadding` to 12px.
- * @returns The portaled bubble.
- */
-function TooltipContent({
-  className,
-  sideOffset = TOOLTIP_SIDE_OFFSET_PX,
-  collisionPadding = TOOLTIP_COLLISION_PADDING_PX,
+function Tooltip({
+  content,
   children,
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
-  // Within the skip window the layer opens in place and only fades.
-  const openedWhileWarm = React.useContext(TooltipOpenedWhileWarmContext)
+  side,
+  align,
+  sideOffset,
+  collisionPadding,
+  contentClassName,
+  open,
+  defaultOpen,
+  onOpenChange,
+  delayDuration,
+}: TooltipProps) {
   return (
-    <TooltipPrimitive.Portal forceMount>
-      <MotionPresence scope="tooltip" forceMount={props.forceMount}>
-        <ArcFloatingSlot motion={() => (openedWhileWarm ? TOOLTIP_INSTANT_MOTION : TOOLTIP_MOTION)}>
-          <TooltipPrimitive.Content
-            forceMount
-            data-slot="tooltip-content"
-            sideOffset={sideOffset}
-            collisionPadding={collisionPadding}
-            className={cn(
-              "z-50 inline-flex w-fit max-w-60 origin-(--radix-tooltip-content-transform-origin) items-center gap-1.5 rounded-(--radius-control) border border-[color-mix(in_oklab,var(--background)_14%,var(--foreground))] bg-foreground px-(--space-4) py-(--space-3) font-sans text-sm leading-(--leading-body) font-normal tracking-(--tracking-body) text-background shadow-(--shadow-raised) has-data-[slot=kbd]:pr-(--space-3) **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-sm",
-              className
-            )}
-            {...props}
-          >
-            {children}
-          </TooltipPrimitive.Content>
-        </ArcFloatingSlot>
-      </MotionPresence>
-    </TooltipPrimitive.Portal>
+    <TooltipRoot open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange} delayDuration={delayDuration}>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent
+        side={side}
+        align={align}
+        sideOffset={sideOffset}
+        collisionPadding={collisionPadding}
+        className={contentClassName}
+      >
+        {content}
+      </TooltipContent>
+    </TooltipRoot>
   )
 }
 
-export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger }
+export { Tooltip }

@@ -1,7 +1,7 @@
-/** Shares the production theme, fonts and tooltip context across examples. */
+/** Shares the production theme and fonts across examples; tooltips bring their own provider. */
 import { useEffect, useEffectEvent } from "react";
 import type { Preview } from "@storybook/react-vite";
-import { BeezUIProvider, TooltipProvider, useTheme } from "beez-ui";
+import { BeezUIProvider, useTheme } from "beez-ui";
 import "beez-ui/styles.css";
 import "./preview.css";
 
@@ -51,17 +51,15 @@ const preview: Preview = {
           }}
         >
           <ThemeSync theme={context.globals.theme} />
-          <TooltipProvider>
-            <div
-              className={
-                context.parameters.layout === "fullscreen"
-                  ? "StoryFullscreen"
-                  : "StoryFrame"
-              }
-            >
-              <Story />
-            </div>
-          </TooltipProvider>
+          <div
+            className={
+              context.parameters.layout === "fullscreen"
+                ? "StoryFullscreen"
+                : "StoryFrame"
+            }
+          >
+            <Story />
+          </div>
         </BeezUIProvider>
       );
     },

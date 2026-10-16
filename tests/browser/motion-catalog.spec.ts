@@ -99,22 +99,19 @@ test("should reveal popovers and hover cards from their trigger", async ({ page 
   await expectSettled(page.locator("[data-slot=hover-card-content]"));
 });
 
-test("should open a submenu with motion and glide inside it", async ({ page }) => {
+test("should open the menu with motion and glide between its items", async ({ page }) => {
   const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
   await page.getByRole("button", { name: "Más opciones" }).click();
-  await page.getByRole("menuitem", { name: "Mover a" }).hover();
-  await page.keyboard.press("ArrowRight");
-  // The submenu renders inside its parent menu, so it is located by its slot.
-  const submenu = page.locator("[data-slot=dropdown-menu-sub-content]");
-  await expect(submenu).toBeVisible();
-  await expect(page.getByRole("menuitem", { name: "Archivo" })).toBeFocused();
+  const menu = page.getByRole("menu", { name: "Más opciones" });
+  await expect(menu).toBeVisible();
+  await page.getByRole("menuitem", { name: "Mover a archivo" }).hover();
+  await expect(page.getByRole("menuitem", { name: "Mover a archivo" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(page.getByRole("menuitem", { name: "Papelera" })).toBeFocused();
-  await expect.poll(motion.glides).toContain("dropdown-menu-sub-content");
-  await expectSettled(submenu);
-  // Only the submenu glides its items; the parent menu must not hide their highlight too.
-  const trash = page.getByRole("menuitem", { name: "Papelera" });
+  await expect(page.getByRole("menuitem", { name: "Mover a papelera" })).toBeFocused();
+  await expect.poll(motion.glides).toContain("dropdown-menu-content");
+  await expectSettled(menu);
+  const trash = page.getByRole("menuitem", { name: "Mover a papelera" });
   await expect(page.locator("[data-glide-indicator]")).toHaveCount(0);
   await expect(trash).not.toHaveAttribute("data-glide-target");
   await expect(trash).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0)");

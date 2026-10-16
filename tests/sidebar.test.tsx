@@ -5,9 +5,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
   Sidebar,
   SidebarBrandButton,
   SidebarContent,
@@ -183,16 +180,15 @@ function WorkspaceSidebar({ defaultOpen = true }: { defaultOpen?: boolean }) {
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <Sidebar>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <DropdownMenu
+          label="Espacios"
+          trigger={
             <SidebarBrandButton icon={<span>AC</span>} trailing={<svg data-testid="brand-chevron" />}>
               Acme
             </SidebarBrandButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem>Otro espacio</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          }
+          items={[{ label: "Otro espacio" }]}
+        />
         <SidebarLabel asChild>
           <p>Todavía no hay espacios</p>
         </SidebarLabel>

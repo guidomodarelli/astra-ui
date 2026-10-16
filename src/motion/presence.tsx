@@ -16,7 +16,6 @@ const OPEN_CONTEXTS = {
   "alert-dialog": createContext(true),
   sheet: createContext(true),
   "dropdown-menu": createContext(true),
-  "dropdown-sub": createContext(true),
   popover: createContext(true),
   "hover-card": createContext(true),
   tooltip: createContext(true),

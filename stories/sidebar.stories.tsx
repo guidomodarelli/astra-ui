@@ -3,9 +3,6 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   AccountMenu,
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
   SidebarBrandButton,
   SidebarLabel,
   SidebarProvider,
@@ -105,16 +102,15 @@ const meta = {
                 collapsible={args.collapsible}
               >
                 <SidebarHeader>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                  <DropdownMenu
+                    label="Espacios de trabajo"
+                    trigger={
                       <SidebarBrandButton icon={<Home />} trailing={<ChevronsUpDown />}>
                         {args.title}
                       </SidebarBrandButton>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      <DropdownMenuItem>Otro espacio</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                    }
+                    items={[{ label: "Otro espacio" }]}
+                  />
                 </SidebarHeader>
                 <SidebarContent>
                   <SidebarGroup>

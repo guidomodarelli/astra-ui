@@ -45,7 +45,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "./dropdown-menu.js";
+} from "./primitives/dropdown-menu.js";
+import { DropdownMenuItems, type DropdownItem } from "./primitives/dropdown-menu-items.js";
 import { Input } from "./input.js";
 import {
   Table,
@@ -156,10 +157,10 @@ export interface DataTableProps<TData, TValue> {
   columnVisibilityButtonLabel?: string;
   columnVisibilityMenuLabel?: string;
   /**
-   * Ítems extra al tope del menú de columnas (p. ej. preferencias de vista);
-   * se separan de la sección de columnas con un separador.
+   * Ítems extra al tope del menú de columnas (p. ej. preferencias de vista), con la
+   * forma de los `items` de `DropdownMenu`; se separan de la sección de columnas con un separador.
    */
-  columnVisibilityMenuExtraContent?: React.ReactNode;
+  columnVisibilityMenuExtraItems?: DropdownItem[];
   sortingBadgeLabelOverrides?: Record<string, string>;
   /**
    * Ids de columnas de orden "internas" (p. ej. la posición de grupo) que el
@@ -348,7 +349,7 @@ export function DataTable<TData, TValue>({
   showColumnVisibilityToggle = false,
   columnVisibilityButtonLabel = "Columnas",
   columnVisibilityMenuLabel = "Mostrar columnas",
-  columnVisibilityMenuExtraContent,
+  columnVisibilityMenuExtraItems,
   sortingBadgeLabelOverrides,
   sortingBadgeIgnoredColumnIds,
   selectAllColumnsLabel = "Mostrar todas",
@@ -1353,9 +1354,9 @@ export function DataTable<TData, TValue>({
                       </ControlButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      {columnVisibilityMenuExtraContent ? (
+                      {columnVisibilityMenuExtraItems?.length ? (
                         <>
-                          {columnVisibilityMenuExtraContent}
+                          <DropdownMenuItems items={columnVisibilityMenuExtraItems} />
                           <DropdownMenuSeparator />
                         </>
                       ) : null}

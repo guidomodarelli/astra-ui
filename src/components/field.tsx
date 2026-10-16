@@ -303,6 +303,8 @@ export function usesFieldCopy(props: FieldCopyProps): boolean {
 
 type FieldProps = Omit<FieldCopyProps, "label"> & {
   label?: string
+  /** Keeps the label for assistive technology only, for layouts that already show their own label. */
+  hideLabel?: boolean
   aria: FieldAria
   className?: string
   children: ReactNode
@@ -313,14 +315,16 @@ type FieldProps = Omit<FieldCopyProps, "label"> & {
  * a negative margin at zero and a closed row would still pay it; each row carries its own space instead. The wrapper
  * keeps the bare control's full-width contract, so a field fills a flex row like the control alone does.
  */
-export function Field({ label, description, error, aria, className, children }: FieldProps) {
+export function Field({ label, hideLabel = false, description, error, aria, className, children }: FieldProps) {
   return (
     <div data-slot="field" className={cn("grid w-full min-w-0", className)}>
       {label ? (
         <label
           data-slot="field-label"
           htmlFor={aria.controlId}
-          className="mb-(--space-2) text-sm leading-(--leading-body) font-medium text-foreground"
+          className={
+            hideLabel ? "sr-only" : "mb-(--space-2) text-sm leading-(--leading-body) font-medium text-foreground"
+          }
         >
           {label}
         </label>

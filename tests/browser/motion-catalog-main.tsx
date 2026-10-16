@@ -13,12 +13,6 @@ import {
   BeezUIProvider,
   Button,
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
   Form,
   FormControl,
   FormField,
@@ -26,8 +20,6 @@ import {
   FormLabel,
   FormMessage,
   HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
   Input,
   InputGroup,
   InputGroupAddon,
@@ -39,10 +31,6 @@ import {
   RadioGroup,
   RadioGroupItem,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -180,25 +168,18 @@ function MotionCatalog() {
             <PopoverContent>Filtros disponibles</PopoverContent>
           </Popover>
           <TickingPopover />
-          <HoverCard openDelay={0} closeDelay={0}>
-            <HoverCardTrigger href="#perfil">Perfil público</HoverCardTrigger>
-            <HoverCardContent>Tarjeta de perfil</HoverCardContent>
+          <HoverCard openDelay={0} closeDelay={0} content="Tarjeta de perfil">
+            <a href="#perfil">Perfil público</a>
           </HoverCard>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>Más opciones</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onSelect={() => setLastAction("Renombrado")}>Renombrar</DropdownMenuItem>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>Mover a</DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem onSelect={() => setLastAction("Movido a archivo")}>Archivo</DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setLastAction("Movido a papelera")}>Papelera</DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <DropdownMenu
+            label="Más opciones"
+            trigger={<Button>Más opciones</Button>}
+            items={[
+              { label: "Renombrar", onSelect: () => setLastAction("Renombrado") },
+              { label: "Mover a archivo", onSelect: () => setLastAction("Movido a archivo") },
+              { label: "Mover a papelera", onSelect: () => setLastAction("Movido a papelera") },
+            ]}
+          />
           <output aria-label="Última acción">{lastAction}</output>
         </section>
 
@@ -235,18 +216,13 @@ function MotionCatalog() {
         </section>
 
         <section className="controls">
-          <Select>
-            <SelectTrigger aria-label="País">
-              <SelectValue placeholder="Elegir país" />
-            </SelectTrigger>
-            <SelectContent position="popper">
-              {MANY_COUNTRIES.map((country) => (
-                <SelectItem key={country} value={country}>
-                  {country}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Select
+            label="País"
+            hideLabel
+            placeholder="Elegir país"
+            className="overlay-select"
+            options={MANY_COUNTRIES.map((country) => ({ value: country, label: country }))}
+          />
           <Button onClick={() => setIsSwitchShown((shown) => !shown)}>Mostrar preferencia</Button>
           <div style={{ display: isSwitchShown ? "flex" : "none" }} className="controls">
             <Switch id="catalog-switch" />

@@ -1,53 +1,64 @@
-/** Exercises Arc's Tooltip, Popover and Hover Card through their public composition and Arc's additions. */
+/** Exercises Arc's Tooltip, Popover and Hover Card through their public API and beez-ui's extensions. */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   Button,
   HoverCard,
-  HoverCardContent,
   HoverCardProfile,
-  HoverCardTrigger,
   Popover,
   PopoverClose,
   PopoverContent,
   PopoverTrigger,
   Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
 } from "beez-ui";
 
+/** The bubble Radix renders for the open tooltip. */
+function tooltipBubble() {
+  return document.querySelector("[data-slot=tooltip-content]");
+}
+
+/** The surface Radix renders for the open hover card. */
+function hoverCardSurface() {
+  return document.querySelector("[data-slot=hover-card-content]");
+}
+
 describe("Tooltip", () => {
-  it("should open on keyboard focus without a TooltipProvider around it", async () => {
+  it("should turn its only child into the trigger and open on keyboard focus without any provider", async () => {
     const user = userEvent.setup();
     render(
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button>Guardar</Button>
-        </TooltipTrigger>
-        <TooltipContent>Guardá los cambios pendientes</TooltipContent>
+      <Tooltip content="Guardá los cambios pendientes">
+        <Button>Guardar</Button>
       </Tooltip>,
     );
     await user.tab();
+    const trigger = screen.getByRole("button", { name: "Guardar" });
+    expect(trigger).toHaveFocus();
     expect(await screen.findByRole("tooltip")).toHaveTextContent("Guardá los cambios pendientes");
+    expect(trigger).toHaveAttribute("aria-describedby");
   });
 
-  it("should turn its only child into the trigger with the content shorthand", async () => {
+  it("should prefer the top side by default and accept every side, alignment and content class", async () => {
     const user = userEvent.setup();
-    render(
-      <TooltipProvider>
-        <Tooltip content="Copiar enlace" side="bottom">
-          <Button>Compartir</Button>
-        </Tooltip>
-      </TooltipProvider>,
+    const { rerender } = render(
+      <Tooltip content="Copiar enlace">
+        <Button>Compartir</Button>
+      </Tooltip>,
     );
     await user.tab();
-    const trigger = screen.getByRole("button", { name: "Compartir" });
-    expect(trigger).toHaveFocus();
-    expect(await screen.findByRole("tooltip")).toHaveTextContent("Copiar enlace");
-    expect(trigger).toHaveAttribute("aria-describedby");
-    expect(document.querySelector("[data-slot=tooltip-content]")).toHaveAttribute("data-side", "bottom");
+    await screen.findByRole("tooltip");
+    expect(tooltipBubble()).toHaveAttribute("data-side", "top");
+
+    for (const side of ["bottom", "left", "right"] as const) {
+      rerender(
+        <Tooltip content="Copiar enlace" side={side} align="start" contentClassName="tooltip-extra">
+          <Button>Compartir</Button>
+        </Tooltip>,
+      );
+      await waitFor(() => expect(tooltipBubble()).toHaveAttribute("data-side", side));
+      expect(tooltipBubble()).toHaveAttribute("data-align", "start");
+      expect(tooltipBubble()).toHaveClass("tooltip-extra");
+    }
   });
 
   it("should remove the bubble once it closes", async () => {
@@ -60,7 +71,42 @@ describe("Tooltip", () => {
     await user.tab();
     await screen.findByRole("tooltip");
     await user.keyboard("{Escape}");
-    await waitFor(() => expect(document.querySelector("[data-slot=tooltip-content]")).not.toBeInTheDocument());
+    await waitFor(() => expect(tooltipBubble()).not.toBeInTheDocument());
+  });
+
+  it("should follow a controlled open state and report dismissals", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    const { rerender } = render(
+      <Tooltip content="Siempre visible" open onOpenChange={onOpenChange}>
+        <Button>Detalle</Button>
+      </Tooltip>,
+    );
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("Siempre visible");
+    screen.getByRole("button", { name: "Detalle" }).focus();
+    await user.keyboard("{Escape}");
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
+    expect(screen.getByRole("tooltip")).toBeInTheDocument();
+
+    rerender(
+      <Tooltip content="Siempre visible" open={false} onOpenChange={onOpenChange}>
+        <Button>Detalle</Button>
+      </Tooltip>,
+    );
+    await waitFor(() => expect(tooltipBubble()).not.toBeInTheDocument());
+  });
+
+  it("should start open with defaultOpen and close by itself afterwards", async () => {
+    const user = userEvent.setup();
+    render(
+      <Tooltip content="Abierto al montar" defaultOpen>
+        <Button>Inicio</Button>
+      </Tooltip>,
+    );
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("Abierto al montar");
+    screen.getByRole("button", { name: "Inicio" }).focus();
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(tooltipBubble()).not.toBeInTheDocument());
   });
 });
 
@@ -89,6 +135,34 @@ describe("Popover", () => {
     expect(screen.getByRole("button", { name: "Ver filtros" })).toHaveFocus();
   });
 
+  it("should align the panel with the start of its trigger by default, as Arc does", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button>Por defecto</Button>
+          </PopoverTrigger>
+          <PopoverContent aria-label="Panel por defecto">Inicio</PopoverContent>
+        </Popover>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button>Centrado</Button>
+          </PopoverTrigger>
+          <PopoverContent aria-label="Panel centrado" align="center">
+            Centro
+          </PopoverContent>
+        </Popover>
+      </>,
+    );
+    await user.click(screen.getByRole("button", { name: "Por defecto" }));
+    expect(screen.getByRole("dialog", { name: "Panel por defecto" })).toHaveAttribute("data-align", "start");
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByText("Inicio")).not.toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: "Centrado" }));
+    expect(await screen.findByRole("dialog", { name: "Panel centrado" })).toHaveAttribute("data-align", "center");
+  });
+
   it("should reopen while it is still closing and stay open", async () => {
     const user = userEvent.setup();
     render(
@@ -114,9 +188,8 @@ describe("HoverCard", () => {
   it("should open on keyboard focus and describe a person with HoverCardProfile", async () => {
     const user = userEvent.setup();
     render(
-      <HoverCard>
-        <HoverCardTrigger href="#perfil">Ana Pérez</HoverCardTrigger>
-        <HoverCardContent>
+      <HoverCard
+        content={
           <HoverCardProfile
             name="Ana Pérez"
             role="Diseñadora de producto, Pagos"
@@ -127,10 +200,13 @@ describe("HoverCard", () => {
             ]}
             meta="Buenos Aires"
           />
-        </HoverCardContent>
+        }
+      >
+        <a href="#perfil">Ana Pérez</a>
       </HoverCard>,
     );
     await user.tab();
+    expect(screen.getByRole("link", { name: "Ana Pérez" })).toHaveFocus();
     expect(await screen.findByText("Diseñadora de producto, Pagos")).toBeInTheDocument();
     expect(screen.getByText("AP")).toBeInTheDocument();
     expect(screen.getByText("Diseña flujos de cobro.")).toBeInTheDocument();
@@ -139,13 +215,30 @@ describe("HoverCard", () => {
     expect(screen.getByText("Buenos Aires")).toBeInTheDocument();
   });
 
+  it("should open below the trigger, aligned with its start, and style its surface", async () => {
+    const { rerender } = render(
+      <HoverCard content="Tarjeta" open className="card-surface" contentClassName="card-extra">
+        <a href="#perfil">Perfil</a>
+      </HoverCard>,
+    );
+    await screen.findByText("Tarjeta");
+    expect(hoverCardSurface()).toHaveAttribute("data-side", "bottom");
+    expect(hoverCardSurface()).toHaveAttribute("data-align", "start");
+    expect(hoverCardSurface()).toHaveClass("card-surface", "card-extra");
+
+    rerender(
+      <HoverCard content="Tarjeta" open side="right" align="end">
+        <a href="#perfil">Perfil</a>
+      </HoverCard>,
+    );
+    await waitFor(() => expect(hoverCardSurface()).toHaveAttribute("data-side", "right"));
+    expect(hoverCardSurface()).toHaveAttribute("data-align", "end");
+  });
+
   it("should render a portrait instead of initials when the profile has an avatar URL", async () => {
     render(
-      <HoverCard open>
-        <HoverCardTrigger href="#perfil">Luis</HoverCardTrigger>
-        <HoverCardContent>
-          <HoverCardProfile name="Luis Gómez" avatar="/retrato.png" />
-        </HoverCardContent>
+      <HoverCard open content={<HoverCardProfile name="Luis Gómez" avatar="/retrato.png" />}>
+        <a href="#perfil">Luis</a>
       </HoverCard>,
     );
     const content = await screen.findByText("Luis Gómez");
@@ -154,20 +247,29 @@ describe("HoverCard", () => {
     expect(screen.queryByText("LG")).not.toBeInTheDocument();
   });
 
-  it("should close once keyboard focus leaves the trigger and the close delay passes", async () => {
+  it("should report opening and closing, so consumers can load data while it is open", async () => {
     const onOpenChange = vi.fn();
     const user = userEvent.setup();
     render(
-      <HoverCard onOpenChange={onOpenChange}>
-        <HoverCardTrigger href="#perfil">Perfil público</HoverCardTrigger>
-        <HoverCardContent>Tarjeta de perfil</HoverCardContent>
+      <HoverCard content="Tarjeta de perfil" onOpenChange={onOpenChange}>
+        <a href="#perfil">Perfil público</a>
       </HoverCard>,
     );
     await user.tab();
     await screen.findByText("Tarjeta de perfil");
+    expect(onOpenChange).toHaveBeenLastCalledWith(true);
     await user.tab();
     await waitFor(() => expect(screen.queryByText("Tarjeta de perfil")).not.toBeInTheDocument());
     expect(onOpenChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it("should start open with defaultOpen", async () => {
+    render(
+      <HoverCard content="Vista previa inicial" defaultOpen>
+        <a href="#perfil">Perfil</a>
+      </HoverCard>,
+    );
+    expect(await screen.findByText("Vista previa inicial")).toBeInTheDocument();
   });
 });
 
@@ -186,9 +288,8 @@ describe("overlays after a test that leaves a fake clock with a pending frame", 
 
   function ProfileCard() {
     return (
-      <HoverCard>
-        <HoverCardTrigger href="#perfil">Perfil público</HoverCardTrigger>
-        <HoverCardContent>Tarjeta de perfil</HoverCardContent>
+      <HoverCard content="Tarjeta de perfil">
+        <a href="#perfil">Perfil público</a>
       </HoverCard>
     );
   }

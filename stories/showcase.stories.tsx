@@ -34,8 +34,6 @@ import {
   TabsList,
   TabsTrigger,
   Tooltip,
-  TooltipContent,
-  TooltipTrigger,
   TypingAnimation,
 } from "beez-ui";
 
@@ -205,11 +203,8 @@ const meta = {
         </Tabs>
       </CardContent>
       <CardFooter>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost">¿Cómo se reparte?</Button>
-          </TooltipTrigger>
-          <TooltipContent>En partes iguales, salvo excepciones</TooltipContent>
+        <Tooltip content="En partes iguales, salvo excepciones">
+          <Button variant="ghost">¿Cómo se reparte?</Button>
         </Tooltip>
       </CardFooter>
     </Card>

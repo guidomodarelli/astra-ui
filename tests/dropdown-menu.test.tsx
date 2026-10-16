@@ -1,81 +1,45 @@
-/** Covers the interaction contract of the Arc-styled DropdownMenu composition. */
+/** Covers the interaction contract of Arc's closed DropdownMenu and beez-ui's extensions. */
 import { useState } from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "beez-ui";
+import { Button, DropdownMenu, type DropdownItem } from "beez-ui";
 
 /**
- * Renders a menu with every kind of row.
- * @param props - Callbacks observed by the tests.
- * @returns The trigger and its menu.
+ * Builds the document actions, with a disabled row and a destructive one after a separator.
+ * @param callbacks - Callbacks observed by the tests.
+ * @returns The menu items.
  */
-function ActionsMenu({ onRename, onDelete }: { onRename?: () => void; onDelete?: () => void }) {
-  const [showArchived, setShowArchived] = useState(false);
-  const [order, setOrder] = useState("recent");
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger>Acciones</DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <DropdownMenuLabel>Documento</DropdownMenuLabel>
-        <DropdownMenuItem onSelect={onRename}>
-          Renombrar
-          <DropdownMenuShortcut>⌘R</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuItem disabled>Duplicar</DropdownMenuItem>
-        <DropdownMenuCheckboxItem checked={showArchived} onCheckedChange={setShowArchived}>
-          Mostrar archivados
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuRadioGroup value={order} onValueChange={setOrder}>
-          <DropdownMenuRadioItem value="recent">Recientes</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="name">Por nombre</DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>Mover a</DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            <DropdownMenuItem>Archivo</DropdownMenuItem>
-            <DropdownMenuItem>Papelera</DropdownMenuItem>
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" onSelect={onDelete}>
-          Eliminar
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+function documentActions({ onRename, onDelete }: { onRename?: () => void; onDelete?: () => void } = {}): DropdownItem[] {
+  return [
+    { label: "Renombrar", icon: <svg data-testid="rename-icon" />, onSelect: onRename },
+    { label: "Duplicar", disabled: true },
+    { label: "Mover" },
+    { label: "Eliminar", destructive: true, separatorBefore: true, onSelect: onDelete },
+  ];
 }
 
 describe("DropdownMenu", () => {
-  it("should run the selected action and close the menu", async () => {
+  it("should draw Arc's labelled trigger, run the selected action and close the menu", async () => {
     const user = userEvent.setup();
     const onRename = vi.fn();
-    render(<ActionsMenu onRename={onRename} />);
+    render(<DropdownMenu label="Acciones" icon={<svg data-testid="trigger-icon" />} items={documentActions({ onRename })} />);
 
-    await user.click(screen.getByRole("button", { name: "Acciones" }));
-    await user.click(screen.getByRole("menuitem", { name: /Renombrar/ }));
+    const trigger = screen.getByRole("button", { name: "Acciones" });
+    expect(within(trigger).getByTestId("trigger-icon")).toBeInTheDocument();
+    await user.click(trigger);
+    expect(screen.getByRole("menu", { name: "Acciones" })).toBeInTheDocument();
+    expect(within(screen.getByRole("menuitem", { name: "Renombrar" })).getByTestId("rename-icon")).toBeInTheDocument();
+    await user.click(screen.getByRole("menuitem", { name: "Renombrar" }));
 
     expect(onRename).toHaveBeenCalledTimes(1);
     await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+    await waitFor(() => expect(trigger).toHaveFocus());
   });
 
-  it("should wrap keyboard navigation from the last item back to the first by default", async () => {
+  it("should wrap keyboard navigation from the last item back to the first", async () => {
     const user = userEvent.setup();
-    render(<ActionsMenu />);
+    render(<DropdownMenu label="Acciones" items={documentActions()} />);
 
     screen.getByRole("button", { name: "Acciones" }).focus();
     await user.keyboard("{Enter}");
@@ -84,102 +48,187 @@ describe("DropdownMenu", () => {
     expect(deleteItem).toHaveFocus();
 
     await user.keyboard("{ArrowDown}");
-    expect(screen.getByRole("menuitem", { name: /Renombrar/ })).toHaveFocus();
+    expect(screen.getByRole("menuitem", { name: "Renombrar" })).toHaveFocus();
   });
 
-  it("should let consumers turn the keyboard wrap off", async () => {
-    const user = userEvent.setup();
-    render(
-      <DropdownMenu>
-        <DropdownMenuTrigger>Acciones</DropdownMenuTrigger>
-        <DropdownMenuContent loop={false}>
-          <DropdownMenuItem>Primera</DropdownMenuItem>
-          <DropdownMenuItem>Última</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>,
-    );
-
-    screen.getByRole("button", { name: "Acciones" }).focus();
-    await user.keyboard("{Enter}");
-    const lastItem = await screen.findByRole("menuitem", { name: "Última" });
-    await user.keyboard("{End}{ArrowDown}");
-
-    expect(lastItem).toHaveFocus();
-  });
-
-  it("should skip disabled actions and mark destructive ones", async () => {
+  it("should skip disabled items, separate groups and mark destructive items", async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn();
-    render(<ActionsMenu onDelete={onDelete} />);
+    render(<DropdownMenu label="Acciones" items={documentActions({ onDelete })} />);
 
     await user.click(screen.getByRole("button", { name: "Acciones" }));
+    const menu = screen.getByRole("menu");
     const duplicateItem = screen.getByRole("menuitem", { name: "Duplicar" });
     const deleteItem = screen.getByRole("menuitem", { name: "Eliminar" });
+    const separator = within(menu).getByRole("separator");
 
     expect(duplicateItem).toHaveAttribute("aria-disabled", "true");
     expect(deleteItem).toHaveAttribute("data-variant", "destructive");
+    // The separator sits right before the item that asked for it.
+    expect(separator.nextElementSibling).toBe(deleteItem);
+    await user.keyboard("{ArrowDown}{ArrowDown}");
+    expect(screen.getByRole("menuitem", { name: "Mover" })).toHaveFocus();
     await user.click(deleteItem);
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
-  it("should toggle checkbox rows and choose radio rows", async () => {
+  it("should open from a custom trigger and name the menu after the label", async () => {
     const user = userEvent.setup();
-    render(<ActionsMenu />);
-    /** Opens the menu again once the previous selection closed it. */
-    const reopen = async () => {
-      await user.click(await screen.findByRole("button", { name: "Acciones" }, { timeout: 3000 }));
-    };
-
-    await user.click(screen.getByRole("button", { name: "Acciones" }));
-    await user.click(screen.getByRole("menuitemcheckbox", { name: "Mostrar archivados" }));
-    await reopen();
-    expect(screen.getByRole("menuitemcheckbox", { name: "Mostrar archivados" })).toHaveAttribute(
-      "aria-checked",
-      "true",
+    render(
+      <DropdownMenu
+        label="Acciones de la fila"
+        trigger={<Button size="sm" aria-label="Más acciones">⋮</Button>}
+        items={[{ label: "Editar" }]}
+      />,
     );
 
+    expect(screen.queryByRole("button", { name: "Acciones de la fila" })).not.toBeInTheDocument();
+    const trigger = screen.getByRole("button", { name: "Más acciones" });
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("menu", { name: "Acciones de la fila" })).toBeInTheDocument();
+  });
+
+  it("should name the menu with contentLabel when it is given", async () => {
+    const user = userEvent.setup();
+    render(<DropdownMenu label="Acciones" contentLabel="Acciones del documento" items={[{ label: "Editar" }]} />);
+
+    await user.click(screen.getByRole("button", { name: "Acciones" }));
+    expect(screen.getByRole("menu", { name: "Acciones del documento" })).toBeInTheDocument();
+  });
+
+  it("should render link items through the provider link and keep their target", async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu
+        label="Ayuda"
+        items={[
+          { label: "Guía", href: "/guia" },
+          { label: "Soporte", href: "https://example.com/soporte", target: "_blank", rel: "noreferrer" },
+        ]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Ayuda" }));
+    const guide = screen.getByRole("menuitem", { name: "Guía" });
+    const support = screen.getByRole("menuitem", { name: "Soporte" });
+    expect(guide.tagName).toBe("A");
+    expect(guide).toHaveAttribute("href", "/guia");
+    expect(support).toHaveAttribute("target", "_blank");
+    expect(support).toHaveAttribute("rel", "noreferrer");
+  });
+
+  it("should render checked items as checkboxes with trailing content, custom classes and attributes", async () => {
+    const user = userEvent.setup();
+    function ArchivedToggle() {
+      const [showArchived, setShowArchived] = useState(false);
+      return (
+        <DropdownMenu
+          label="Vista"
+          items={[
+            {
+              id: "archived",
+              label: "Mostrar archivados",
+              checked: showArchived,
+              onSelect: () => setShowArchived(!showArchived),
+              trailing: <span>3</span>,
+              className: "archived-row",
+              itemProps: { "data-testid": "archived-row", "aria-keyshortcuts": "A" },
+            },
+          ]}
+        />
+      );
+    }
+    render(<ArchivedToggle />);
+
+    await user.click(screen.getByRole("button", { name: "Vista" }));
+    const row = screen.getByRole("menuitemcheckbox", { name: /Mostrar archivados/ });
+    expect(row).toHaveAttribute("aria-checked", "false");
+    expect(row).toHaveClass("archived-row");
+    expect(row).toHaveAttribute("data-testid", "archived-row");
+    expect(row).toHaveAttribute("aria-keyshortcuts", "A");
+    expect(within(row).getByText("3")).toBeInTheDocument();
+    await user.click(row);
+    await user.click(await screen.findByRole("button", { name: "Vista" }, { timeout: 3000 }));
+    expect(screen.getByRole("menuitemcheckbox", { name: /Mostrar archivados/ })).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("should render a single selection as radio items and report the chosen value", async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    function OrderMenu() {
+      const [order, setOrder] = useState("recent");
+      return (
+        <DropdownMenu
+          label="Orden"
+          selection={{
+            value: order,
+            onValueChange: (value) => {
+              setOrder(value);
+              onValueChange(value);
+            },
+          }}
+          items={[
+            { label: "Recientes", value: "recent" },
+            { label: "Por nombre", value: "name" },
+            { label: "Restablecer", separatorBefore: true },
+          ]}
+        />
+      );
+    }
+    render(<OrderMenu />);
+
+    await user.click(screen.getByRole("button", { name: "Orden" }));
+    expect(screen.getByRole("menuitemradio", { name: "Recientes" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("menuitem", { name: "Restablecer" })).toBeInTheDocument();
     await user.click(screen.getByRole("menuitemradio", { name: "Por nombre" }));
-    await reopen();
+    expect(onValueChange).toHaveBeenCalledWith("name");
+
+    await user.click(await screen.findByRole("button", { name: "Orden" }, { timeout: 3000 }));
     expect(screen.getByRole("menuitemradio", { name: "Por nombre" })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByRole("menuitemradio", { name: "Recientes" })).toHaveAttribute("aria-checked", "false");
   });
 
-  it("should open a submenu from the keyboard", async () => {
+  it("should place its content on the requested side and alignment, with a content class", async () => {
     const user = userEvent.setup();
-    render(<ActionsMenu />);
+    render(
+      <DropdownMenu label="Acciones" side="top" align="end" contentClassName="menu-extra" items={[{ label: "Editar" }]} />,
+    );
 
     await user.click(screen.getByRole("button", { name: "Acciones" }));
-    screen.getByRole("menuitem", { name: "Mover a" }).focus();
-    await user.keyboard("{ArrowRight}");
-
-    expect(await screen.findByRole("menuitem", { name: "Archivo" })).toBeVisible();
-    expect(screen.getByRole("menuitem", { name: "Mover a" })).toHaveAttribute("aria-expanded", "true");
+    const menu = screen.getByRole("menu");
+    expect(menu).toHaveAttribute("data-side", "top");
+    expect(menu).toHaveAttribute("data-align", "end");
+    expect(menu).toHaveClass("menu-extra");
   });
 
   it("should follow a controlled open state", async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
     const { rerender } = render(
-      <DropdownMenu open onOpenChange={onOpenChange}>
-        <DropdownMenuTrigger>Acciones</DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem>Renombrar</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>,
+      <DropdownMenu label="Acciones" open onOpenChange={onOpenChange} items={[{ label: "Renombrar" }]} />,
     );
 
     expect(screen.getByRole("menu")).toBeInTheDocument();
     await user.keyboard("{Escape}");
     expect(onOpenChange).toHaveBeenCalledWith(false);
 
-    rerender(
-      <DropdownMenu open={false} onOpenChange={onOpenChange}>
-        <DropdownMenuTrigger>Acciones</DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem>Renombrar</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>,
-    );
+    rerender(<DropdownMenu label="Acciones" open={false} onOpenChange={onOpenChange} items={[{ label: "Renombrar" }]} />);
     await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+  });
+
+  it("should leave the page interactive while a non-modal menu is open", async () => {
+    const user = userEvent.setup();
+    const onOutsideClick = vi.fn();
+    render(
+      <>
+        <DropdownMenu label="Acciones" modal={false} items={[{ label: "Editar" }]} />
+        <Button onClick={onOutsideClick}>Afuera</Button>
+      </>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Acciones" }));
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Afuera" })).not.toHaveAttribute("aria-hidden");
   });
 });
