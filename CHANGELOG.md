@@ -4,6 +4,8 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+## [2.6.1] - 2026-10-16
+
 ### Fixed
 
 - Los botones de un toast de `ThemedToaster` (acción, cancelar o cerrar) responden mientras hay un `Dialog`, `AlertDialog` o `Sheet` abierto, y presionarlos ya no cierra el `Dialog` o el `Sheet`. También se alcanzan con el teclado mediante el atajo de Sonner (Alt+T), que ya no queda bloqueado por la trampa de foco del modal; si el control enfocado cierra su toast, el foco vuelve al modal en lugar de perderse.
