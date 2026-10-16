@@ -1,5 +1,6 @@
 /** Covers desktop and small-screen rendering in both supported engines. */
 import { defineConfig } from "@playwright/test";
+import { NEXT_PORT, VITE_PORT } from "./tests/browser/ports";
 
 /**
  * Servers start through `node`, not `pnpm exec`: pnpm puts the server in its own process group,
@@ -8,11 +9,11 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/browser",
   testMatch: "**/*.spec.ts",
-  use: { baseURL: "http://127.0.0.1:3108" },
+  use: { baseURL: `http://127.0.0.1:${VITE_PORT}` },
   timeout: 60000,
   webServer: [
-    { command: "node node_modules/vite/bin/vite.js --config tests/browser/vite.config.ts", port: 3108, reuseExistingServer: false },
-    { command: "node node_modules/next/dist/bin/next dev tests/next-app --port 3109", port: 3109, reuseExistingServer: false, timeout: 120000 },
+    { command: `node node_modules/vite/bin/vite.js --config tests/browser/vite.config.ts --port ${VITE_PORT} --strictPort`, port: VITE_PORT, reuseExistingServer: false },
+    { command: `node node_modules/next/dist/bin/next dev tests/next-app --port ${NEXT_PORT}`, port: NEXT_PORT, reuseExistingServer: false, timeout: 120000 },
   ],
   projects: [
     { name: "chromium-desktop", use: { browserName: "chromium", viewport: { width: 1440, height: 1000 } } },

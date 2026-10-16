@@ -1,5 +1,6 @@
 /** Verifies compiled library interactions, styles and framework boundaries in actual consumers. */
 import { expect, test } from "@playwright/test";
+import { NEXT_ORIGIN } from "./ports";
 
 test("preserves the default theme and shared interactions", async ({ page }) => {
   const runtimeErrors: string[] = [];
@@ -45,7 +46,7 @@ test("preserves the default theme and shared interactions", async ({ page }) => 
 test("activates Next adapters only through their optional entrypoint", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
-  await page.goto("http://127.0.0.1:3109/");
+  await page.goto(`${NEXT_ORIGIN}/`);
   await expect(page.getByLabel("Carga del servidor")).toBeVisible();
   await expect(page.getByLabel("Carga del servidor")).toHaveAttribute("data-slot", "skeleton");
   const image = page.getByRole("img", { name: "Avatar Next" });
@@ -65,7 +66,7 @@ test("restores the provider theme without hydration mismatches", async ({ page }
     if (/hydrated|hydration/i.test(message.text())) hydrationErrors.push(message.text());
   });
   await page.addInitScript(() => localStorage.setItem("theme", "dark"));
-  await page.goto("http://127.0.0.1:3109/");
+  await page.goto(`${NEXT_ORIGIN}/`);
   await expect(page.locator("html")).toHaveClass(/dark/);
   await page.getByRole("button", { name: "Notificar" }).click();
   await expect(page.getByText("Tema aplicado")).toBeVisible();
