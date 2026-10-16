@@ -81,6 +81,32 @@ function ProfileAvatarGroup() {
   );
 }
 
+/** An alert that opens later and carries its own height class and inline opacity. */
+function StyledAlert() {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="narrow-field">
+      <Button variant="secondary" onClick={() => setIsOpen(true)}>Mostrar aviso alto</Button>
+      <Alert aria-label="Aviso alto" tone="info" open={isOpen} className="tall-alert" style={{ opacity: 0.5 }}>
+        <AlertTitle>Aviso con alto propio</AlertTitle>
+      </Alert>
+    </div>
+  );
+}
+
+/** A reveal whose consumer keeps its own scrolling overflow. */
+function ScrollingReveal() {
+  const [isLoading, setIsLoading] = useState(true);
+  return (
+    <div className="narrow-field">
+      <Button variant="secondary" onClick={() => setIsLoading((current) => !current)}>Alternar carga</Button>
+      <Skeleton aria-label="Resumen con desplazamiento" loading={isLoading} lines={2} style={{ overflow: "auto" }}>
+        <p>Resumen listo para revisar.</p>
+      </Skeleton>
+    </div>
+  );
+}
+
 /** Renders one fixture per component. */
 function ArcDisplay() {
   return <BeezUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
@@ -102,6 +128,8 @@ function ArcDisplay() {
     </section>
     <section><DismissibleAlert /></section>
     <section><ActionableAlert /></section>
+    <section><StyledAlert /></section>
+    <section><ScrollingReveal /></section>
   </main></BeezUIProvider>;
 }
 

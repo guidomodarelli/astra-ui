@@ -70,9 +70,12 @@ function useMorphHeight(
     if (!content || !frame || typeof ResizeObserver === "undefined") return
     let lastHeight: number | undefined
     let controls: AnimationPlaybackControls | undefined
+    // The consumer's inline overflow, saved only while the frame clips a move and restored afterwards.
+    let restingOverflow: string | undefined
     const settle = () => {
       height.jump("auto")
-      frame.style.overflow = ""
+      if (restingOverflow !== undefined) frame.style.overflow = restingOverflow
+      restingOverflow = undefined
     }
     const observer = new ResizeObserver(([entry]) => {
       if (!entry) return
@@ -84,6 +87,7 @@ function useMorphHeight(
       const isOutsideWindow = performance.now() - changedAt.current > SKELETON_MORPH_WINDOW_MS
       if (reduceMotion || fromHeight === undefined || fromHeight === nextHeight || isOutsideWindow) return settle()
       // Pin the old height before this frame paints, then spring to the new one.
+      restingOverflow ??= frame.style.overflow
       frame.style.overflow = "hidden"
       height.jump(fromHeight)
       controls = animate(height, nextHeight, { ...ARC_SPRING_SMOOTH, onComplete: settle })

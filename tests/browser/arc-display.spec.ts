@@ -129,3 +129,21 @@ test("should size the group counter like the profile-size avatars beside it", as
   expect(counterBox!.width).toBeCloseTo(avatarBox!.width, 0);
   expect(counterBox!.height).toBeCloseTo(avatarBox!.height, 0);
 });
+
+test("should hand height and opacity back to the consumer once an alert has opened", async ({ page }) => {
+  await page.getByRole("button", { name: "Mostrar aviso alto" }).click();
+
+  const alert = page.getByLabel("Aviso alto");
+  await expect(alert).toHaveCSS("height", "112px", { timeout: SETTLE_TIMEOUT_MS });
+  await expect(alert).toHaveCSS("opacity", "0.5", { timeout: SETTLE_TIMEOUT_MS });
+});
+
+test("should keep the consumer overflow on a reveal before and after it moves", async ({ page }) => {
+  const reveal = page.getByLabel("Resumen con desplazamiento");
+  await expect(reveal).toHaveCSS("overflow-y", "auto");
+
+  await page.getByRole("button", { name: "Alternar carga" }).click();
+
+  await expect(page.getByText("Resumen listo para revisar.")).toBeVisible();
+  await expect(reveal).toHaveCSS("overflow-y", "auto", { timeout: SETTLE_TIMEOUT_MS });
+});

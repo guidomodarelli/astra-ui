@@ -6,7 +6,7 @@
  * place when the tone changes; `onDismiss` adds a dismiss button and `open` collapses the alert's height while it
  * fades, so the content below closes the gap. The compound title, description and action parts are kept.
  */
-import { useState } from "react"
+import { useRef, useState } from "react"
 import type { ComponentProps, ReactNode } from "react"
 import { cva } from "class-variance-authority"
 import { AnimatePresence, motion, useIsPresent } from "motion/react"
@@ -89,6 +89,19 @@ const presenceExit: TargetAndTransition = {
   transition: { default: ARC_SPRING_SMOOTH, opacity: ARC_SWAP_EXIT_TRANSITION },
 }
 const reducedPresenceExit: TargetAndTransition = { ...collapsedBox, opacity: 0, transition: { duration: 0 } }
+/** Entrance target; once it settles, the alert hands height and opacity back to the consumer's classes and style. */
+const presenceEnter: TargetAndTransition = { height: "auto", opacity: 1 }
+
+/**
+ * Converts a consumer style value into the inline string React would write.
+ * @param value - The consumer's style value, if any.
+ * @param unit - Unit appended to numbers, as React does for lengths.
+ * @returns The inline value, or an empty string to fall back to the stylesheet.
+ */
+function toInlineStyleValue(value: string | number | undefined, unit = ""): string {
+  if (value === undefined) return ""
+  return typeof value === "number" ? `${value}${unit}` : value
+}
 
 /** Outgoing icons are hidden from assistive technology while they fade. */
 function AlertIconSwap(props: HTMLMotionProps<"span">) {
@@ -224,8 +237,22 @@ function Alert({ open, onDismiss, ref: consumerRef, ...props }: AlertProps) {
   const [isDismissed, setIsDismissed] = useState(false)
   // Shares the alert node with the consumer's ref, keeping its React 19 cleanup, and with the clip toggled while it moves.
   const [presenceElement, attachPresence] = useAttachedElement<HTMLDivElement>(consumerRef)
-  const setPresenceClip = (overflow: string) => {
-    if (presenceElement) presenceElement.style.overflow = overflow
+  // The consumer's inline overflow, kept while the alert clips its content during a move.
+  const restingOverflow = useRef<string | undefined>(undefined)
+  const clipPresence = () => {
+    if (!presenceElement) return
+    restingOverflow.current ??= presenceElement.style.overflow
+    presenceElement.style.overflow = "hidden"
+  }
+  const settlePresence = (definition: unknown) => {
+    if (!presenceElement) return
+    if (restingOverflow.current !== undefined) presenceElement.style.overflow = restingOverflow.current
+    restingOverflow.current = undefined
+    // Motion leaves the entrance's `height: auto` and `opacity: 1` inline; hand both back to the consumer.
+    if (definition === presenceEnter) {
+      presenceElement.style.height = toInlineStyleValue(props.style?.height, "px")
+      presenceElement.style.opacity = toInlineStyleValue(props.style?.opacity)
+    }
   }
   if (open === undefined && !onDismiss) {
     return <AlertBox {...props} ref={consumerRef} reduceMotion={reduceMotion} />
@@ -249,12 +276,12 @@ function Alert({ open, onDismiss, ref: consumerRef, ...props }: AlertProps) {
           presence={{
             ref: attachPresence,
             initial: { height: 0, opacity: 0 },
-            animate: { height: "auto", opacity: 1 },
+            animate: presenceEnter,
             exit: reduceMotion ? reducedPresenceExit : presenceExit,
             transition: reduceMotion ? { duration: 0 } : presenceTransition,
             // Clips only while moving, so focus outlines inside the alert are not cut off at rest.
-            onAnimationStart: () => setPresenceClip("hidden"),
-            onAnimationComplete: () => setPresenceClip(""),
+            onAnimationStart: clipPresence,
+            onAnimationComplete: settlePresence,
           }}
         />
       ) : null}
