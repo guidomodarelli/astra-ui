@@ -163,7 +163,7 @@ const ringClassName =
  * @returns The chip's accessible name.
  */
 function buildOverflowLabel(overflow: number, label: string): string {
-  return `${overflow} ${label.toLocaleLowerCase()} ${AVATAR_GROUP_OVERFLOW_SUFFIX}`
+  return `${overflow} ${label.toLowerCase()} ${AVATAR_GROUP_OVERFLOW_SUFFIX}`
 }
 
 /**

@@ -123,6 +123,17 @@ describe("Card", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
+  it("should open a controlled quick look whose details are the number 0", async () => {
+    // Arrange
+    render(<Card title="Pendientes" details={0} open />);
+
+    // Act
+    const dialog = await screen.findByRole("dialog", { name: "Pendientes" });
+
+    // Assert
+    expect(within(dialog).getByText("0")).toBeInTheDocument();
+  });
+
   it("should keep a single live copy of its children while the quick look is open", async () => {
     // Arrange
     const user = userEvent.setup();

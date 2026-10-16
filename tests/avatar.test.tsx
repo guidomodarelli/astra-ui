@@ -1,5 +1,5 @@
 /** Verifies Arc's closed Avatar and AvatarGroup through the public barrel, as a consumer would use them. */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { UserIcon } from "lucide-react";
 
@@ -120,6 +120,28 @@ describe("AvatarGroup", () => {
     const fittingGroup = screen.getByRole("group", { name: "Revisores" });
     expect(within(fittingGroup).getAllByRole("img")).toHaveLength(2);
     expect(within(fittingGroup).queryByRole("img", { name: /más$/ })).not.toBeInTheDocument();
+  });
+
+  it("should lowercase the overflow chip label the same way on a Turkish host", () => {
+    // Arrange
+    // The host default locale is fixed when the process starts, so this spy stands in for a Turkish server or browser:
+    // a call without an explicit locale lowercases with Turkish rules ("I" becomes a dotless "ı").
+    const nativeToLocaleLowerCase = String.prototype.toLocaleLowerCase;
+    const toLocaleLowerCaseSpy = vi
+      .spyOn(String.prototype, "toLocaleLowerCase")
+      .mockImplementation(function lowercaseWithTurkishDefault(this: string, locales?: Intl.LocalesArgument) {
+        return nativeToLocaleLowerCase.call(this, locales ?? "tr");
+      });
+
+    try {
+      // Act
+      render(<AvatarGroup members={TEAM} label="Integrantes" />);
+
+      // Assert
+      expect(screen.getByRole("img", { name: "2 integrantes más" })).toBeInTheDocument();
+    } finally {
+      toLocaleLowerCaseSpy.mockRestore();
+    }
   });
 
   it("should keep members with the same name apart through their keys", () => {

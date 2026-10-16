@@ -192,7 +192,7 @@ function Card({
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen)
   const [geometry, setGeometry] = useState<Geometry>({})
   const [landing, setLanding] = useState<Landing | null>(null)
-  const hasQuickLook = Boolean(details) && title !== undefined && title !== null
+  const hasQuickLook = details !== undefined && details !== null && details !== false && title !== undefined && title !== null
   const isOpen = hasQuickLook ? (openProp ?? uncontrolledOpen) : false
   const shouldMorph = hasQuickLook && !reduceMotion
   const isReturning = !isOpen && landing !== null
