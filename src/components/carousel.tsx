@@ -54,7 +54,7 @@ type CarouselProps = {
   slideLabel?: (index: number, count: number) => string
   /**
    * Milliseconds per slide. Adds a play control that rotates through the slides; rotation pauses on hover, keyboard
-   * focus, drag, offscreen and in hidden tabs, and is unavailable with reduced motion.
+   * focus, drag, offscreen and in hidden tabs; with reduced motion the control stays but is disabled.
    */
   interval?: number
   /** Starts rotating on mount. Off by default, so motion begins with the viewer. */
@@ -283,11 +283,12 @@ function Carousel({
     // The parent already knows this slide, so its own change is not reported back to it.
     reportedIndexRef.current = nextIndex
     api.scrollTo(nextIndex, reduceMotion)
-  }, [api, controlledIndex, reduceMotion])
+    // `selectedIndex` re-runs the sync after every selection, so a slide the parent rejected scrolls back to `index`.
+  }, [api, controlledIndex, reduceMotion, selectedIndex])
 
   const rotation = useRotation({ api, count, interval, autoplay, reduceMotion, isHydrated, selectedIndex, loop, isRotatingRef })
   const visibleIndex = clampSlideIndex(selectedIndex, count)
-  const hasControlRow = count > 1 && (showControls || showIndicators || rotation.canRotate)
+  const hasControlRow = count > 1 && (showControls || showIndicators || rotation.hasControl)
   const rootStyle = { [CAROUSEL_SLIDE_SIZE_PROPERTY]: slideSize } as React.CSSProperties
 
   return (
@@ -325,7 +326,7 @@ function Carousel({
           data-slot="carousel-controls"
           className="flex min-w-0 items-center gap-2 px-[calc((100cqw_-_var(--carousel-slide))/2)] @max-[340px]/carousel:gap-1 @max-[340px]/carousel:px-[max(0px,calc((100cqw_-_var(--carousel-slide))/2_-_var(--spacing)*2))]"
         >
-          {rotation.canRotate ? (
+          {rotation.hasControl ? (
             <ControlButton
               ref={rotation.playRef}
               data-slot="carousel-rotation"
@@ -333,6 +334,7 @@ function Carousel({
               size="icon"
               className="size-(--control-height-sm) rounded-full border-border bg-surface text-foreground hover-fine:bg-surface-muted"
               aria-label={rotation.isPlaying ? CAROUSEL_COPY.pauseRotation : CAROUSEL_COPY.startRotation}
+              disabled={!rotation.canRotate}
               onClick={rotation.toggle}
             >
               <span className="grid size-4 place-items-center">
@@ -389,7 +391,8 @@ type RotationSettings = {
 /**
  * Arc's slide rotation: each slide stays for `interval` while its pill drains, then the carousel moves on, wrapping to
  * the first slide at the end. Rotation pauses on hover, keyboard focus, drag, offscreen and in hidden tabs; pausing it
- * with the control refills the pill. Reduced motion, once hydrated, makes rotation unavailable.
+ * with the control refills the pill. Reduced motion, once hydrated, makes rotation unavailable and disables the control,
+ * which stays in place so the control row keeps its layout after hydration.
  * @param settings - Carousel state the rotation reads.
  * @returns Rotation state and the handlers the carousel binds.
  */
@@ -403,7 +406,8 @@ function useRotation({ api, count, interval, autoplay, reduceMotion, isHydrated,
   const drain = useMotionValue(0)
   const rootRef = React.useRef<HTMLElement>(null)
   const playRef = React.useRef<HTMLButtonElement>(null)
-  const canRotate = Boolean(interval) && count > 1 && !(isHydrated && reduceMotion)
+  const hasControl = Boolean(interval) && count > 1
+  const canRotate = hasControl && !(isHydrated && reduceMotion)
   const isRunning = canRotate && isPlaying && !isHovered && !isFocusPaused && !isDragging && isInView && isPageVisible
 
   React.useEffect(() => {
@@ -476,8 +480,9 @@ function useRotation({ api, count, interval, autoplay, reduceMotion, isHydrated,
   }
 
   return {
+    hasControl,
     canRotate,
-    isPlaying,
+    isPlaying: canRotate && isPlaying,
     drain: canRotate ? drain : undefined,
     rootRef,
     playRef,

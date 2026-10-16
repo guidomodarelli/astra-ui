@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, render, screen, within } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
+import { hydrateRoot, type Root } from "react-dom/client";
 
 import { Carousel } from "beez-ui";
 
@@ -14,6 +16,22 @@ function renderCarousel(props: Partial<Parameters<typeof Carousel>[0]> = {}) {
       ))}
     </Carousel>,
   );
+}
+
+afterEach(() => vi.restoreAllMocks());
+
+/** Emulates the reduced motion preference without replacing React or the component. */
+function preferReducedMotion() {
+  vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+    matches: true,
+    media: query,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => true,
+  }));
 }
 
 describe("Carousel", () => {
@@ -133,5 +151,37 @@ describe("Carousel", () => {
     expect(carousel).toHaveClass("Gallery");
     expect(carousel.style.getPropertyValue("--carousel-slide")).toBe("100%");
     for (const panel of screen.getAllByRole("tabpanel", { hidden: true })) expect(panel).toHaveClass("Gallery__slide");
+  });
+
+  it("should keep the rotation control in place but disabled after hydrating with reduced motion", async () => {
+    // Arrange
+    preferReducedMotion();
+    const carousel = (
+      <Carousel label="Destacados" interval={4000} autoplay showControls={false} showIndicators={false}>
+        {SLIDES.map((slide) => (
+          <p key={slide}>{slide}</p>
+        ))}
+      </Carousel>
+    );
+    const container = document.createElement("div");
+    container.innerHTML = renderToString(carousel);
+    document.body.append(container);
+    const recoverableErrors: unknown[] = [];
+    let root: Root | undefined;
+
+    try {
+      // Act
+      await act(async () => {
+        root = hydrateRoot(container, carousel, { onRecoverableError: (error) => recoverableErrors.push(error) });
+      });
+
+      // Assert
+      expect(recoverableErrors).toEqual([]);
+      expect(container.querySelector('[data-slot="carousel-controls"]')).toBeInTheDocument();
+      expect(within(container).getByRole("button", { name: "Iniciar la rotación de diapositivas" })).toBeDisabled();
+    } finally {
+      await act(async () => root?.unmount());
+      container.remove();
+    }
   });
 });

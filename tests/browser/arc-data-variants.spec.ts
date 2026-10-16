@@ -59,3 +59,32 @@ for (const { direction, from, to } of [
     await expect(indicators.nth(to)).toHaveAttribute("aria-selected", "true");
   });
 }
+
+for (const reducedMotion of ["no-preference", "reduce"] as const) {
+  test(`should return to the controlled slide when the parent rejects a change (${reducedMotion})`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion });
+    await page.goto("/arc-data-variants.html");
+    const carousel = page.getByRole("region", { name: "Galería fija" });
+    const next = carousel.getByRole("button", { name: "Diapositiva siguiente" });
+    await expect(next).not.toHaveAttribute("aria-disabled");
+
+    await next.click();
+    await carousel.getByRole("tab", { name: "Diapositiva 3 de 5" }).click();
+
+    await expect(page.getByLabel("Cambios pedidos")).toHaveText("2");
+    await expect(carousel.getByRole("tab", { name: "Diapositiva 1 de 5" })).toHaveAttribute("aria-selected", "true");
+    const panels = carousel.locator('[data-slot="carousel-item"]');
+    await expect(panels.nth(0)).not.toHaveAttribute("inert");
+    await expect(panels.nth(1)).toHaveAttribute("inert");
+    await expect(panels.nth(2)).toHaveAttribute("inert");
+    await expect
+      .poll(() =>
+        carousel.evaluate((root) => {
+          const viewport = root.querySelector<HTMLElement>('[data-slot="carousel-content"]')!.getBoundingClientRect();
+          const slide = root.querySelector<HTMLElement>('[data-slot="carousel-item"]')!.getBoundingClientRect();
+          return Math.abs(slide.left + slide.width / 2 - (viewport.left + viewport.width / 2));
+        }),
+      )
+      .toBeLessThan(1);
+  });
+}

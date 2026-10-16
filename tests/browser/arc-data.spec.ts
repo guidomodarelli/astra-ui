@@ -403,13 +403,13 @@ test.describe("with reduced motion", () => {
     expect(samples.every((offset) => Math.abs(offset - end) < 1)).toBe(true);
   });
 
-  test("should jump between slides and offer no rotation", async ({ page }) => {
+  test("should jump between slides and keep the rotation control disabled in place", async ({ page }) => {
     await openCarouselPage(page);
     const carousel = page.getByRole("region", { name: "Destacados" });
     const rotation = page.getByRole("region", { name: "Rotación" });
     // Rotation pauses offscreen, so the carousel is brought into view first.
     await rotation.scrollIntoViewIfNeeded();
-    await expect(rotation.getByRole("button", { name: /rotación/ })).toHaveCount(0);
+    await expect(rotation.getByRole("button", { name: "Iniciar la rotación de diapositivas" })).toBeDisabled();
 
     const positions = await carousel.getByRole("button", { name: "Diapositiva siguiente" }).last().evaluate(async (button, frames) => {
       const track = button.closest('[data-slot="carousel"]')!.querySelector<HTMLElement>('[data-slot="carousel-content"] > div')!;
