@@ -252,4 +252,17 @@ describe("Card", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Cerrar vista rápida" })).not.toBeInTheDocument();
   });
+
+  it("should not offer a quick look when its title is a false condition", () => {
+    // Arrange
+    const canShowTitle = false;
+
+    // Act
+    render(<Card title={canShowTitle && "Resumen"} details={<p>Reglamento y calendario.</p>} />);
+
+    // Assert
+    expect(screen.getByRole("article")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByText("Reglamento y calendario.")).not.toBeInTheDocument();
+  });
 });

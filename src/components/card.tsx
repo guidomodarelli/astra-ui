@@ -200,10 +200,11 @@ function Card({
   const layoutGroupId = useId()
   const [cardNode, attachCard] = useAttachedElement<HTMLElement>(ref)
   const descriptionRef = useRef<HTMLParagraphElement>(null)
+  const quickLookRef = useRef<HTMLDivElement>(null)
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen)
   const [geometry, setGeometry] = useState<Geometry>({})
   const [landing, setLanding] = useState<Landing | null>(null)
-  const hasQuickLook = hasContent(details) && title !== undefined && title !== null
+  const hasQuickLook = hasContent(details) && hasContent(title)
   const isOpen = hasQuickLook ? (openProp ?? uncontrolledOpen) : false
   const shouldMorph = hasQuickLook && !reduceMotion
   const isReturning = !isOpen && landing !== null
@@ -251,6 +252,15 @@ function Card({
       setLanding({ top: box.top, left: box.left, width: box.width, height: box.height })
     }
   }, [isOpen, shouldMorph, cardNode])
+  // A closed quick look stays mounted while it flies back or fades out, and AnimatePresence keeps its last open render
+  // during the fade, so the panel leaves the tab order and the accessibility tree through its node as soon as it closes.
+  useLayoutEffect(() => {
+    const panel = quickLookRef.current
+    if (!panel) return
+    panel.toggleAttribute("inert", !isOpen)
+    if (isOpen) panel.removeAttribute("aria-hidden")
+    else panel.setAttribute("aria-hidden", "true")
+  }, [isOpen])
   // Once the surface has visually landed, the card takes over, so the handoff has no seam.
   useEffect(() => {
     if (!isReturning) return
@@ -408,12 +418,9 @@ function Card({
               </AnimatePresence>
               <DialogPrimitive.Content asChild forceMount {...(hasDescription ? {} : { "aria-describedby": undefined })}>
                 <motion.div
+                  ref={quickLookRef}
                   data-slot="card-quick-look"
                   data-returning={isReturning || undefined}
-                  // While it flies back the dialog has already closed, so its panel leaves the tab order and the
-                  // accessibility tree at once.
-                  inert={isReturning || undefined}
-                  aria-hidden={isReturning || undefined}
                   className="group/quick-look fixed inset-0 z-50 m-auto h-fit max-h-[calc(100dvh-var(--space-8))] w-[min(calc(100vw-var(--space-8)),30rem)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-(--radius-surface) border border-border bg-surface-raised text-sm text-foreground shadow-(--shadow-floating) transition-[background-color,box-shadow] duration-(--duration-standard) ease-(--ease-standard) focus:outline-none data-returning:pointer-events-none data-returning:inset-auto data-returning:top-(--landing-top) data-returning:left-(--landing-left) data-returning:m-0 data-returning:h-(--landing-height) data-returning:max-h-none data-returning:w-(--landing-width) data-returning:overflow-hidden data-returning:bg-surface data-returning:shadow-none"
                   data-framer-portal-id={layoutGroupId}
                   layoutScroll

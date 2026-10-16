@@ -156,6 +156,23 @@ test("should open and close the quick look with a plain fade when motion is redu
   await expect(trigger).toBeFocused();
 });
 
+test("should hide the fading quick look from assistive technology and the tab order when motion is reduced", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.getByRole("button", { name: "Tribu de cocina" }).click();
+  await expect(page.getByRole("dialog", { name: "Tribu de cocina" })).toBeVisible();
+
+  // The close and the read share one task, so the panel is caught during its fade instead of after it unmounts.
+  const fadingPanel = await page.evaluate(async () => {
+    document.querySelector<HTMLElement>('[data-slot="card-quick-look-close"]')!.click();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    const panel = document.querySelector('[data-slot="card-quick-look"]');
+    return panel ? { inert: panel.hasAttribute("inert"), ariaHidden: panel.getAttribute("aria-hidden") } : null;
+  });
+
+  expect(fadingPanel).toEqual({ inert: true, ariaHidden: "true" });
+  await expect(page.getByRole("button", { name: "Cerrar vista rápida" })).toHaveCount(0);
+});
+
 test("should collapse a dismissed alert so the content below closes the gap", async ({ page }) => {
   const marker = page.getByText("Debajo del aviso");
   const startTop = (await marker.boundingBox())!.y;
