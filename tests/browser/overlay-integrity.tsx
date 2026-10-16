@@ -9,9 +9,6 @@ import {
   Button,
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
   DropdownMenu,
   DropdownMenuContent,
@@ -86,11 +83,7 @@ function DialogWithToast() {
       <DialogTrigger asChild>
         <Button>Abrir edición</Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Editar evento</DialogTitle>
-          <DialogDescription>Los cambios se guardan al confirmar.</DialogDescription>
-        </DialogHeader>
+      <DialogContent title="Editar evento" description="Los cambios se guardan al confirmar.">
         <FloatingLayers prefix="Diálogo" />
         <Button
           onClick={() =>

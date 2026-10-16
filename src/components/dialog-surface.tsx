@@ -2,16 +2,21 @@
 
 /**
  * Arc's Dialog surface (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md), shared by `Dialog` and
- * `AlertDialog`: the dimmed, blurred overlay, the raised panel with Arc's surface radius, border and floating shadow,
+ * its `alert` mode: the dimmed, blurred overlay, the raised panel with Arc's surface radius, border and floating shadow,
  * the title and description type, the bordered close button and the text swap that animates a title or description
  * changed while the dialog is open. Internal: the panel's entrance and exit are Arc's, played by `MotionSlot`.
  */
+import { XIcon } from "lucide-react"
 import { AnimatePresence, motion, useIsPresent } from "motion/react"
+import { AlertDialog as AlertDialogPrimitive, Dialog as DialogPrimitive } from "radix-ui"
 import type { ReactNode, Ref } from "react"
 
-import { DIALOG_TEXT_SWAP_OFFSET_EM } from "../constants/dialog.js"
+import { DIALOG_DEFAULT_COPY, DIALOG_TEXT_SWAP_OFFSET_EM } from "../constants/dialog.js"
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
+import { cn } from "../lib/utils.js"
 import { ARC_BLUR, ARC_DURATION, ARC_EASE } from "../motion/arc-tokens.js"
+import { MotionSlot } from "../motion/motion-slot.js"
+import { ControlButton } from "./control-button.js"
 
 /** Arc's overlay: a near-black scrim at 46% with a 7px backdrop blur where the engine supports it. */
 export const dialogOverlayClassName =
@@ -42,6 +47,61 @@ export const dialogDescriptionClassName =
  */
 export const dialogCloseButtonClassName =
   "size-(--space-8) rounded-(--radius-control) border-border bg-surface-muted/50 text-text-secondary hover-fine:bg-surface-muted hover-fine:text-foreground [&_svg:not([class*='size-'])]:size-4"
+
+/** Where the dialog close button sits: inside the panel or pinned to the viewport corner. */
+export type DialogCloseButtonPlacement = "content" | "viewport"
+
+/** Which Radix family owns the close button: a regular dialog closes, an alert dialog cancels. */
+export type DialogSurfaceKind = "dialog" | "alert"
+
+/** Classes of a close button pinned to the viewport corner while the panel enters and closes. */
+const viewportCloseButtonClassName =
+  "fixed top-4 right-4 transition-opacity duration-200 ease-out in-data-motion-entering:invisible in-data-motion-entering:opacity-0 in-data-motion-entering:transition-none in-data-[state=closed]:invisible in-data-[state=closed]:opacity-0 in-data-[state=closed]:transition-none motion-reduce:transition-none"
+
+/** Classes of a close button centred on the first line of an 18px title, as in Arc's header row. */
+const contentCloseButtonClassName =
+  "absolute top-[calc(var(--space-6)+(var(--text-lg)*var(--leading-body)-var(--space-8))/2)] right-(--space-6)"
+
+/**
+ * Arc's bordered close button for both dialog families. Pinned to the viewport corner it stays hidden while the panel
+ * enters, because the entrance transform would otherwise carry it along with the panel, fades in once the panel settles and hides
+ * at once when the dialog starts closing; while hidden it is also `visibility: hidden`, so the initial focus and the
+ * keyboard never land on a control that cannot be seen. Inside the panel it pops in after the panel.
+ * @param props - The Radix family, the placement and the accessible name.
+ * @param props.kind - `alert` renders Radix's `AlertDialog.Cancel`, `dialog` its `Dialog.Close`.
+ * @param props.placement - `viewport` pins it to the viewport corner; `content` keeps it in the panel.
+ * @param props.label - Accessible name of the icon-only button.
+ * @returns The close control.
+ */
+export function DialogSurfaceCloseButton({
+  kind,
+  placement,
+  label = DIALOG_DEFAULT_COPY.closeLabel,
+}: {
+  kind: DialogSurfaceKind
+  placement: DialogCloseButtonPlacement
+  label?: string
+}) {
+  const Close = kind === "alert" ? AlertDialogPrimitive.Cancel : DialogPrimitive.Close
+  const button = (
+    <ControlButton
+      variant="ghost"
+      size="icon-sm"
+      className={cn(
+        dialogCloseButtonClassName,
+        placement === "viewport" ? viewportCloseButtonClassName : contentCloseButtonClassName
+      )}
+    >
+      <XIcon aria-hidden="true" />
+      <span className="sr-only">{label}</span>
+    </ControlButton>
+  )
+  return (
+    <Close data-slot="dialog-close" asChild>
+      {placement === "viewport" ? button : <MotionSlot kind="delayed-pop">{button}</MotionSlot>}
+    </Close>
+  )
+}
 
 /**
  * One version of the copy. While it lifts out it turns inert and hidden from assistive technology, so the dialog's

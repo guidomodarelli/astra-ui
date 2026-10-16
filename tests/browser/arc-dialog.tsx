@@ -1,25 +1,7 @@
-/** Mounts Dialog and AlertDialog from the public barrel, so Arc's surface layout and text swap run in real engines. */
+/** Mounts Dialog, also in `alert` mode, from the public barrel, so Arc's surface layout and text swap run in real engines. */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-  BeezUIProvider,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "beez-ui";
+import { BeezUIProvider, Button, Dialog, DialogClose, DialogContent, DialogTrigger } from "beez-ui";
 import "./styles.css";
 
 /** A title long enough to wrap, so the spec can check it never runs under the close button. */
@@ -33,15 +15,11 @@ function SwappingDialog() {
       <DialogTrigger asChild>
         <Button>Abrir pasos</Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{`Paso ${step}`}</DialogTitle>
-          <DialogDescription>Completá cada paso para continuar.</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button onClick={() => setStep((current) => current + 1)}>Siguiente paso</Button>
-        </DialogFooter>
-      </DialogContent>
+      <DialogContent
+        title={`Paso ${step}`}
+        description="Completá cada paso para continuar."
+        footer={<Button onClick={() => setStep((current) => current + 1)}>Siguiente paso</Button>}
+      />
     </Dialog>
   );
 }
@@ -55,30 +33,44 @@ function App() {
           <DialogTrigger asChild>
             <Button>Abrir datos</Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{LONG_TITLE}</DialogTitle>
-              <DialogDescription>Revisá el nombre y el correo antes de guardar.</DialogDescription>
-            </DialogHeader>
+          <DialogContent
+            title={LONG_TITLE}
+            description="Revisá el nombre y el correo antes de guardar."
+            footer={
+              <DialogClose asChild>
+                <Button variant="secondary">Cerrar</Button>
+              </DialogClose>
+            }
+          >
             <p>Los cambios se aplican al próximo cobro.</p>
-            <DialogFooter showCloseButton />
           </DialogContent>
         </Dialog>
         <SwappingDialog />
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>Abrir galería</Button>
+          </DialogTrigger>
+          <DialogContent title="Galería de la ronda" hideTitle>
+            <p>Fotos de la ronda.</p>
+          </DialogContent>
+        </Dialog>
+        <Dialog alert>
+          <DialogTrigger asChild>
             <Button>Abrir confirmación</Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>¿Eliminar el evento?</AlertDialogTitle>
-              <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          </DialogTrigger>
+          <DialogContent
+            title="¿Eliminar el evento?"
+            description="Esta acción no se puede deshacer."
+            footer={
+              <>
+                <DialogClose asChild>
+                  <Button variant="secondary">Cancelar</Button>
+                </DialogClose>
+                <Button variant="danger">Eliminar</Button>
+              </>
+            }
+          />
+        </Dialog>
       </main>
     </BeezUIProvider>
   );

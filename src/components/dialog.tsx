@@ -2,257 +2,201 @@
 
 /**
  * Arc's Dialog (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): a focused surface for decisions that need
- * attention, on Arc's overlay, raised panel, title and description type and bordered close button, with Arc's swap of
- * a title or description changed while open, and Arc's dialog transition: the panel rises and scales in on the smooth
- * spring and leaves quickly. It keeps beez-ui's composable parts and the viewport close button placement instead of
- * Arc's single `title`/`description` content.
+ * attention. Arc's API (`Dialog`, `DialogTrigger`, `DialogContent` with its `title`, `description` and built-in close
+ * button, `DialogClose`) on Arc's overlay, raised panel, text swap and dialog transition. beez-ui
+ * extends it with a footer slot, a hidden title, the viewport close button placement, Spanish copy and an `alert` mode
+ * that replaces the former `AlertDialog`.
  */
-import * as React from "react"
-import { Dialog as DialogPrimitive } from "radix-ui"
+import { createContext, useContext, type ComponentProps, type ReactNode } from "react"
+import { AlertDialog as AlertDialogPrimitive, type Dialog as DialogRadix } from "radix-ui"
 
-import { MotionSlot } from "../motion/motion-slot.js"
-import { MotionPresence, MotionOpenProvider, useMotionOpenState } from "../motion/presence.js"
 import { cn } from "../lib/utils.js"
-import { keepOpenOnToastInteraction } from "../lib/toast-layer.js"
-import { Button } from "./button.js"
-import { ControlButton } from "./control-button.js"
-import { XIcon } from "lucide-react"
+import type { DialogCloseButtonPlacement } from "./dialog-surface.js"
 import {
-  withDialogSwapText,
-  dialogCloseButtonClassName,
-  dialogDescriptionClassName,
-  dialogFooterClassName,
-  dialogOverlayClassName,
-  dialogSurfaceClassName,
-  dialogTitleClassName,
-} from "./dialog-surface.js"
+  AlertDialog as AlertDialogRoot,
+  AlertDialogContent as AlertDialogContentPrimitive,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./primitives/alert-dialog.js"
+import {
+  Dialog as DialogRoot,
+  DialogClose as DialogClosePrimitive,
+  DialogContent as DialogContentPrimitive,
+  DialogDescription as DialogDescriptionPrimitive,
+  DialogFooter as DialogFooterPrimitive,
+  DialogHeader as DialogHeaderPrimitive,
+  DialogTitle as DialogTitlePrimitive,
+  DialogTrigger as DialogTriggerPrimitive,
+} from "./primitives/dialog.js"
 
-function Dialog({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  const [motionOpen, setMotionOpen] = useMotionOpenState(props)
+export type { DialogCloseButtonPlacement } from "./dialog-surface.js"
 
-  return <MotionOpenProvider scope="dialog" open={motionOpen}><DialogPrimitive.Root data-slot="dialog" {...props} open={motionOpen} onOpenChange={setMotionOpen} /></MotionOpenProvider>
+/** Marks the consumer's close controls, so an alert dialog can focus the first one when it opens. */
+const DIALOG_CLOSE_ACTION_ATTRIBUTE = "data-dialog-close-action"
+
+/** Whether the surrounding `Dialog` runs in `alert` mode. */
+const DialogAlertContext = createContext(false)
+
+/** Props of `Dialog`: Radix's root contract plus beez-ui's `alert` mode. */
+export type DialogProps = ComponentProps<typeof DialogRadix.Root> & {
+  /**
+   * Gives the dialog alert dialog semantics: `role="alertdialog"`, a press outside never closes it, it opens with the
+   * focus on the first `DialogClose` (the least destructive answer) and `DialogContent` hides its close button by
+   * default. `Escape` still cancels it. `modal` does not apply: an alert dialog is always modal.
+   */
+  alert?: boolean
 }
-
-function DialogTrigger({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
-}
-
-function DialogPortal({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
-}
-
-function DialogClose({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Close>) {
-  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
-}
-
-function DialogOverlay({
-  className,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
-  return (
-    <DialogPrimitive.Overlay
-      data-slot="dialog-overlay"
-      className={cn(dialogOverlayClassName, className)}
-      {...props}
-    />
-  )
-}
-
-/** Where the dialog close button sits: inside the panel or pinned to the viewport corner. */
-type DialogCloseButtonPlacement = "content" | "viewport"
 
 /**
- * Renders a close button pinned to the viewport corner. It stays hidden while the panel
- * enters, because the entrance transform would otherwise carry it along with the panel, and
- * fades in once the panel settles. It hides at once when the dialog starts closing.
- * While hidden it is also `visibility: hidden`, so the dialog's initial focus and the
- * keyboard can never land on a control that cannot be seen.
- * @returns The close control for wide layouts that keep the panel clear of controls.
+ * Root that tracks the open state so the content can animate out. Controlled (`open`, `onOpenChange`) or uncontrolled
+ * (`defaultOpen`).
+ * @param props - Radix root props and `alert`.
+ * @returns The dialog root.
  */
-function DialogViewportCloseButton() {
+function Dialog({ alert = false, modal, ...props }: DialogProps) {
   return (
-    <DialogPrimitive.Close data-slot="dialog-close" asChild>
-      <ControlButton
-        variant="ghost"
-        className={cn(dialogCloseButtonClassName, "fixed top-4 right-4 transition-opacity duration-200 ease-out in-data-motion-entering:invisible in-data-motion-entering:opacity-0 in-data-motion-entering:transition-none in-data-[state=closed]:invisible in-data-[state=closed]:opacity-0 in-data-[state=closed]:transition-none motion-reduce:transition-none")}
-        size="icon-sm"
-      >
-        <XIcon />
-        <span className="sr-only">Cerrar</span>
-      </ControlButton>
-    </DialogPrimitive.Close>
+    <DialogAlertContext.Provider value={alert}>
+      {alert ? <AlertDialogRoot {...props} /> : <DialogRoot modal={modal} {...props} />}
+    </DialogAlertContext.Provider>
   )
 }
 
+/** Props of `DialogTrigger`: Radix's trigger contract, including `asChild`. */
+export type DialogTriggerProps = ComponentProps<typeof DialogRadix.Trigger>
+
 /**
- * Renders compact dialog content with viewport-safe scrolling. The panel rises 8px and scales
- * from 0.96 on Arc's smooth spring while it fades in, and leaves with a short drop and fade.
- * @param props - Primitive properties and optional consumer overrides.
- * @param props.showCloseButton - Whether the dialog renders its own close button.
- * @param props.closeButtonPlacement - `viewport` pins the close button to the viewport corner
- * and shows it only once the panel has settled; `content` (default) keeps it in the panel.
- * @returns The styled primitive with its original interaction contract.
+ * Opens the dialog. Use `asChild` to render your own button.
+ * @param props - Radix trigger props.
+ * @returns The trigger.
+ */
+function DialogTrigger(props: DialogTriggerProps) {
+  return useContext(DialogAlertContext) ? <AlertDialogTrigger {...props} /> : <DialogTriggerPrimitive {...props} />
+}
+
+/** Props of `DialogClose`: Radix's close contract, including `asChild`. */
+export type DialogCloseProps = ComponentProps<typeof DialogRadix.Close>
+
+/**
+ * Closes the dialog from a custom control, such as a cancel button. In `alert` mode it cancels the confirmation, and
+ * the first one receives the focus when the dialog opens.
+ * @param props - Radix close props.
+ * @returns The close control.
+ */
+function DialogClose(props: DialogCloseProps) {
+  const closeActionProps = { [DIALOG_CLOSE_ACTION_ATTRIBUTE]: "" }
+  return useContext(DialogAlertContext) ? (
+    <AlertDialogPrimitive.Cancel data-slot="dialog-close" {...closeActionProps} {...props} />
+  ) : (
+    <DialogClosePrimitive {...closeActionProps} {...props} />
+  )
+}
+
+/** Props of `DialogContent`: Arc's titled panel, beez-ui's extensions and Radix's content props. */
+export type DialogContentProps = Omit<ComponentProps<typeof DialogRadix.Content>, "title" | "children"> & {
+  /** Heading of the dialog and its accessible name. Plain text that changes while open crossfades in place. */
+  title: ReactNode
+  /** Supporting line under the title, wired to `aria-describedby`. */
+  description?: ReactNode
+  /** Body of the dialog, usually a form or actions. */
+  children?: ReactNode
+  /** Edge-to-edge action row under a hairline at the bottom of the panel, usually the dialog's buttons. */
+  footer?: ReactNode
+  /** Keeps the title as the accessible name but shows it only to screen readers. */
+  hideTitle?: boolean
+  /** Whether the panel renders its close button. Defaults to `true`, or `false` in `alert` mode. */
+  showCloseButton?: boolean
+  /**
+   * `content` (default) places the close button in the panel header; `viewport` pins it to the viewport corner and
+   * shows it once the panel has settled.
+   */
+  closeButtonPlacement?: DialogCloseButtonPlacement
+  /** Accessible name of the close button. Defaults to "Cerrar diálogo". */
+  closeLabel?: string
+  /** Classes of the block that holds the title and description. */
+  headerClassName?: string
+  /** Classes of the title. */
+  titleClassName?: string
+  /** Classes of the description. */
+  descriptionClassName?: string
+  /** Classes of the footer. */
+  footerClassName?: string
+}
+
+/**
+ * Focuses the first consumer close control of an alert dialog when it opens, or the panel when there is none.
+ * @param event - Radix's open auto-focus event, already handed to the consumer's handler.
+ */
+function focusFirstCloseAction(event: Event) {
+  if (event.defaultPrevented) return
+  const panel = event.currentTarget ?? event.target
+  if (!(panel instanceof HTMLElement)) return
+  event.preventDefault()
+  const firstCloseAction = panel.querySelector<HTMLElement>(`[${DIALOG_CLOSE_ACTION_ATTRIBUTE}]`)
+  ;(firstCloseAction ?? panel).focus({ preventScroll: true })
+}
+
+/**
+ * The portaled overlay and panel with a titled header, the body, an optional footer and the built-in close button.
+ * @param props - Title, description, body, footer, close button options, part classes and Radix content props.
+ * @returns The dialog panel.
  */
 function DialogContent({
-  className,
+  title,
+  description,
   children,
-  showCloseButton = true,
+  footer,
+  hideTitle = false,
+  showCloseButton,
   closeButtonPlacement = "content",
+  closeLabel,
+  headerClassName,
+  titleClassName,
+  descriptionClassName,
+  footerClassName,
+  onOpenAutoFocus,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> & {
-  showCloseButton?: boolean
-  closeButtonPlacement?: DialogCloseButtonPlacement
-}) {
-  return (
-    <DialogPortal forceMount><MotionPresence scope="dialog" forceMount={props.forceMount}><React.Fragment>
-      <MotionSlot kind="overlay"><DialogOverlay forceMount /></MotionSlot>
-      <MotionSlot kind="dialog"><DialogPrimitive.Content forceMount
-        data-slot="dialog-content"
-        data-close-button-placement={showCloseButton ? closeButtonPlacement : undefined}
-        className={cn(
-          dialogSurfaceClassName,
-          "fixed grid w-full max-w-[calc(100%-2rem)] max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain sm:max-w-[440px]",
-          // A resting `translate` would make the panel the containing block of the
-          // viewport-pinned close button, so that placement centers with margins instead.
-          closeButtonPlacement === "viewport"
-            ? "inset-0 m-auto h-fit"
-            : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-          className
-        )}
-        {...props}
-        onInteractOutside={keepOpenOnToastInteraction(props.onInteractOutside)}
-      >
-        {children}
-        {showCloseButton && closeButtonPlacement === "viewport" && <DialogViewportCloseButton />}
-        {showCloseButton && closeButtonPlacement === "content" && (
-          <DialogPrimitive.Close data-slot="dialog-close" asChild>
-            <MotionSlot kind="delayed-pop"><ControlButton
-              variant="ghost"
-              className={cn(
-                dialogCloseButtonClassName,
-                // Centred on the first line of an 18px title, as in Arc's header row.
-                "absolute top-[calc(var(--space-6)+(var(--text-lg)*var(--leading-body)-var(--space-8))/2)] right-(--space-6)"
-              )}
-              size="icon-sm"
-            >
-              <XIcon
-              />
-              <span className="sr-only">Cerrar</span>
-            </ControlButton></MotionSlot>
-          </DialogPrimitive.Close>
-        )}
-      </DialogPrimitive.Content></MotionSlot>
-    </React.Fragment></MotionPresence></DialogPortal>
-  )
-}
+}: DialogContentProps) {
+  const alert = useContext(DialogAlertContext)
+  const Content = alert ? AlertDialogContentPrimitive : DialogContentPrimitive
+  const Header = alert ? AlertDialogHeader : DialogHeaderPrimitive
+  const Title = alert ? AlertDialogTitle : DialogTitlePrimitive
+  const Description = alert ? AlertDialogDescription : DialogDescriptionPrimitive
+  const Footer = alert ? AlertDialogFooter : DialogFooterPrimitive
+  const hasDescription = description !== undefined && description !== null && description !== false
+  // Without a description, Radix would point `aria-describedby` at a missing element and warn about it.
+  const describedBy = hasDescription || "aria-describedby" in props ? {} : { "aria-describedby": undefined }
 
-/**
- * Stacks the title and description. While the panel shows its own close button, the header keeps Arc's gap to it so
- * long copy never runs under the button.
- * @param props - Native div properties and optional consumer overrides.
- * @returns The header block.
- */
-function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="dialog-header"
-      className={cn(
-        "flex flex-col gap-(--space-2) in-data-[close-button-placement=content]:pr-[calc(var(--space-8)+var(--space-5))]",
-        className
-      )}
-      {...props}
-    />
-  )
-}
+  const titleElement = <Title className={cn(hideTitle && "sr-only", titleClassName)}>{title}</Title>
+  const descriptionElement = hasDescription ? (
+    <Description className={descriptionClassName}>{description}</Description>
+  ) : null
 
-/**
- * Separates dialog actions with an edge-to-edge footer under a hairline, bleeding through the panel padding.
- * @param props - Primitive properties and optional consumer overrides.
- * @returns The styled primitive with its original interaction contract.
- */
-function DialogFooter({
-  className,
-  showCloseButton = false,
-  children,
-  ...props
-}: React.ComponentProps<"div"> & {
-  showCloseButton?: boolean
-}) {
   return (
-    <div
-      data-slot="dialog-footer"
-      className={cn(dialogFooterClassName, className)}
+    <Content
+      {...describedBy}
       {...props}
+      showCloseButton={showCloseButton ?? !alert}
+      closeButtonPlacement={closeButtonPlacement}
+      closeLabel={closeLabel}
+      onOpenAutoFocus={(event: Event) => {
+        onOpenAutoFocus?.(event)
+        if (alert) focusFirstCloseAction(event)
+      }}
     >
+      {hideTitle ? titleElement : null}
+      {!hideTitle || descriptionElement ? (
+        <Header className={headerClassName}>
+          {hideTitle ? null : titleElement}
+          {descriptionElement}
+        </Header>
+      ) : null}
       {children}
-      {showCloseButton && (
-        <DialogPrimitive.Close asChild>
-          <Button variant="secondary">Cerrar</Button>
-        </DialogPrimitive.Close>
-      )}
-    </div>
+      {footer === undefined || footer === null ? null : <Footer className={footerClassName}>{footer}</Footer>}
+    </Content>
   )
 }
 
-/**
- * Renders the dialog heading in Arc's title type. Plain text that changes while open swaps with Arc's rise.
- * @param props - Primitive properties and optional consumer overrides.
- * @returns The styled primitive with its original interaction contract.
- */
-function DialogTitle({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Title>) {
-  return (
-    <DialogPrimitive.Title
-      data-slot="dialog-title"
-      className={cn(dialogTitleClassName, className)}
-      {...props}
-    >
-      {withDialogSwapText(children, props.asChild)}
-    </DialogPrimitive.Title>
-  )
-}
-
-/**
- * Renders the dialog description in Arc's secondary text. Plain text that changes while open swaps with Arc's rise.
- * @param props - Primitive properties and optional consumer overrides.
- * @returns The styled primitive with its original interaction contract.
- */
-function DialogDescription({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Description>) {
-  return (
-    <DialogPrimitive.Description
-      data-slot="dialog-description"
-      className={cn(dialogDescriptionClassName, className)}
-      {...props}
-    >
-      {withDialogSwapText(children, props.asChild)}
-    </DialogPrimitive.Description>
-  )
-}
-
-export {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogOverlay,
-  DialogPortal,
-  DialogTitle,
-  DialogTrigger,
-}
+export { Dialog, DialogClose, DialogContent, DialogTrigger }

@@ -1,186 +1,149 @@
 "use client";
 
 /**
- * Arc's Pagination (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): compact page controls on Arc's
- * tokens with tabular numbers, a current-page mark that glides to the newly selected page with Arc's morph spring,
- * hover only on fine pointers and arrows that press in. Unlike Arc's stateful component it stays composable: every
- * page is a link rendered through the provider's `Link` adapter (Next.js, TanStack Router or a native anchor).
+ * Arc's Pagination (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): previous and next arrows around a
+ * sliding five page window, with a current-page mark that glides to the selected page. Arc's API (`page`,
+ * `pageCount`, `onPageChange`, `label`), with beez-ui's extensions: links through the provider's `Link` adapter
+ * (`getHref`), cursor paging without a page count (`hasNextPage`), arrow labels and Spanish copy.
  */
-import type { ComponentProps, MouseEvent, Ref } from "react"
-import { cva } from "class-variance-authority"
-import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
-
-import { PAGINATION_DEFAULT_COPY } from "../constants/pagination.js"
-import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
-import { cn } from "../lib/utils.js"
-import { useArcPress } from "../motion/arc-press.js"
-import { GlideSlot } from "../motion/glide-slot.js"
-import { useAttachedElement } from "../motion/use-attached-element.js"
-import type { ControlButton } from "./control-button.js"
-import { Link, type LinkProps } from "./link.js"
-
-/**
- * Landmark that holds the page controls.
- * @param props - Native `nav` attributes; `aria-label` defaults to Spanish copy.
- * @returns The navigation landmark.
- */
-function Pagination({ className, ...props }: ComponentProps<"nav">) {
-  return (
-    <nav
-      role="navigation"
-      aria-label={PAGINATION_DEFAULT_COPY.navigationLabel}
-      data-slot="pagination"
-      className={cn("mx-auto flex w-full justify-center", className)}
-      {...props}
-    />
-  )
-}
-
-/** Lists page links; the current page's mark glides to the newly selected page. */
-function PaginationContent({ className, ...props }: ComponentProps<"ul">) {
-  return (
-    <GlideSlot preset="pagination">
-      <ul
-        data-slot="pagination-content"
-        className={cn("flex flex-wrap items-center gap-(--space-1)", className)}
-        {...props}
-      />
-    </GlideSlot>
-  )
-}
-
-function PaginationItem({ ...props }: ComponentProps<"li">) {
-  return <li data-slot="pagination-item" {...props} />
-}
-
-/**
- * Arc's page control: a control-height square for numbers, padded for labelled arrows. The current page draws the
- * raised mark (border, surface and resting shadow) that the glide copies while it travels.
- */
-const paginationLinkVariants = cva(
-  "relative inline-flex h-(--control-height-sm) min-w-(--control-height-sm) shrink-0 cursor-pointer items-center justify-center gap-1 rounded-(--radius-control) border border-transparent bg-transparent font-sans text-xs font-medium whitespace-nowrap text-text-secondary tabular-nums no-underline [-webkit-tap-highlight-color:transparent] transition-[color,background-color,border-color,box-shadow,opacity] duration-(--duration-fast) ease-(--ease-standard) select-none motion-reduce:transition-none hover-fine:bg-surface-muted hover-fine:text-foreground aria-[current=page]:border-border aria-[current=page]:bg-surface aria-[current=page]:text-foreground aria-[current=page]:shadow-(--shadow-resting) aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-  {
-    variants: {
-      size: {
-        default: "px-(--space-3)",
-        xs: "px-(--space-2)",
-        sm: "px-(--space-2)",
-        lg: "px-(--space-4)",
-        icon: "px-0",
-        "icon-xs": "px-0",
-        "icon-sm": "px-0",
-        "icon-lg": "px-0",
-      },
-    },
-    defaultVariants: {
-      size: "icon",
-    },
-  }
-)
-
-export type PaginationLinkProps = {
-  isActive?: boolean
-} & Pick<ComponentProps<typeof ControlButton>, "size"> &
-  LinkProps
-
-/**
- * One page, rendered through the provider's `Link` adapter or the `component` passed to it.
- * @param props - `isActive` marks the current page (`aria-current="page"`); `size` keeps the previous size names
- *   and only changes the horizontal padding; every other prop reaches the link. With `aria-disabled` the link
- *   stays visible but never navigates, whether clicked or activated with Enter, and `onClick` is not called.
- * @returns The page link.
- */
-function PaginationLink({ className, isActive, size = "icon", onClick, ...props }: PaginationLinkProps) {
-  const isDisabled = props["aria-disabled"] === true || props["aria-disabled"] === "true"
-  /** Cancels the click before the native anchor or the router adapter, which both skip prevented clicks, acts on it. */
-  function handleClick(event: MouseEvent<HTMLAnchorElement>) {
-    if (isDisabled) {
-      event.preventDefault()
-      return
-    }
-    onClick?.(event)
-  }
-  return (
-    <Link
-      aria-current={isActive ? "page" : undefined}
-      data-slot="pagination-link"
-      data-active={isActive}
-      data-size={size}
-      className={cn(paginationLinkVariants({ size }), className)}
-      {...props}
-      onClick={handleClick}
-    />
-  )
-}
-
-/** Previous and next links accept an optional visible label, hidden on small screens. */
-type PaginationStepProps = PaginationLinkProps & { text?: string }
-
-/** A previous or next arrow: Arc presses it in, while page numbers stay still and let the mark travel. */
-function PaginationStep({ ref, ...props }: PaginationLinkProps) {
-  const reduceMotion = usePrefersReducedMotion()
-  const [element, attach] = useAttachedElement<HTMLAnchorElement>(ref as Ref<HTMLAnchorElement> | undefined)
-  useArcPress(element, !reduceMotion)
-  return <PaginationLink ref={attach} size="default" {...props} />
-}
-
-function PaginationPrevious({
-  className,
-  text = PAGINATION_DEFAULT_COPY.previousText,
-  ...props
-}: PaginationStepProps) {
-  return (
-    <PaginationStep
-      aria-label={PAGINATION_DEFAULT_COPY.previousLabel}
-      className={cn("pl-(--space-2)", className)}
-      {...props}
-    >
-      <ChevronLeftIcon data-icon="inline-start" aria-hidden="true" />
-      <span className="hidden sm:block">{text}</span>
-    </PaginationStep>
-  )
-}
-
-function PaginationNext({
-  className,
-  text = PAGINATION_DEFAULT_COPY.nextText,
-  ...props
-}: PaginationStepProps) {
-  return (
-    <PaginationStep
-      aria-label={PAGINATION_DEFAULT_COPY.nextLabel}
-      className={cn("pr-(--space-2)", className)}
-      {...props}
-    >
-      <span className="hidden sm:block">{text}</span>
-      <ChevronRightIcon data-icon="inline-end" aria-hidden="true" />
-    </PaginationStep>
-  )
-}
-
-function PaginationEllipsis({ className, ...props }: ComponentProps<"span">) {
-  return (
-    <span
-      aria-hidden
-      data-slot="pagination-ellipsis"
-      className={cn(
-        "flex size-(--control-height-sm) items-center justify-center text-text-muted [&_svg:not([class*='size-'])]:size-4",
-        className
-      )}
-      {...props}
-    >
-      <MoreHorizontalIcon />
-      <span className="sr-only">{PAGINATION_DEFAULT_COPY.morePages}</span>
-    </span>
-  )
-}
-
-export {
-  Pagination,
+import { PAGINATION_DEFAULT_COPY, PAGINATION_FIRST_PAGE, PAGINATION_WINDOW_SIZE } from "../constants/pagination.js"
+import {
+  PaginationButton,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
+  PaginationRoot,
+  PaginationStep,
+} from "./primitives/pagination.js"
+
+/** Props shared by every way of paging. */
+type PaginationBaseProps = {
+  /** Current page, 1-based. Clamped to the range. */
+  page: number
+  /**
+   * Total pages. Zero renders an empty landmark. Leave it out for cursor paging: only the arrows render, and
+   * `hasNextPage` decides whether the next one is enabled.
+   */
+  pageCount?: number
+  /** Whether a page follows the current one, for cursor paging without `pageCount`. Ignored with `pageCount`. */
+  hasNextPage?: boolean
+  /** Accessible name of the navigation landmark. Defaults to "Paginación". */
+  label?: string
+  /** Visible label of the previous arrow, hidden on small screens. Defaults to "Anterior". */
+  previousLabel?: string
+  /** Visible label of the next arrow, hidden on small screens. Defaults to "Siguiente". */
+  nextLabel?: string
+  /** Classes of the navigation landmark. */
+  className?: string
 }
+
+/** Props of `Pagination`: buttons that report the page, or links built with `getHref`. */
+export type PaginationProps = PaginationBaseProps &
+  (
+    | {
+        /** Called with the requested page. */
+        onPageChange: (page: number) => void
+        getHref?: undefined
+      }
+    | {
+        /** Called with the requested page when a link is clicked, before it navigates. */
+        onPageChange?: (page: number) => void
+        /**
+         * Builds the address of a page. Every control becomes a link rendered through the provider's `Link` adapter,
+         * so pages live in the URL and render on the server.
+         */
+        getHref: (page: number) => string
+      }
+  )
+
+/**
+ * Lists the pages of the window around the current page.
+ * @param currentPage - Clamped current page.
+ * @param pageCount - Total pages.
+ * @returns The visible page numbers, in order.
+ */
+function getVisiblePages(currentPage: number, pageCount: number): number[] {
+  const halfWindow = Math.floor(PAGINATION_WINDOW_SIZE / 2)
+  const start = Math.max(
+    PAGINATION_FIRST_PAGE,
+    Math.min(pageCount - PAGINATION_WINDOW_SIZE + 1, currentPage - halfWindow)
+  )
+  return Array.from({ length: Math.min(pageCount, PAGINATION_WINDOW_SIZE) }, (_, index) => start + index)
+}
+
+/**
+ * Previous and next arrows around a five page window. Disabled arrows keep `aria-disabled` and never request a page.
+ * @param props - Current page, page count or next-page flag, handlers and copy.
+ * @returns The navigation landmark.
+ */
+function Pagination({
+  page,
+  pageCount,
+  hasNextPage = false,
+  onPageChange,
+  getHref,
+  label = PAGINATION_DEFAULT_COPY.navigationLabel,
+  previousLabel = PAGINATION_DEFAULT_COPY.previousText,
+  nextLabel = PAGINATION_DEFAULT_COPY.nextText,
+  className,
+}: PaginationProps) {
+  const isCursor = pageCount === undefined
+  const safePageCount = isCursor ? 0 : Math.max(0, Math.floor(pageCount))
+
+  if (!isCursor && safePageCount === 0) return <PaginationRoot aria-label={label} className={className} />
+
+  const lowestPage = Math.max(PAGINATION_FIRST_PAGE, Math.floor(page))
+  const currentPage = isCursor ? lowestPage : Math.min(lowestPage, safePageCount)
+  const isFirst = currentPage <= PAGINATION_FIRST_PAGE
+  const isLast = isCursor ? !hasNextPage : currentPage >= safePageCount
+  /** Address of a page; a disabled arrow points at the current page and never navigates. */
+  const hrefOf = (target: number) => getHref?.(target)
+
+  return (
+    <PaginationRoot aria-label={label} className={className}>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationStep
+            direction="previous"
+            text={previousLabel}
+            label={previousLabel === PAGINATION_DEFAULT_COPY.previousText ? PAGINATION_DEFAULT_COPY.previousLabel : previousLabel}
+            href={hrefOf(isFirst ? currentPage : currentPage - 1)}
+            disabled={isFirst}
+            onClick={() => onPageChange?.(currentPage - 1)}
+          />
+        </PaginationItem>
+        {isCursor
+          ? null
+          : getVisiblePages(currentPage, safePageCount).map((pageNumber) => {
+              const controlProps = {
+                isActive: pageNumber === currentPage,
+                "aria-label": `${PAGINATION_DEFAULT_COPY.pageLabelPrefix} ${pageNumber}`,
+                onClick: () => onPageChange?.(pageNumber),
+                children: pageNumber,
+              }
+              return (
+                <PaginationItem key={pageNumber}>
+                  {getHref ? (
+                    <PaginationLink href={getHref(pageNumber)} {...controlProps} />
+                  ) : (
+                    <PaginationButton {...controlProps} />
+                  )}
+                </PaginationItem>
+              )
+            })}
+        <PaginationItem>
+          <PaginationStep
+            direction="next"
+            text={nextLabel}
+            label={nextLabel === PAGINATION_DEFAULT_COPY.nextText ? PAGINATION_DEFAULT_COPY.nextLabel : nextLabel}
+            href={hrefOf(isLast ? currentPage : currentPage + 1)}
+            disabled={isLast}
+            onClick={() => onPageChange?.(currentPage + 1)}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </PaginationRoot>
+  )
+}
+
+export { Pagination }

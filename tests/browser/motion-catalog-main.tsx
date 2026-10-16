@@ -5,15 +5,11 @@ import { useForm } from "react-hook-form";
 import {
   Alert,
   AlertDescription,
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogTrigger,
   AlertTitle,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTrigger,
   BeezUIProvider,
   Button,
   DropdownMenu,
@@ -158,21 +154,25 @@ function MotionCatalog() {
               <SheetDescription>Contenido del panel.</SheetDescription>
             </SheetContent>
           </Sheet>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+          <Dialog alert>
+            <DialogTrigger asChild>
               <Button>Eliminar cuenta</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogTitle>¿Eliminar la cuenta?</AlertDialogTitle>
-              <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Conservar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => setLastAction("Cuenta eliminada")}>
-                  Eliminar
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+            </DialogTrigger>
+            <DialogContent
+              title="¿Eliminar la cuenta?"
+              description="Esta acción no se puede deshacer."
+              footer={
+                <>
+                  <DialogClose asChild>
+                    <Button variant="secondary">Conservar</Button>
+                  </DialogClose>
+                  <DialogClose asChild>
+                    <Button onClick={() => setLastAction("Cuenta eliminada")}>Eliminar</Button>
+                  </DialogClose>
+                </>
+              }
+            />
+          </Dialog>
           <Popover>
             <PopoverTrigger asChild>
               <Button>Ver filtros</Button>
@@ -256,7 +256,7 @@ function MotionCatalog() {
 
         <section>
           <Tabs defaultValue="activos">
-            <TabsList variant="line" aria-label="Estados">
+            <TabsList aria-label="Estados">
               <TabsTrigger value="activos">Activos</TabsTrigger>
               <TabsTrigger value="pausados">Pausados</TabsTrigger>
             </TabsList>
