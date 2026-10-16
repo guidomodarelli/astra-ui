@@ -358,6 +358,7 @@ function CarouselIndicators({
   const reduceMotion = usePrefersReducedMotion()
   const [snapCount, setSnapCount] = React.useState(0)
   const [selectedIndex, setSelectedIndex] = React.useState(0)
+  const [isLooping, setIsLooping] = React.useState(false)
   const position = useMotionValue(0)
   const indicatorRefs = React.useRef<(HTMLButtonElement | null)[]>([])
 
@@ -372,12 +373,20 @@ function CarouselIndicators({
     }
     const syncSelection = () => {
       const nextIndex = api.selectedScrollSnap()
-      setSnapCount(api.scrollSnapList().length)
+      const count = api.scrollSnapList().length
+      setSnapCount(count)
       setSelectedIndex(nextIndex)
+      setIsLooping(isLoop())
       // A looping track wraps its progress, so its pill hands over between snaps instead of following the scroll.
+      // It travels the short way round: across the loop boundary the position runs past the last dot, which the
+      // dots read on a circle, and settles back on the snap's own index once it lands.
       if (isLoop()) {
         positionAnimation?.stop()
-        positionAnimation = reduceMotion ? null : animate(position, nextIndex, ARC_SPRING_SMOOTH)
+        const turns = Math.round((position.get() - nextIndex) / count)
+        const destination = nextIndex + turns * count
+        positionAnimation = reduceMotion
+          ? null
+          : animate(position, destination, { ...ARC_SPRING_SMOOTH, onComplete: () => position.jump(nextIndex) })
         if (reduceMotion) position.set(nextIndex)
       }
       // Focus follows the selection only while one of the dots has it. The dots are tracked by their own refs, so the
@@ -426,6 +435,7 @@ function CarouselIndicators({
           key={index}
           index={index}
           lastIndex={snapCount - 1}
+          isLooping={isLooping}
           position={position}
           isSelected={index === selectedIndex}
           orientation={orientation ?? "horizontal"}
@@ -443,6 +453,8 @@ function CarouselIndicators({
 type CarouselIndicatorProps = {
   index: number
   lastIndex: number
+  /** Whether the track loops, so the first and last dots are neighbours on a circle. */
+  isLooping: boolean
   position: MotionValue<number>
   isSelected: boolean
   orientation: CarouselOrientation
@@ -455,6 +467,7 @@ type CarouselIndicatorProps = {
 function CarouselIndicator({
   index,
   lastIndex,
+  isLooping,
   position,
   isSelected,
   orientation,
@@ -462,9 +475,12 @@ function CarouselIndicator({
   indicatorRef,
   onSelect,
 }: CarouselIndicatorProps) {
-  const emphasis = useTransform(position, (value) =>
-    Math.max(0, 1 - Math.abs(Math.min(lastIndex, Math.max(0, value)) - index))
-  )
+  const emphasis = useTransform(position, (value) => {
+    if (!isLooping) return Math.max(0, 1 - Math.abs(Math.min(lastIndex, Math.max(0, value)) - index))
+    const count = lastIndex + 1
+    const distance = Math.abs(value - index) % count
+    return Math.max(0, 1 - Math.min(distance, count - distance))
+  })
   const length = useTransform(
     emphasis,
     (value) => CAROUSEL_INDICATOR_LENGTH_PX.dot + (CAROUSEL_INDICATOR_LENGTH_PX.pill - CAROUSEL_INDICATOR_LENGTH_PX.dot) * value

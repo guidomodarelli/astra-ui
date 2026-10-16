@@ -135,12 +135,15 @@ function Calendar({
             defaultClassNames.button_next
           ),
           month_caption: cn(
-            "flex h-8 w-full items-center justify-start",
-            showToday ? "pe-36" : "pe-18",
+            "flex h-8 w-full items-center justify-start pe-18",
+            // An invisible copy of the Today label reserves the button's width next to the arrows, so a longer
+            // label pushes the month title into truncation instead of under the controls.
+            showToday &&
+              "after:invisible after:me-0.5 after:shrink-0 after:px-[11px] after:text-sm after:leading-none after:font-medium after:whitespace-nowrap after:content-[attr(data-today-label)]",
             defaultClassNames.month_caption
           ),
           dropdowns: cn(
-            "flex h-8 w-full items-center justify-start gap-1.5 text-base font-medium",
+            "flex h-8 w-full min-w-0 items-center justify-start gap-1.5 text-base font-medium",
             defaultClassNames.dropdowns
           ),
           dropdown_root: cn(
@@ -154,7 +157,7 @@ function Calendar({
           caption_label: cn(
             "font-medium whitespace-nowrap tabular-nums select-none",
             captionLayout === "label"
-              ? "text-base"
+              ? "min-w-0 truncate text-base"
               : "flex items-center gap-1 rounded-(--radius-control) text-base [&>svg]:size-3.5 [&>svg]:text-text-muted",
             defaultClassNames.caption_label
           ),
@@ -200,7 +203,7 @@ function Calendar({
           Chevron: CalendarChevron,
           DayButton: CalendarDayButtonSlot,
           Month: CalendarMonth,
-          ...(showToday ? { Nav: CalendarNav } : {}),
+          ...(showToday ? { Nav: CalendarNav, MonthCaption: CalendarMonthCaption } : {}),
           WeekNumber: CalendarWeekNumber,
           ...components,
         }}
@@ -239,6 +242,12 @@ function CalendarChevron({ className, orientation, ...props }: CalendarSlotProps
 function CalendarDayButtonSlot(props: CalendarSlotProps<"DayButton">) {
   const { dayPickerProps } = useDayPicker()
   return <CalendarDayButton locale={dayPickerProps.locale} {...props} />
+}
+
+/** The month caption, carrying the Today label its reserved space is sized from. Used only with `showToday`. */
+function CalendarMonthCaption({ calendarMonth: _calendarMonth, displayIndex: _displayIndex, ...props }: CalendarSlotProps<"MonthCaption">) {
+  const { todayLabel } = React.useContext(CalendarSettingsContext)
+  return <div data-today-label={todayLabel} {...props} />
 }
 
 /** A week number cell sized like a day. */
