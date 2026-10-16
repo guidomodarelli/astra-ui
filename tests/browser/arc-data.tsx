@@ -1,5 +1,5 @@
 /** Mounts Arc's Calendar and Carousel from the public barrel, so their layout, cursor and motion run in real engines. */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   BeezUIProvider,
@@ -45,6 +45,8 @@ function PhotoCarousel() {
 }
 
 function App() {
+  // A consumer ref on the indicators, which must not stop focus from following the selected dot.
+  const indicatorsRef = useRef<HTMLDivElement>(null);
   return (
     <BeezUIProvider>
       <main>
@@ -67,7 +69,7 @@ function App() {
             </CarouselContent>
             <CarouselPrevious />
             <CarouselNext />
-            <CarouselIndicators />
+            <CarouselIndicators ref={indicatorsRef} />
           </Carousel>
         </section>
       </main>

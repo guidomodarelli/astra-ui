@@ -359,7 +359,6 @@ function CarouselIndicators({
   const [snapCount, setSnapCount] = React.useState(0)
   const [selectedIndex, setSelectedIndex] = React.useState(0)
   const position = useMotionValue(0)
-  const listRef = React.useRef<HTMLDivElement>(null)
   const indicatorRefs = React.useRef<(HTMLButtonElement | null)[]>([])
 
   React.useEffect(() => {
@@ -381,8 +380,9 @@ function CarouselIndicators({
         positionAnimation = reduceMotion ? null : animate(position, nextIndex, ARC_SPRING_SMOOTH)
         if (reduceMotion) position.set(nextIndex)
       }
-      const list = listRef.current
-      if (list && list.contains(document.activeElement)) {
+      // Focus follows the selection only while one of the dots has it. The dots are tracked by their own refs, so the
+      // consumer's `ref` reaches the group untouched.
+      if (indicatorRefs.current.some((indicator) => indicator !== null && indicator === document.activeElement)) {
         indicatorRefs.current[nextIndex]?.focus({ preventScroll: true })
       }
     }
@@ -411,7 +411,6 @@ function CarouselIndicators({
 
   return (
     <div
-      ref={listRef}
       role="group"
       aria-label={label}
       data-slot="carousel-indicators"
