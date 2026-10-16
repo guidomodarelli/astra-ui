@@ -165,6 +165,7 @@ function AlertBox({
   children,
   ...props
 }: AlertBoxProps) {
+  const isPresent = useIsPresent()
   const ToneIcon = tone ? TONE_ICON[tone] : null
   const resolvedIcon = icon === false ? null : (icon ?? (ToneIcon ? <ToneIcon aria-hidden="true" /> : null))
   const rootProps = {
@@ -194,8 +195,14 @@ function AlertBox({
     </>
   )
   if (presence) {
+    // A leaving alert turns inert and hidden at once, so its controls and live region are gone while it collapses.
     return (
-      <motion.div {...(rootProps as HTMLMotionProps<"div">)} {...presence}>
+      <motion.div
+        {...(rootProps as HTMLMotionProps<"div">)}
+        {...presence}
+        aria-hidden={isPresent ? rootProps["aria-hidden"] : true}
+        inert={!isPresent || rootProps.inert}
+      >
         {content}
       </motion.div>
     )

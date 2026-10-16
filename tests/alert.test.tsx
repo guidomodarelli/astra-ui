@@ -102,6 +102,31 @@ describe("Alert", () => {
     expect(attachedNodes).not.toContain(null);
   });
 
+  it("should take a closing alert out of reach as soon as it starts leaving", () => {
+    // Arrange
+    const { rerender } = render(
+      <Alert tone="info" open onDismiss={() => undefined}>
+        <AlertTitle>Nueva versión</AlertTitle>
+        <a href="/novedades">Ver novedades</a>
+      </Alert>,
+    );
+
+    // Act
+    rerender(
+      <Alert tone="info" open={false} onDismiss={() => undefined}>
+        <AlertTitle>Nueva versión</AlertTitle>
+        <a href="/novedades">Ver novedades</a>
+      </Alert>,
+    );
+
+    // Assert
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Ver novedades" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Descartar aviso" })).not.toBeInTheDocument();
+    const leavingAlert = screen.queryByRole("status", { hidden: true });
+    if (leavingAlert) expect(leavingAlert).toHaveAttribute("inert");
+  });
+
   it("should let a controlled alert decide when it closes", async () => {
     // Arrange
     const user = userEvent.setup();
