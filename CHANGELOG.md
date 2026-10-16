@@ -4,14 +4,6 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
-## [2.7.1] - 2026-10-16
-
-### Fixed
-
-- `RichLinkEditor` ya no pinta su propio fondo: deja ver la superficie que lo contiene, así dentro de un diálogo o de una tarjeta en modo oscuro deja de verse como un bloque de otro color.
-
-## [2.7.0] - 2026-10-16
-
 ### Added
 
 - `Dialog` acepta `alert` para confirmaciones: se anuncia como `alertdialog`, no se cierra al hacer click afuera, abre con el foco en el primer `DialogClose` y oculta el botón de cerrar por defecto.
@@ -32,7 +24,6 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 - `AvatarGroup` acepta `total` para cuando `members` es solo una vista previa: si es mayor que la cantidad de integrantes recibidos, el chip +N cuenta contra el total. También reenvía atributos nativos y ARIA a la raíz (`aria-hidden`, `style`, `data-*`, `id`…).
 - `Select` acepta `aria-describedby` en el trigger, combinado con los ids de `description` y `error`, y `options` acepta arrays de solo lectura, así una lista declarada `as const` no necesita copia.
 - `DialogContent` suma `headerContent`, contenido extra del encabezado (por ejemplo etiquetas de tipo y estado) que se dibuja después del título y fuera de él, sin cambiar el nombre accesible del diálogo, y `closeButtonRef`, el ref del botón de cerrar; con `onOpenAutoFocus` permite abrir el diálogo con el foco en ese botón.
-- `beez-ui/motion-tokens` suma los presets de Arc que faltaban: `MOTION_TIMING.instant`, `MOTION_TIMING.standard`, `MOTION_TIMING.considered`, `MOTION_EASE_EXIT`, `MOTION_EASE_STANDARD`, `MOTION_EXIT_SCALE`, `MOTION_TOOLTIP_SCALE` y `MOTION_DIALOG_EXIT_DISTANCE`.
 
 ### Changed
 
@@ -54,16 +45,6 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 - **Incompatible:** `Calendar` recibe `value` y `onChange`, `month` y `onMonthChange`, `minDate`, `maxDate`, `disabledDates`, `locale` como texto (`"es-AR"` por defecto, semana desde el lunes), `showToday` y `className`.
 - **Incompatible:** `Carousel` recibe `label` (obligatorio), una diapositiva por hijo, `index`, `defaultIndex`, `onIndexChange`, `slideSize` (`min(80cqw, 340px)` por defecto) y `slideLabel`; las flechas quedan debajo de las diapositivas, junto a los indicadores.
 - **Incompatible:** los indicadores del carrusel son pestañas (`role="tab"` con `aria-selected`), las flechas usan `aria-disabled` en los extremos sin perder el foco, las diapositivas inactivas quedan inertes, el cambio de diapositiva se anuncia en una región en vivo y los nombres accesibles pasan a "Diapositiva anterior" y "Diapositiva siguiente".
-- Los tokens de `beez-ui/motion-tokens` toman los valores de los presets de Arc y conservan sus nombres: los springs pasan a `snappy`, `smooth` o `morph` (expresados con `visualDuration` y `bounce` en lugar de `stiffness`, `damping` y `mass`), las duraciones y curvas usan las de Arc y la presión baja a 0.97.
-- `Dialog` (también en su modo `alert`) entra como el diálogo de Arc: el panel sube 8 px y crece desde 0.96 con un resorte suave mientras aparece, y sale rápido (0.16 s), en lugar de desplegarse desde el centro. La transformación y la opacidad que el panel recibe por `className` o `style` se mantienen durante toda la animación, y reabrirlo mientras sale lo devuelve desde donde está.
-- `Input`, `Textarea`, `InputGroup` y el trigger de `Select` ya no tiemblan al pasar a `aria-invalid="true"`: el error se indica con el color y el mensaje, sin mover el campo.
-- Las opciones de `Select`, `Alert`, `FormMessage` y el ícono de `AnimatedThemeToggler` aparecen con un fundido y una escala breves, sin desenfoque; las opciones del `Select` entran todas juntas, sin escalonarse.
-- El ancho del `Sidebar` cambia con el resorte `smooth` de Arc (0.4 s, sin rebote), más suave que antes.
-
-### Deprecated
-
-- `MOTION_TIMING.centerMorph`, `MOTION_TIMING.centerMorphFold`, `MOTION_EASE_UNFOLD` y `MOTION_CENTER_MORPH_FOLDED_PERCENT`: los diálogos ya no se despliegan desde el centro. Siguen exportados con su valor.
-- `MOTION_TIMING.shake` y `MOTION_INVALID_SHAKE_PX`: los campos inválidos ya no tiemblan. Siguen exportados con su valor.
 
 ### Removed
 
@@ -91,8 +72,36 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 - Las fotos de `Avatar` con `size="xl"` se piden y se dibujan a 88px, en lugar de 40px estirados, con el provider por defecto y con el de Next.
 - Cuando alguien sale de un `AvatarGroup` (cambian `members` o baja `max`), los lectores de pantalla dejan de anunciarlo apenas empieza a cerrarse su lugar.
 - En pantallas o contenedores angostos, la `action` de un `Alert` baja debajo del texto cuando no entra al lado, en lugar de desbordar el aviso y aplastar el texto.
-- Al moverse con el teclado mientras un `Select` o un `DropdownMenu` todavía se está abriendo, el resaltado se desliza hasta el tamaño y la posición finales de la opción y ya no salta al terminar.
 - Los números de la ayuda de `Input` y `Textarea` ruedan hasta su línea sin pasarse ni rebotar al asentarse.
+
+## [2.7.1] - 2026-10-16
+
+### Fixed
+
+- `RichLinkEditor` ya no pinta su propio fondo: deja ver la superficie que lo contiene, así dentro de un diálogo o de una tarjeta en modo oscuro deja de verse como un bloque de otro color.
+
+## [2.7.0] - 2026-10-16
+
+### Added
+
+- `beez-ui/motion-tokens` suma los presets de Arc que faltaban: `MOTION_TIMING.instant`, `MOTION_TIMING.standard`, `MOTION_TIMING.considered`, `MOTION_EASE_EXIT`, `MOTION_EASE_STANDARD`, `MOTION_EXIT_SCALE`, `MOTION_TOOLTIP_SCALE` y `MOTION_DIALOG_EXIT_DISTANCE`.
+
+### Changed
+
+- Los tokens de `beez-ui/motion-tokens` toman los valores de los presets de Arc y conservan sus nombres: los springs pasan a `snappy`, `smooth` o `morph` (expresados con `visualDuration` y `bounce` en lugar de `stiffness`, `damping` y `mass`), las duraciones y curvas usan las de Arc y la presión baja a 0.97.
+- `Dialog` y `AlertDialog` entran como el diálogo de Arc: el panel sube 8 px y crece desde 0.96 con un resorte suave mientras aparece, y sale rápido (0.16 s), en lugar de desplegarse desde el centro. La transformación y la opacidad que el panel recibe por `className` o `style` se mantienen durante toda la animación, y reabrirlo mientras sale lo devuelve desde donde está.
+- `Input`, `Textarea`, `InputGroup` y `SelectTrigger` ya no tiemblan al pasar a `aria-invalid="true"`: el error se indica con el color y el mensaje, sin mover el campo.
+- Las opciones de `Select`, `Alert`, `FormMessage` y el ícono de `AnimatedThemeToggler` aparecen con un fundido y una escala breves, sin desenfoque; las opciones del `Select` entran todas juntas, sin escalonarse.
+- El ancho del `Sidebar` cambia con el resorte `smooth` de Arc (0.4 s, sin rebote), más suave que antes.
+
+### Deprecated
+
+- `MOTION_TIMING.centerMorph`, `MOTION_TIMING.centerMorphFold`, `MOTION_EASE_UNFOLD` y `MOTION_CENTER_MORPH_FOLDED_PERCENT`: los diálogos ya no se despliegan desde el centro. Siguen exportados con su valor.
+- `MOTION_TIMING.shake` y `MOTION_INVALID_SHAKE_PX`: los campos inválidos ya no tiemblan. Siguen exportados con su valor.
+
+### Fixed
+
+- Al moverse con el teclado mientras un `Select` o un `DropdownMenu` todavía se está abriendo, el resaltado se desliza hasta el tamaño y la posición finales de la opción y ya no salta al terminar.
 
 ## [2.6.2] - 2026-10-16
 
