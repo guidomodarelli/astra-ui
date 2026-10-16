@@ -22,3 +22,6 @@ export const CALENDAR_SELECTION_DISC_ATTRIBUTE = "data-selection-disc"
 export const CALENDAR_COPY = {
   today: "Hoy",
 } as const
+
+/** Months in a year, to compare dates by calendar month. */
+export const CALENDAR_MONTHS_PER_YEAR = 12

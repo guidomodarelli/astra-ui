@@ -71,7 +71,7 @@ test.describe("Calendar", () => {
 
   test("should select today from the Today button and then rest dimmed", async ({ page }) => {
     await page.goto("/arc-data.html");
-    await page.getByRole("button", { name: /siguiente/i }).click();
+    await page.getByRole("button", { name: "Ir al mes siguiente" }).click();
     await expect(page.locator('[data-slot="calendar-month"]')).toContainText("octubre 2026");
     const todayButton = page.getByRole("button", { name: "Hoy", exact: true });
 
@@ -144,11 +144,25 @@ test.describe("Carousel", () => {
     await expect(nestedTab).toBeFocused();
   });
 
+  test("should leave Home and End inside a nested carousel to that carousel", async ({ page }) => {
+    await page.goto("/arc-data.html");
+    const outer = page.getByRole("region", { name: "Destacados" });
+    const inner = page.getByRole("region", { name: "Fotos" });
+    const innerNext = inner.getByRole("button", { name: "Foto siguiente" });
+    await expect(innerNext).toBeEnabled();
+    await innerNext.focus();
+
+    await page.keyboard.press("End");
+
+    await expect(innerNext).toBeDisabled();
+    await expect(outer.getByRole("button", { name: "Diapositiva 1 de 4" })).toHaveAttribute("aria-current", "true");
+  });
+
   test("should show a grab cursor on fine pointers while the track can be dragged", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name.endsWith("-mobile"), "Phone projects emulate a touch screen without a cursor");
     await page.goto("/arc-data.html");
 
-    await expect(page.locator('[data-slot="carousel-content"]')).toHaveCSS("cursor", "grab");
+    await expect(page.getByRole("region", { name: "Destacados" }).locator('[data-slot="carousel-content"]').first()).toHaveCSS("cursor", "grab");
   });
 });
 

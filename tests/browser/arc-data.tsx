@@ -29,6 +29,21 @@ function SingleDateCalendar() {
   );
 }
 
+/** A carousel nested inside a slide, which must own the keys pressed inside it. */
+function PhotoCarousel() {
+  return (
+    <Carousel aria-label="Fotos">
+      <CarouselContent>
+        {SLIDES.map((photo) => (
+          <CarouselItem key={photo}>{`Foto ${photo}`}</CarouselItem>
+        ))}
+      </CarouselContent>
+      <CarouselPrevious aria-label="Foto anterior" />
+      <CarouselNext aria-label="Foto siguiente" />
+    </Carousel>
+  );
+}
+
 function App() {
   return (
     <BeezUIProvider>
@@ -42,6 +57,7 @@ function App() {
                   <div className="arc-data-slide">
                     <a href={`#tarjeta-${slide}`}>{`Tarjeta ${slide}`}</a>
                     <input aria-label={`Nota ${slide}`} />
+                    {slide === 1 ? <PhotoCarousel /> : null}
                     <div role="tablist" aria-label={`Vistas ${slide}`}>
                       <button type="button" role="tab" aria-selected="true">{`Resumen ${slide}`}</button>
                     </div>

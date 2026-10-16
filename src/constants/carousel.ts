@@ -35,3 +35,6 @@ export const CAROUSEL_COPY = {
   slideLabelPrefix: "Diapositiva",
   slideLabelSeparator: "de",
 } as const
+
+/** Root of a carousel; a nested carousel owns the keys pressed inside it. */
+export const CAROUSEL_ROOT_SELECTOR = '[data-slot="carousel"]'

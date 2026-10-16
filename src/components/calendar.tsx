@@ -31,6 +31,7 @@ import {
   CALENDAR_COPY,
   CALENDAR_MONTH_ENTER_OPACITY,
   CALENDAR_MONTH_SPRING,
+  CALENDAR_MONTHS_PER_YEAR,
   CALENDAR_SELECTED_DAY_SELECTOR,
   CALENDAR_SELECTION_DISC_ATTRIBUTE,
   CALENDAR_SELECTION_ENTER_SCALE,
@@ -317,6 +318,11 @@ function isSameMonth(firstDate: Date, secondDate: Date): boolean {
   return firstDate.getFullYear() === secondDate.getFullYear() && firstDate.getMonth() === secondDate.getMonth()
 }
 
+/** Months elapsed since year zero, so two dates can be compared by calendar month alone. */
+function toMonthIndex(date: Date): number {
+  return date.getFullYear() * CALENDAR_MONTHS_PER_YEAR + date.getMonth()
+}
+
 /** Whether two dates fall on the same calendar day, read in the dates' own time zone. */
 function isSameDate(firstDate: Date, secondDate: Date): boolean {
   return isSameMonth(firstDate, secondDate) && firstDate.getDate() === secondDate.getDate()
@@ -360,7 +366,14 @@ function CalendarTodayButton() {
       )
   const isTodaySelectable = Boolean(today && select && dayPickerProps.mode === "single" && !isTodayBlocked)
   const isTodaySelected = Boolean(today && isSelected?.(today))
-  const isIdle = !today || (isTodayShown && (!isTodaySelectable || isTodaySelected))
+  // DayPicker cannot navigate past `startMonth` or `endMonth`, so a today outside them is out of reach.
+  const isTodayOutOfRange = Boolean(
+    today &&
+      ((dayPickerProps.startMonth && toMonthIndex(today) < toMonthIndex(dayPickerProps.startMonth)) ||
+        (dayPickerProps.endMonth && toMonthIndex(today) > toMonthIndex(dayPickerProps.endMonth)))
+  )
+  const isIdle =
+    !today || (!isTodayShown && isTodayOutOfRange) || (isTodayShown && (!isTodaySelectable || isTodaySelected))
   // The latest DayPicker state, refreshed on every commit, so a click can read the month it just navigated to.
   const latestDayPickerRef = React.useRef({ months, getModifiers, select })
   React.useLayoutEffect(() => {

@@ -123,6 +123,31 @@ describe("Calendar", () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
+  it("should rest dimmed when today's month is outside the navigation range", async () => {
+    // Arrange
+    const onMonthChange = vi.fn();
+    render(
+      <Calendar
+        mode="single"
+        showToday
+        today={TODAY}
+        defaultMonth={new Date(2026, 5, 1)}
+        startMonth={new Date(2026, 0, 1)}
+        endMonth={new Date(2026, 6, 1)}
+        onMonthChange={onMonthChange}
+      />,
+    );
+    const todayButton = screen.getByRole("button", { name: TODAY_BUTTON_NAME });
+
+    // Act
+    await userEvent.click(todayButton);
+
+    // Assert
+    expect(todayButton).toHaveAttribute("aria-disabled", "true");
+    expect(onMonthChange).not.toHaveBeenCalled();
+    expect(screen.getByText("junio 2026")).toBeInTheDocument();
+  });
+
   it("should leave the selection alone when today is already selected", async () => {
     // Arrange
     const onSelect = vi.fn();

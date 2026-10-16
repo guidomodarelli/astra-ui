@@ -19,6 +19,7 @@ import {
   CAROUSEL_INDICATOR_LENGTH_PX,
   CAROUSEL_KEYS,
   CAROUSEL_OWN_KEYBOARD_SELECTOR,
+  CAROUSEL_ROOT_SELECTOR,
   type CarouselOrientation,
 } from "../constants/carousel.js"
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
@@ -104,6 +105,9 @@ function Carousel({
       // Text fields and composite widgets inside the carousel keep their own navigation keys, as in Arc.
       const keyboardOwner = event.target instanceof Element ? event.target.closest(CAROUSEL_OWN_KEYBOARD_SELECTOR) : null
       if (keyboardOwner && event.currentTarget.contains(keyboardOwner)) return
+      // A carousel nested in a slide handles its own keys; the outer one leaves them alone.
+      const closestCarousel = event.target instanceof Element ? event.target.closest(CAROUSEL_ROOT_SELECTOR) : null
+      if (closestCarousel && closestCarousel !== event.currentTarget) return
       const keys = CAROUSEL_KEYS[orientation]
       if (event.key === keys.previous) {
         event.preventDefault()
