@@ -79,6 +79,28 @@ test("should swap a changed title with a rise while the old copy leaves the acce
   await expect(page.getByRole("heading").locator("[data-slot=dialog-swap-text]")).toHaveCount(1);
 });
 
+test("should keep the title height while the old copy leaves", async ({ page }) => {
+  await page.getByRole("button", { name: "Abrir pasos" }).click();
+  await expect(page.getByRole("dialog", { name: "Paso 1" })).toHaveCSS("clip-path", "none");
+  const { restingHeight, swapHeights, sawBothCopies } = await page.evaluate(async (frames) => {
+    const title = document.querySelector<HTMLElement>("[data-slot=dialog-title]")!;
+    const height = () => title.getBoundingClientRect().height;
+    const resting = height();
+    const next = [...document.querySelectorAll("button")].find((button) => button.textContent === "Siguiente paso")!;
+    next.click();
+    const heights: number[] = [];
+    let both = false;
+    for (let frame = 0; frame < frames; frame += 1) {
+      await new Promise(requestAnimationFrame);
+      if (title.querySelectorAll("[data-slot=dialog-swap-text]").length > 1) both = true;
+      heights.push(height());
+    }
+    return { restingHeight: resting, swapHeights: heights, sawBothCopies: both };
+  }, SAMPLED_FRAMES);
+  expect(sawBothCopies, "the old copy must still be leaving while the title is measured").toBe(true);
+  expect(Math.max(...swapHeights)).toBeLessThanOrEqual(restingHeight + 0.5);
+});
+
 test("should show the new title at once under reduced motion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.getByRole("button", { name: "Abrir pasos" }).click();

@@ -7,7 +7,7 @@
  * changed while the dialog is open. Internal: the entrance stays beez-ui's center morph, not Arc's rise.
  */
 import { AnimatePresence, motion, useIsPresent } from "motion/react"
-import type { ReactNode } from "react"
+import type { ReactNode, Ref } from "react"
 
 import { DIALOG_TEXT_SWAP_OFFSET_EM } from "../constants/dialog.js"
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
@@ -46,14 +46,15 @@ export const dialogCloseButtonClassName =
 /**
  * One version of the copy. While it lifts out it turns inert and hidden from assistive technology, so the dialog's
  * accessible name never reads the old and the new copy together.
- * @param props - The copy to render.
+ * @param props - The copy to render and the ref `AnimatePresence` injects to pop the leaving copy out of layout.
  * @returns The animated copy.
  */
-function DialogSwapTextItem({ children }: { children: ReactNode }) {
+function DialogSwapTextItem({ children, ref }: { children: ReactNode; ref?: Ref<HTMLSpanElement> }) {
   const isPresent = useIsPresent()
   const shouldReduceMotion = usePrefersReducedMotion()
   return (
     <motion.span
+      ref={ref}
       data-slot="dialog-swap-text"
       className="block"
       aria-hidden={isPresent ? undefined : true}
