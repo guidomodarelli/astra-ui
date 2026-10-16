@@ -124,7 +124,8 @@ function useDeferredReInit() {
 
   const isBusy = React.useCallback(() => {
     const api = apiRef.current
-    if (!api) return false
+    // Without slides Embla has no snap to rest on, so its scroll never reads as settled.
+    if (!api || api.slideNodes().length === 0) return false
     return isPointerDownRef.current || !api.internalEngine().scrollBody.settled()
   }, [])
 
@@ -210,6 +211,8 @@ function Carousel({
   const [selectedIndex, setSelectedIndex] = React.useState(startIndex)
   const [api, setApi] = React.useState<CarouselApi>()
   const [announcement, setAnnouncement] = React.useState("")
+  // Slides Embla has measured, so a controlled `index` beyond them is synced again once they arrive.
+  const [engineSlideCount, setEngineSlideCount] = React.useState(0)
   const { watch, bind } = useDeferredReInit()
 
   // The latest callbacks, so Embla's listeners never need to be re-attached when a consumer passes new functions.
@@ -263,6 +266,7 @@ function Carousel({
     }
     // A re-initialization lands at rest, possibly on another slide when slides were removed: it reports both.
     const handleReInit = () => {
+      setEngineSlideCount(api.slideNodes().length)
       handleSelect()
       handleSettle()
     }
@@ -284,7 +288,7 @@ function Carousel({
     reportedIndexRef.current = nextIndex
     api.scrollTo(nextIndex, reduceMotion)
     // `selectedIndex` re-runs the sync after every selection, so a slide the parent rejected scrolls back to `index`.
-  }, [api, controlledIndex, reduceMotion, selectedIndex])
+  }, [api, controlledIndex, engineSlideCount, reduceMotion, selectedIndex])
 
   const rotation = useRotation({ api, count, interval, autoplay, reduceMotion, isHydrated, selectedIndex, loop, isRotatingRef })
   const visibleIndex = clampSlideIndex(selectedIndex, count)
@@ -361,7 +365,13 @@ function Carousel({
             </ControlButton>
           ) : null}
           {showIndicators ? (
-            <CarouselIndicators slideLabel={slideLabel} getSlideId={getSlideId} drain={rotation.drain} />
+            <CarouselIndicators
+              slideLabel={slideLabel}
+              getSlideId={getSlideId}
+              drain={rotation.drain}
+              initialCount={count}
+              initialIndex={startIndex}
+            />
           ) : null}
           {showControls ? (
             <div className="ms-auto flex flex-none gap-2 @max-[340px]/carousel:gap-1">

@@ -72,6 +72,35 @@ describe("Carousel", () => {
     expect(panels.map((panel) => panel.hasAttribute("inert"))).toEqual([true, true, false]);
   });
 
+  it.each([
+    { initialSlides: [] as string[], description: "no slides" },
+    { initialSlides: SLIDES.slice(0, 1), description: "a single slide" },
+  ])("should reach a controlled index once enough slides arrive after mounting with $description", async ({ initialSlides }) => {
+    // Arrange
+    const { rerender } = render(
+      <Carousel label="Destacados" index={2}>
+        {initialSlides.map((slide) => (
+          <p key={slide}>{slide}</p>
+        ))}
+      </Carousel>,
+    );
+
+    // Act
+    await act(async () => {
+      rerender(
+        <Carousel label="Destacados" index={2}>
+          {SLIDES.map((slide) => (
+            <p key={slide}>{slide}</p>
+          ))}
+        </Carousel>,
+      );
+    });
+
+    // Assert
+    const panels = screen.getAllByRole("tabpanel", { hidden: true });
+    expect(panels.map((panel) => panel.hasAttribute("inert"))).toEqual([true, true, false]);
+  });
+
   it("should clamp an initial slide beyond the last one", () => {
     // Arrange & Act
     renderCarousel({ defaultIndex: 9 });
@@ -164,6 +193,38 @@ describe("Carousel", () => {
     expect(carousel).toHaveClass("Gallery");
     expect(carousel.style.getPropertyValue("--carousel-slide")).toBe("100%");
     for (const panel of screen.getAllByRole("tabpanel", { hidden: true })) expect(panel).toHaveClass("Gallery__slide");
+  });
+
+  it("should render the indicator tabs on the server so hydrating does not grow the control row", async () => {
+    // Arrange
+    const carousel = (
+      <Carousel label="Destacados" defaultIndex={1} showControls={false}>
+        {SLIDES.map((slide) => (
+          <p key={slide}>{slide}</p>
+        ))}
+      </Carousel>
+    );
+    const container = document.createElement("div");
+    container.innerHTML = renderToString(carousel);
+    document.body.append(container);
+    const serverTabs = within(container).getAllByRole("tab");
+    const recoverableErrors: unknown[] = [];
+    let root: Root | undefined;
+
+    try {
+      // Act
+      await act(async () => {
+        root = hydrateRoot(container, carousel, { onRecoverableError: (error) => recoverableErrors.push(error) });
+      });
+
+      // Assert
+      expect(serverTabs.map((tab) => tab.getAttribute("aria-selected"))).toEqual(["false", "true", "false"]);
+      expect(recoverableErrors).toEqual([]);
+      expect(within(container).getAllByRole("tab")).toHaveLength(SLIDES.length);
+    } finally {
+      await act(async () => root?.unmount());
+      container.remove();
+    }
   });
 
   it("should keep the rotation control in place but disabled after hydrating with reduced motion", async () => {

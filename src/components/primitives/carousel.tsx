@@ -363,13 +363,17 @@ type CarouselIndicatorsProps = Omit<React.ComponentProps<"div">, "children"> & {
   getSlideId?: (index: number) => string
   /** Rotation time spent on the selected slide, from 0 to 1; it drains the selected pill from its end. */
   drain?: MotionValue<number>
+  /** Snap points expected before Embla measures, so server-rendered tabs keep their place. Defaults to 0. */
+  initialCount?: number
+  /** Selected snap expected before Embla measures. Defaults to 0. */
+  initialIndex?: number
 }
 
 /**
  * Arc's page indicator: a tab per snap point, where the selected one stretches into a pill that follows the track frame
  * by frame while it is dragged or scrolled. Only the selected tab is in the tab order; activating a tab scrolls to its
  * slide, and while a tab has focus the carousel's arrow, Home and End keys move the focus to the tab of the new slide.
- * It renders once Embla has measured the slides. Place it inside `Carousel`.
+ * It renders once Embla has measured the slides, or from `initialCount` until then. Place it inside `Carousel`.
  * @param props - Optional accessible copy, slide ids and rotation drain plus native attributes of the list.
  * @returns The indicator tab list, or nothing until there is more than one snap point.
  */
@@ -379,14 +383,16 @@ function CarouselIndicators({
   slideLabel = defaultCarouselSlideLabel,
   getSlideId,
   drain,
+  initialCount = 0,
+  initialIndex = 0,
   ...props
 }: CarouselIndicatorsProps) {
   const { api } = useCarousel()
   const reduceMotion = usePrefersReducedMotion()
-  const [snapCount, setSnapCount] = React.useState(0)
-  const [selectedIndex, setSelectedIndex] = React.useState(0)
+  const [snapCount, setSnapCount] = React.useState(initialCount)
+  const [selectedIndex, setSelectedIndex] = React.useState(initialIndex)
   const [isLooping, setIsLooping] = React.useState(false)
-  const position = useMotionValue(0)
+  const position = useMotionValue(initialIndex)
   const indicatorRefs = React.useRef<(HTMLButtonElement | null)[]>([])
 
   React.useEffect(() => {
