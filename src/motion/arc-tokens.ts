@@ -9,12 +9,15 @@ export const ARC_DURATION = {
   fast: 0.16,
   exit: 0.18,
   standard: 0.24,
+  considered: 0.48,
 } as const;
 
-/** Cubic-bezier curves for entrances and color or opacity tweens. */
+/** Cubic-bezier curves: entrances, exits, color or opacity tweens, and moves of elements already on screen. */
 export const ARC_EASE = {
   enter: [0.16, 1, 0.3, 1],
+  exit: [0.7, 0, 0.84, 0],
   standard: [0.22, 1, 0.36, 1],
+  inOut: [0.65, 0, 0.35, 1],
 } as const;
 
 /** Presses, toggles and small indicators: settles fast with a hint of life. */
@@ -29,6 +32,7 @@ export const ARC_SPRING_MORPH = { type: "spring", visualDuration: 0.42, bounce: 
 /** Stagger steps in seconds; keep a whole staggered entrance under roughly 0.4s. */
 export const ARC_STAGGER = {
   char: 0.016,
+  item: 0.035,
 } as const;
 
 /** Blur radii in pixels for brief content crossfades. */

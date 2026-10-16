@@ -146,6 +146,17 @@ function MotionExamples() {
               </DialogDescription>
             </DialogContent>
           </Dialog>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>Abrir nota</Button>
+            </DialogTrigger>
+            <DialogContent style={{ transform: "rotate(2deg)", opacity: 0.9 }}>
+              <DialogTitle>Nota</DialogTitle>
+              <DialogDescription>
+                El panel descansa inclinado y algo translúcido.
+              </DialogDescription>
+            </DialogContent>
+          </Dialog>
         </section>
         <section>
           <TypingAnimation duration={1000} delay={10000} startOnView={false}>

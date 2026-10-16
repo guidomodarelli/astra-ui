@@ -4,7 +4,7 @@
  * Arc's Dialog surface (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md), shared by `Dialog` and
  * `AlertDialog`: the dimmed, blurred overlay, the raised panel with Arc's surface radius, border and floating shadow,
  * the title and description type, the bordered close button and the text swap that animates a title or description
- * changed while the dialog is open. Internal: the entrance stays beez-ui's center morph, not Arc's rise.
+ * changed while the dialog is open. Internal: the panel's entrance and exit are Arc's, played by `MotionSlot`.
  */
 import { AnimatePresence, motion, useIsPresent } from "motion/react"
 import type { ReactNode, Ref } from "react"

@@ -30,7 +30,9 @@ test.beforeEach(async ({ page }) => {
 test("should render the dialog on Arc's raised surface over a blurred scrim", async ({ page }) => {
   await page.getByRole("button", { name: "Abrir datos" }).click();
   const dialog = page.getByRole("dialog");
+  // The panel has settled: nothing clips it and its entrance transform is gone.
   await expect(dialog).toHaveCSS("clip-path", "none");
+  await expect(dialog).toHaveCSS("transform", "none");
   await expect(dialog).toHaveCSS("padding", "24px");
   await expect(dialog).toHaveCSS("border-top-width", "1px");
   await expect(dialog).toHaveCSS("border-top-left-radius", "34px");
@@ -45,7 +47,9 @@ test("should render the dialog on Arc's raised surface over a blurred scrim", as
 test("should keep a wrapping title clear of the close button", async ({ page }) => {
   await page.getByRole("button", { name: "Abrir datos" }).click();
   const dialog = page.getByRole("dialog");
+  // The panel has settled: nothing clips it and its entrance transform is gone.
   await expect(dialog).toHaveCSS("clip-path", "none");
+  await expect(dialog).toHaveCSS("transform", "none");
   const close = dialog.locator("[data-slot=dialog-close]").first();
   await expect(close).toHaveCSS("width", "32px");
   const title = await boxOf(dialog.getByRole("heading"));
@@ -60,7 +64,9 @@ test("should keep a wrapping title clear of the close button", async ({ page }) 
 test("should swap a changed title with a rise while the old copy leaves the accessible name", async ({ page }) => {
   await page.getByRole("button", { name: "Abrir pasos" }).click();
   const dialog = page.getByRole("dialog", { name: "Paso 1" });
+  // The panel has settled: nothing clips it and its entrance transform is gone.
   await expect(dialog).toHaveCSS("clip-path", "none");
+  await expect(dialog).toHaveCSS("transform", "none");
   const opacities = await page.evaluate(async (frames) => {
     const next = [...document.querySelectorAll("button")].find((button) => button.textContent === "Siguiente paso")!;
     next.click();
@@ -81,7 +87,9 @@ test("should swap a changed title with a rise while the old copy leaves the acce
 
 test("should keep the title height while the old copy leaves", async ({ page }) => {
   await page.getByRole("button", { name: "Abrir pasos" }).click();
+  // The panel has settled: nothing clips it and its entrance transform is gone.
   await expect(page.getByRole("dialog", { name: "Paso 1" })).toHaveCSS("clip-path", "none");
+  await expect(page.getByRole("dialog", { name: "Paso 1" })).toHaveCSS("transform", "none");
   const { restingHeight, swapHeights, sawBothCopies } = await page.evaluate(async (frames) => {
     const title = document.querySelector<HTMLElement>("[data-slot=dialog-title]")!;
     const height = () => title.getBoundingClientRect().height;
@@ -113,7 +121,9 @@ test("should show the new title at once under reduced motion", async ({ page }) 
 test("should share the dialog surface with the alert dialog", async ({ page }) => {
   await page.getByRole("button", { name: "Abrir confirmación" }).click();
   const alert = page.getByRole("alertdialog");
+  // The panel has settled: nothing clips it and its entrance transform is gone.
   await expect(alert).toHaveCSS("clip-path", "none");
+  await expect(alert).toHaveCSS("transform", "none");
   await expect(alert).toHaveCSS("padding", "24px");
   await expect(alert).toHaveCSS("border-top-left-radius", "34px");
   await expect(page.locator("[data-slot=alert-dialog-overlay]")).toHaveCSS("backdrop-filter", "blur(7px)");

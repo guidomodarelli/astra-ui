@@ -1,6 +1,6 @@
 /** Verifies every remaining motion-enabled component animates, settles cleanly and stays usable. */
 import { expect, test, type Locator } from "@playwright/test";
-import { recordMotion } from "./motion-recorder.js";
+import { recordMotion, samplePaintedBoxes, waitForSettledLayout, type PaintedBox } from "./motion-recorder.js";
 
 /** Asserts that playback left no visual residue: no transform, blur, clip or partial opacity. */
 async function expectSettled(target: Locator) {
@@ -8,6 +8,21 @@ async function expectSettled(target: Locator) {
   await expect(target).toHaveCSS("transform", "none");
   await expect(target).toHaveCSS("filter", "none");
   await expect(target).toHaveCSS("clip-path", "none");
+}
+
+/** How long a state change is watched for movement: longer than any field or message transition. */
+const STABILITY_WINDOW_MS = 600;
+
+/** Asserts that every sampled box sits where the first one did: the element never moved or resized. */
+function expectStill(boxes: PaintedBox[]) {
+  expect(boxes.length).toBeGreaterThan(1);
+  const [first] = boxes;
+  for (const box of boxes) {
+    expect(box.x).toBeCloseTo(first!.x, 1);
+    expect(box.y).toBeCloseTo(first!.y, 1);
+    expect(box.width).toBeCloseTo(first!.width, 1);
+    expect(box.height).toBeCloseTo(first!.height, 1);
+  }
 }
 
 test.beforeEach(async ({ page }) => {
@@ -44,18 +59,17 @@ test("should slide the sheet in and out from its edge", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Abrir panel" })).toBeFocused();
 });
 
-test("should unfold the alert dialog from its center and keep its actions working", async ({ page }) => {
+test("should rise the alert dialog in like a dialog and keep its actions working", async ({ page }) => {
   const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
   await page.getByRole("button", { name: "Eliminar cuenta" }).click();
   const alert = page.getByRole("alertdialog", { name: "¿Eliminar la cuenta?" });
   await expect(alert).toBeVisible();
+  // Arc's dialog transition: the panel fades in while it rises and scales on a spring; it no longer clips.
   await expect
     .poll(() => motion.properties({ role: "alertdialog" }))
-    .toContain("clipPath");
-  const properties = await motion.properties({ role: "alertdialog" });
-  expect(properties).not.toContain("opacity");
-  expect(properties).not.toContain("transform");
+    .toEqual(expect.arrayContaining(["opacity", "transform"]));
+  expect(await motion.properties({ role: "alertdialog" })).not.toContain("clipPath");
   await expectSettled(alert);
   await page.getByRole("button", { name: "Eliminar", exact: true }).click();
   await expect(page.getByLabel("Última acción")).toHaveText("Cuenta eliminada");
@@ -155,48 +169,74 @@ test("should press radios and pop their dot on selection", async ({ page }) => {
   expect(dotScaleOnCheck).toBeCloseTo(0.4, 2);
 });
 
-test("should shake the whole input group and textarea when they turn invalid", async ({
+test("should keep the input group and textarea in place when they turn invalid", async ({
   page,
 }) => {
   const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
+  // The error is told by color: the frame and its text never move while the state changes.
+  await waitForSettledLayout(page.locator("[data-slot=input-group]"));
+  const groupBoxes = samplePaintedBoxes(page, "[data-slot=input-group]", STABILITY_WINDOW_MS, {
+    from: "[data-slot=input-group] [aria-invalid=true]",
+  });
   await page.getByRole("button", { name: "Validar código" }).click();
   await expect(page.getByRole("textbox", { name: "Código" })).toHaveAttribute(
     "aria-invalid",
     "true",
   );
-  await expect
-    .poll(() => motion.properties({ slot: "input-group" }))
-    .toContain("transform");
+  expectStill(await groupBoxes);
+  expect(await motion.properties({ slot: "input-group" })).not.toContain("transform");
   expect(await motion.properties({ slot: "input-group-control" })).not.toContain(
     "transform",
   );
   await expectSettled(page.locator("[data-slot=input-group]"));
 
+  await waitForSettledLayout(page.locator("[data-slot=textarea]"));
+  const noteBoxes = samplePaintedBoxes(page, "[data-slot=textarea]", STABILITY_WINDOW_MS, {
+    from: "[data-slot=textarea][aria-invalid=true]",
+  });
   await page.getByRole("button", { name: "Validar nota" }).click();
-  await expect
-    .poll(() => motion.properties({ slot: "textarea" }))
-    .toContain("transform");
+  await expect(page.getByRole("textbox", { name: "Nota" })).toHaveAttribute("aria-invalid", "true");
+  expectStill(await noteBoxes);
+  expect(await motion.properties({ slot: "textarea" })).not.toContain("transform");
   await expectSettled(page.getByRole("textbox", { name: "Nota" }));
 });
 
-test("should blur in the form message and shake the invalid control", async ({ page }) => {
+test("should fade the form message in without blur and keep the invalid control in place", async ({ page }) => {
   const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
+  await waitForSettledLayout(page.locator("[data-slot=form-control]"));
+  const controlBoxes = samplePaintedBoxes(page, "[data-slot=form-control]", STABILITY_WINDOW_MS, {
+    from: "[data-slot=form-control][aria-invalid=true]",
+  });
   await page.getByRole("button", { name: "Guardar perfil" }).click();
   const message = page.getByText("El nombre es obligatorio");
   await expect(message).toBeVisible();
   await expect
     .poll(() => motion.properties({ slot: "form-message" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform", "filter"]));
-  await expect
-    .poll(() => motion.properties({ slot: "form-control" }))
-    .toContain("transform");
+    .toEqual(expect.arrayContaining(["opacity", "transform"]));
+  expect(await motion.properties({ slot: "form-message" })).not.toContain("filter");
+  await expect(page.getByRole("textbox", { name: "Nombre" })).toHaveAttribute("aria-invalid", "true");
+  expectStill(await controlBoxes);
+  expect(await motion.properties({ slot: "form-control" })).not.toContain("transform");
   await expectSettled(message);
   await expectSettled(page.getByRole("textbox", { name: "Nombre" }));
 });
 
-test("should keep long selects responsive and blur only the first options", async ({ page }) => {
+test("should fade an inline alert in without blur and settle it", async ({ page }) => {
+  const motion = await recordMotion(page);
+  await page.goto("/motion-catalog.html");
+  await page.getByRole("button", { name: "Mostrar aviso" }).click();
+  const notice = page.locator("[data-slot=alert]");
+  await expect(notice).toContainText("Cambios guardados");
+  await expect
+    .poll(() => motion.properties({ slot: "alert" }))
+    .toEqual(expect.arrayContaining(["opacity", "transform"]));
+  expect(await motion.properties({ slot: "alert" })).not.toContain("filter");
+  await expectSettled(notice);
+});
+
+test("should fade every option of a long select in together, without blur", async ({ page }) => {
   const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
   await page.getByRole("combobox", { name: "País" }).click();
@@ -204,10 +244,12 @@ test("should keep long selects responsive and blur only the first options", asyn
   await expect
     .poll(async () => (await motion.properties({ slot: "select-item" })).length)
     .toBeGreaterThan(0);
-  const filters = (await motion.properties({ slot: "select-item" })).filter(
-    (property) => property === "filter",
+  expect(await motion.properties({ slot: "select-item" })).not.toContain("filter");
+  // Options arrive with the list: none waits behind a stagger delay.
+  const delays = await page.locator("[data-slot=select-item]").evaluateAll((items) =>
+    items.flatMap((item) => item.getAnimations().map((animation) => Number(animation.effect?.getTiming().delay ?? 0))),
   );
-  expect(filters.length).toBeLessThanOrEqual(10);
+  expect(delays.every((delay) => delay === 0)).toBe(true);
   const firstOption = page.getByRole("option", { name: "País 1", exact: true });
   await expectSettled(firstOption);
   await page.keyboard.press("ArrowDown");
@@ -275,6 +317,15 @@ test("should run every catalog interaction without motion when it is reduced", a
   await page.getByRole("button", { name: "Validar código" }).click();
   await page.getByRole("button", { name: "Guardar perfil" }).click();
   await expect(page.getByText("El nombre es obligatorio")).toBeVisible();
+  await page.getByRole("button", { name: "Mostrar aviso" }).click();
+  await expect(page.locator("[data-slot=alert]")).toContainText("Cambios guardados");
+  await page.getByRole("combobox", { name: "País" }).click();
+  await expect(page.getByRole("option", { name: "País 1", exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Eliminar cuenta" }).click();
+  await expect(page.getByRole("alertdialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("alertdialog")).toHaveCount(0);
   await page.getByRole("button", { name: "Abrir panel" }).click();
   await expect(page.getByRole("dialog", { name: "Panel lateral" })).toBeVisible();
   await page.keyboard.press("Escape");
