@@ -1,30 +1,30 @@
 /** Demonstrates Alert through its public component contract. */
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Alert, AlertTitle, AlertDescription, Button } from "beez-ui";
+import { Alert, Button } from "beez-ui";
 
 /** Editable inputs specific to this example. */
 type Args = {
   title: string;
   description: string;
-  variant: "default" | "destructive";
-  tone: "none" | "info" | "success" | "warning" | "danger";
+  tone: "info" | "success" | "warning" | "danger";
   dismissible: boolean;
+  withAction: boolean;
 };
 
 /** Keeps the dismissed state so a dismissed alert can be shown again. */
-function AlertExample({ title, description, variant, tone, dismissible }: Args) {
+function AlertExample({ title, description, tone, dismissible, withAction }: Args) {
   const [isOpen, setIsOpen] = useState(true);
   return (
     <div className="StoryStack">
       <Alert
-        variant={variant}
-        tone={tone === "none" ? undefined : tone}
+        tone={tone}
+        title={title}
         open={dismissible ? isOpen : undefined}
         onDismiss={dismissible ? () => setIsOpen(false) : undefined}
+        action={withAction ? <Button size="sm" variant="secondary">Revisar</Button> : undefined}
       >
-        <AlertTitle>{title}</AlertTitle>
-        <AlertDescription>{description}</AlertDescription>
+        {description}
       </Alert>
       {dismissible && !isOpen ? (
         <Button variant="secondary" onClick={() => setIsOpen(true)}>Mostrar de nuevo</Button>
@@ -38,9 +38,9 @@ const meta = {
   args: {
     title: "Cambios guardados",
     description: "La información está actualizada.",
-    variant: "default",
     tone: "success",
     dismissible: true,
+    withAction: false,
   },
   argTypes: {
     title: {
@@ -49,19 +49,18 @@ const meta = {
     description: {
       control: "text",
     },
-    variant: {
-      control: "select",
-      options: ["default", "destructive"],
-    },
     tone: {
       control: "select",
-      options: ["none", "info", "success", "warning", "danger"],
+      options: ["info", "success", "warning", "danger"],
     },
     dismissible: {
       control: "boolean",
     },
+    withAction: {
+      control: "boolean",
+    },
   },
-  parameters: { controls: { include: ["title", "description", "variant", "tone", "dismissible"] } },
+  parameters: { controls: { include: ["title", "description", "tone", "dismissible", "withAction"] } },
   render: (args) => <AlertExample {...args} />,
 } satisfies Meta<Args>;
 

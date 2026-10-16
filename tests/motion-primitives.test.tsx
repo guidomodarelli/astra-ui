@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, MotionGlobalConfig } from "motion/react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AnimatedCollapse, AnimatedCount, AnimatedListItem, BeezUIProvider, Dialog, DialogContent, DialogDescription, DialogTitle, PresenceSwap } from "beez-ui";
+import { AnimatedCollapse, AnimatedCount, AnimatedListItem, BeezUIProvider, Dialog, DialogContent, PresenceSwap } from "beez-ui";
 
 function CollapseHarness() {
   const [isOpen, setIsOpen] = useState(false);
@@ -262,9 +262,7 @@ describe("motion primitives with reduced motion", () => {
       const hasRetried = useRef(false);
       return (
         <Dialog open>
-          <DialogContent>
-            <DialogTitle>Suscripción</DialogTitle>
-            <DialogDescription>Estado del link</DialogDescription>
+          <DialogContent title="Suscripción" description="Estado del link">
             <PresenceSwap presenceKey={status}>
               {status === "error" ? (
                 <button type="button" onClick={() => { hasRetried.current = true; setStatus("loading"); }}>Reintentar</button>

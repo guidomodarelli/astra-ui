@@ -6,7 +6,7 @@ import { ChevronDownIcon, LogInIcon, LogOutIcon, PlusIcon } from "lucide-react";
 
 import { cn } from "../lib/utils.js";
 import { getNameInitials } from "../lib/name-initials.js";
-import { Avatar, AvatarBadge, AvatarFallback, AvatarImage } from "./avatar.js";
+import { AvatarBadge, AvatarFallback, AvatarImage, AvatarRoot } from "./primitives/avatar.js";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -108,7 +108,7 @@ function AccountAvatar({ name, image, fallback, status, showStatusBadge, isDecor
   const isAuthenticated = status === "authenticated";
 
   return (
-    <Avatar className={cn(showStatusBadge && !isAuthenticated && "grayscale", className)}>
+    <AvatarRoot className={cn(showStatusBadge && !isAuthenticated && "grayscale", className)}>
       {image ? <AvatarImage alt={isDecorative ? "" : name} loading="eager" src={image} /> : null}
       <AvatarFallback aria-hidden={isDecorative || undefined}>{fallback}</AvatarFallback>
       {showStatusBadge ? (
@@ -122,7 +122,7 @@ function AccountAvatar({ name, image, fallback, status, showStatusBadge, isDecor
           {isAuthenticated ? null : <PlusIcon aria-hidden="true" />}
         </AvatarBadge>
       ) : null}
-    </Avatar>
+    </AvatarRoot>
   );
 }
 

@@ -30,7 +30,9 @@ test.beforeEach(async ({ page }) => {
 test("should render the dialog on Arc's raised surface over a blurred scrim", async ({ page }) => {
   await page.getByRole("button", { name: "Abrir datos" }).click();
   const dialog = page.getByRole("dialog");
+  // The panel has settled: nothing clips it and its entrance transform is gone.
   await expect(dialog).toHaveCSS("clip-path", "none");
+  await expect(dialog).toHaveCSS("transform", "none");
   await expect(dialog).toHaveCSS("padding", "24px");
   await expect(dialog).toHaveCSS("border-top-width", "1px");
   await expect(dialog).toHaveCSS("border-top-left-radius", "34px");
@@ -45,8 +47,10 @@ test("should render the dialog on Arc's raised surface over a blurred scrim", as
 test("should keep a wrapping title clear of the close button", async ({ page }) => {
   await page.getByRole("button", { name: "Abrir datos" }).click();
   const dialog = page.getByRole("dialog");
+  // The panel has settled: nothing clips it and its entrance transform is gone.
   await expect(dialog).toHaveCSS("clip-path", "none");
-  const close = dialog.locator("[data-slot=dialog-close]").first();
+  await expect(dialog).toHaveCSS("transform", "none");
+  const close = dialog.getByRole("button", { name: "Cerrar diálogo" });
   await expect(close).toHaveCSS("width", "32px");
   const title = await boxOf(dialog.getByRole("heading"));
   const closeBox = await boxOf(close);
@@ -60,7 +64,9 @@ test("should keep a wrapping title clear of the close button", async ({ page }) 
 test("should swap a changed title with a rise while the old copy leaves the accessible name", async ({ page }) => {
   await page.getByRole("button", { name: "Abrir pasos" }).click();
   const dialog = page.getByRole("dialog", { name: "Paso 1" });
+  // The panel has settled: nothing clips it and its entrance transform is gone.
   await expect(dialog).toHaveCSS("clip-path", "none");
+  await expect(dialog).toHaveCSS("transform", "none");
   const opacities = await page.evaluate(async (frames) => {
     const next = [...document.querySelectorAll("button")].find((button) => button.textContent === "Siguiente paso")!;
     next.click();
@@ -81,7 +87,9 @@ test("should swap a changed title with a rise while the old copy leaves the acce
 
 test("should keep the title height while the old copy leaves", async ({ page }) => {
   await page.getByRole("button", { name: "Abrir pasos" }).click();
+  // The panel has settled: nothing clips it and its entrance transform is gone.
   await expect(page.getByRole("dialog", { name: "Paso 1" })).toHaveCSS("clip-path", "none");
+  await expect(page.getByRole("dialog", { name: "Paso 1" })).toHaveCSS("transform", "none");
   const { restingHeight, swapHeights, sawBothCopies } = await page.evaluate(async (frames) => {
     const title = document.querySelector<HTMLElement>("[data-slot=dialog-title]")!;
     const height = () => title.getBoundingClientRect().height;
@@ -110,15 +118,50 @@ test("should show the new title at once under reduced motion", async ({ page }) 
   await expect(page.getByRole("dialog", { name: "Paso 2" })).toBeVisible();
 });
 
-test("should share the dialog surface with the alert dialog", async ({ page }) => {
+test("should bleed the footer slot through the panel padding", async ({ page }) => {
+  await page.getByRole("button", { name: "Abrir datos" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toHaveCSS("clip-path", "none");
+  const footer = dialog.locator("[data-slot=dialog-footer]");
+  await expect(footer).toHaveCSS("margin-bottom", "-24px");
+  await expect(footer).toHaveCSS("border-top-width", "1px");
+  const [dialogBox, footerBox] = await Promise.all([boxOf(dialog), boxOf(footer)]);
+  // Edge to edge inside the 1px border, down to the panel's bottom edge.
+  expect(Math.abs(footerBox.x - (dialogBox.x + 1))).toBeLessThanOrEqual(1);
+  expect(Math.abs(footerBox.y + footerBox.height - (dialogBox.y + dialogBox.height - 1))).toBeLessThanOrEqual(1);
+  await footer.getByRole("button", { name: "Cerrar", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("should keep a hidden title out of the layout while it names the dialog", async ({ page }) => {
+  await page.getByRole("button", { name: "Abrir galería" }).click();
+  const dialog = page.getByRole("dialog", { name: "Galería de la ronda" });
+  await expect(dialog).toHaveCSS("clip-path", "none");
+  const title = await boxOf(dialog.getByRole("heading", { name: "Galería de la ronda" }));
+  expect(title.width).toBeLessThanOrEqual(1);
+  expect(title.height).toBeLessThanOrEqual(1);
+  // The body starts right under the panel padding, with no header row above it.
+  const [dialogBox, bodyBox] = await Promise.all([boxOf(dialog), boxOf(dialog.getByText("Fotos de la ronda."))]);
+  expect(bodyBox.y - dialogBox.y).toBeLessThanOrEqual(25 + 1);
+});
+
+test("should share the dialog surface with the alert mode and focus its cancel action", async ({ page }) => {
   await page.getByRole("button", { name: "Abrir confirmación" }).click();
-  const alert = page.getByRole("alertdialog");
+  const alert = page.getByRole("alertdialog", { name: "¿Eliminar el evento?" });
+  // The panel has settled: nothing clips it and its entrance transform is gone.
   await expect(alert).toHaveCSS("clip-path", "none");
+  await expect(alert).toHaveCSS("transform", "none");
   await expect(alert).toHaveCSS("padding", "24px");
   await expect(alert).toHaveCSS("border-top-left-radius", "34px");
   await expect(page.locator("[data-slot=alert-dialog-overlay]")).toHaveCSS("backdrop-filter", "blur(7px)");
   await expect(alert.getByRole("heading")).toHaveCSS("font-size", "18px");
   await expect(page.locator("[data-slot=alert-dialog-footer]")).toHaveCSS("margin-bottom", "-24px");
+  await expect(alert.getByRole("button", { name: "Cerrar diálogo" })).toHaveCount(0);
+  await expect(alert.getByRole("button", { name: "Cancelar" })).toBeFocused();
+  // A press on the scrim never dismisses a confirmation.
+  await page.mouse.click(4, 4);
+  await expect(alert).toBeVisible();
   await alert.getByRole("button", { name: "Cancelar" }).click();
   await expect(page.getByRole("alertdialog")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Abrir confirmación" })).toBeFocused();
 });

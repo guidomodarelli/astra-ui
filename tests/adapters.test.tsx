@@ -2,7 +2,7 @@
 import type { ComponentProps } from "react";
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { Avatar, AvatarImage, BeezUIProvider, PaginationNext } from "beez-ui";
+import { Avatar, BeezUIProvider, Pagination } from "beez-ui";
 
 /** Models a consumer-owned router without mocking a library implementation. */
 function ConsumerLink(props: ComponentProps<"a">) {
@@ -16,19 +16,19 @@ function ConsumerImage(props: ComponentProps<"img">) {
 
 describe("BeezUIProvider", () => {
   it("should render a native link without an orchestrator", () => {
-    render(<PaginationNext href="/page/2" text="Siguiente" />);
-    expect(screen.getByRole("link")).toHaveAttribute("href", "/page/2");
-    expect(screen.getByRole("link")).not.toHaveAttribute("data-router");
+    render(<Pagination page={1} pageCount={2} getHref={(page) => `/page/${page}`} />);
+    expect(screen.getByRole("link", { name: "Página 2" })).toHaveAttribute("href", "/page/2");
+    expect(screen.getByRole("link", { name: "Página 2" })).not.toHaveAttribute("data-router");
   });
 
   it("should apply the consumer adapters while preserving the image lifecycle", () => {
-    render(<BeezUIProvider components={{ Link: ConsumerLink, Image: ConsumerImage }}><PaginationNext href="/page/2" text="Siguiente" /><Avatar><AvatarImage src="/profile.png" alt="Perfil" /></Avatar></BeezUIProvider>);
-    expect(screen.getByRole("link")).toHaveAttribute("data-router", "consumer");
-    const image = screen.getByAltText("Perfil");
+    render(<BeezUIProvider components={{ Link: ConsumerLink, Image: ConsumerImage }}><Pagination page={1} pageCount={2} getHref={(page) => `/page/${page}`} /><Avatar name="Perfil" src="/profile.png" /></BeezUIProvider>);
+    expect(screen.getByRole("link", { name: "Página 2" })).toHaveAttribute("data-router", "consumer");
+    const image = screen.getByRole("img", { name: "Perfil" }).querySelector("img")!;
     expect(image).toHaveAttribute("data-image-adapter", "consumer");
     fireEvent.load(image);
-    expect(screen.getByRole("img", { name: "Perfil" })).toBeInTheDocument();
+    expect(screen.queryByText("P")).not.toBeInTheDocument();
     fireEvent.error(image);
-    expect(screen.queryByRole("img", { name: "Perfil" })).not.toBeInTheDocument();
+    expect(screen.getByText("P")).toBeInTheDocument();
   });
 });

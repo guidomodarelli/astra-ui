@@ -1,75 +1,63 @@
-/** Demonstrates RadioGroup as a complete, interactive composition. */
+/** Demonstrates RadioGroup through its public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { RadioGroup, RadioGroupItem, Label } from "beez-ui";
+import { RadioGroup } from "beez-ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */
 type Args = {
+  label: string;
   value: string;
-  disabled: boolean;
-  orientation: "horizontal" | "vertical";
-  optionRows: boolean;
+  descriptions: boolean;
+  disabledOption: boolean;
 };
 const meta = {
   title: "Components/RadioGroup",
   args: {
+    label: "Frecuencia de cobro",
     value: "monthly",
-    disabled: false,
-    orientation: "vertical",
-    optionRows: true,
+    descriptions: true,
+    disabledOption: false,
   },
   argTypes: {
+    label: {
+      control: "text",
+    },
     value: {
       control: "select",
-      options: ["weekly", "monthly"],
+      options: ["weekly", "monthly", "yearly"],
     },
-    disabled: {
+    descriptions: {
       control: "boolean",
+      description: "Agrega `description` a cada opción.",
     },
-    orientation: {
-      control: "select",
-      options: ["horizontal", "vertical"],
-    },
-    optionRows: {
+    disabledOption: {
       control: "boolean",
-      description: "Pasa `label` y `description` a cada `RadioGroupItem` para usar las filas de Arc.",
+      description: "Deshabilita la opción anual.",
     },
   },
-  parameters: { controls: { include: ["value", "disabled", "orientation", "optionRows"] } },
+  parameters: { controls: { include: ["label", "value", "descriptions", "disabledOption"] } },
   render: function Render(args) {
     const [, updateArgs] = useArgs<Args>();
     return (
       <LiveArgs args={args} names={["value"]} updateArgs={updateArgs}>
-        {({ value }, { value: setValue }) => {
-          return (
-            <RadioGroup
-              value={value}
-              disabled={args.disabled}
-              orientation={args.orientation}
-              className={
-                args.orientation === "horizontal" ? "StoryRow" : "StoryStack"
-              }
-              onValueChange={(value) => setValue(value)}
-            >
-              {[
-                { value: "weekly", label: "Semanal", description: "Se cobra cada lunes." },
-                { value: "monthly", label: "Mensual", description: "Se cobra el primer día del mes." },
-              ].map((option) => args.optionRows ? (
-                <RadioGroupItem
-                  key={option.value}
-                  value={option.value}
-                  label={option.label}
-                  description={option.description}
-                />
-              ) : (
-                <div className="StoryRow" key={option.value}>
-                  <RadioGroupItem value={option.value} id={`radio-${option.value}`} />
-                  <Label htmlFor={`radio-${option.value}`}>{option.label}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          );
-        }}
+        {({ value }, { value: setValue }) => (
+          <RadioGroup
+            className="StoryStack"
+            label={args.label}
+            value={value}
+            onValueChange={(nextValue) => setValue(nextValue)}
+            options={[
+              { value: "weekly", label: "Semanal", description: args.descriptions ? "Se cobra cada lunes." : undefined },
+              { value: "monthly", label: "Mensual", description: args.descriptions ? "Se cobra el primer día del mes." : undefined },
+              {
+                value: "yearly",
+                label: "Anual",
+                description: args.descriptions ? "Dos meses sin cargo." : undefined,
+                disabled: args.disabledOption,
+              },
+            ]}
+          />
+        )}
       </LiveArgs>
     );
   },

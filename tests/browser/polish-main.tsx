@@ -3,17 +3,11 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Avatar,
-  AvatarFallback,
   AvatarGroup,
-  AvatarImage,
   BeezUIProvider,
   Button,
   Calendar,
   Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
   Carousel,
   CarouselContent,
   CarouselItem,
@@ -29,9 +23,6 @@ import {
   FilterQueryBar,
   type FilterQualifierConfig,
   Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -42,7 +33,8 @@ import {
 } from "beez-ui";
 import "./styles.css";
 
-const PAGES = [1, 2, 3] as const;
+/** Pages of the results pagination. */
+const PAGE_COUNT = 3;
 const SLIDES = ["Primera", "Segunda", "Tercera"] as const;
 /** Fixed month, so navigation and its direction are deterministic across runs. */
 const INITIAL_MONTH = new Date(2026, 0, 1);
@@ -73,28 +65,17 @@ function StatefulFilter() {
   );
 }
 
-/** Pages through local state, as a client-side table would, keeping the list mounted. */
+/** Pages through the URL hash with links, as a router-backed table would, keeping the list mounted. */
 function StatefulPagination() {
   const [page, setPage] = useState<number>(1);
   return (
-    <Pagination aria-label="Páginas de resultados">
-      <PaginationContent>
-        {PAGES.map((pageNumber) => (
-          <PaginationItem key={pageNumber}>
-            <PaginationLink
-              href={`#pagina-${pageNumber}`}
-              isActive={page === pageNumber}
-              onClick={(event) => {
-                event.preventDefault();
-                setPage(pageNumber);
-              }}
-            >
-              {pageNumber}
-            </PaginationLink>
-          </PaginationItem>
-        ))}
-      </PaginationContent>
-    </Pagination>
+    <Pagination
+      label="Páginas de resultados"
+      page={page}
+      pageCount={PAGE_COUNT}
+      getHref={(pageNumber) => `#pagina-${pageNumber}`}
+      onPageChange={setPage}
+    />
   );
 }
 
@@ -103,22 +84,14 @@ function ReloadableAvatar() {
   const [version, setVersion] = useState(0);
   return (
     <div className="controls">
-      <Avatar size="lg">
-        <AvatarImage
-          src={version === 0 ? null : `/avatar.svg?version=${version}`}
-          alt="Foto de Ana"
-        />
-        <AvatarFallback>AN</AvatarFallback>
-      </Avatar>
+      <Avatar
+        name="Ana Núñez"
+        alt="Foto de Ana"
+        size="lg"
+        src={version === 0 ? null : `/avatar.svg?version=${version}`}
+      />
       <Button onClick={() => setVersion((current) => current + 1)}>Cargar foto</Button>
-      <AvatarGroup aria-label="Equipo">
-        <Avatar>
-          <AvatarFallback>LU</AvatarFallback>
-        </Avatar>
-        <Avatar>
-          <AvatarFallback>MA</AvatarFallback>
-        </Avatar>
-      </AvatarGroup>
+      <AvatarGroup label="Equipo" members={[{ name: "Lucía Uriarte" }, { name: "Martín Alonso" }]} />
     </div>
   );
 }
@@ -136,14 +109,13 @@ function PolishExamples() {
           <StatefulFilter />
         </section>
         <section>
-          <Card aria-label="Resumen del mes" className="summary-card">
-            <CardHeader>
-              <CardTitle>Resumen del mes</CardTitle>
-            </CardHeader>
-            <CardContent>Total: $ 184.200</CardContent>
-            <CardFooter>
-              <Button variant="secondary">Ver detalle</Button>
-            </CardFooter>
+          <Card
+            aria-label="Resumen del mes"
+            className="summary-card"
+            title="Resumen del mes"
+            footer={<Button variant="secondary">Ver detalle</Button>}
+          >
+            Total: $ 184.200
           </Card>
         </section>
         <section>
@@ -153,7 +125,7 @@ function PolishExamples() {
           <ReloadableAvatar />
         </section>
         <section>
-          <Skeleton aria-label="Cargando resumen" className="motion-skeleton" />
+          <Skeleton label="Cargando resumen" lines={1} className="motion-skeleton" />
           <TypingAnimation startOnView={false} duration={20} pauseDelay={60000} words={["Hola", "Chau"]} />
         </section>
         <section>

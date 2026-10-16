@@ -1,7 +1,7 @@
 /** Mounts Arc's Switch, Checkbox and RadioGroup from the public barrel, so their layout and motion run in real engines. */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BeezUIProvider, Checkbox, RadioGroup, RadioGroupItem, Switch } from "beez-ui";
+import { BeezUIProvider, Checkbox, RadioGroup, Switch } from "beez-ui";
 import "./styles.css";
 
 /** A select-all checkbox that starts indeterminate, as a table header would render it. */
@@ -17,7 +17,6 @@ function ArcToggles() {
     <section className="controls">
       <span data-testid="bare-switch-row" className="controls"><Switch id="bare-switch" /><label htmlFor="bare-switch">Modo compacto</label></span>
       <Switch label="Avisos por correo" />
-      <Switch label="Avisos compactos" size="sm" />
     </section>
     <section className="controls">
       <span data-testid="bare-checkbox-row" className="controls"><Checkbox id="bare-checkbox" /><label htmlFor="bare-checkbox">Termina otro día</label></span>
@@ -25,11 +24,15 @@ function ArcToggles() {
       <SelectAllCheckbox />
     </section>
     <section className="narrow-field">
-      <RadioGroup aria-label="Facturación" defaultValue="monthly">
-        <RadioGroupItem value="monthly" label="Mensual" description="Se renueva cada mes." />
-        <RadioGroupItem value="quarterly" label="Trimestral" />
-        <RadioGroupItem value="yearly" label="Anual" description="Dos meses sin cargo." />
-      </RadioGroup>
+      <RadioGroup
+        label="Facturación"
+        defaultValue="monthly"
+        options={[
+          { value: "monthly", label: "Mensual", description: "Se renueva cada mes." },
+          { value: "quarterly", label: "Trimestral" },
+          { value: "yearly", label: "Anual", description: "Dos meses sin cargo." },
+        ]}
+      />
     </section>
   </main></BeezUIProvider>;
 }

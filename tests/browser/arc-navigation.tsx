@@ -4,11 +4,6 @@ import { createRoot } from "react-dom/client";
 import {
   BeezUIProvider,
   Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
   Tabs,
   TabsContent,
   TabsList,
@@ -22,8 +17,8 @@ const SECTIONS = ["Resumen", "Actividad", "Miembros"] as const;
 /** Enough tabs to overflow a phone-width list, so the active one must scroll into view. */
 const MANY_SECTIONS = Array.from({ length: 12 }, (_, index) => `Sección ${index + 1}`);
 
-/** Pages of the stateful pagination. */
-const PAGES = [1, 2, 3, 4, 5];
+/** Pages of both paginations: more than the five page window, so the window shifts. */
+const PAGE_COUNT = 9;
 
 /** Tabs whose panels differ in height. */
 function PanelTabs() {
@@ -64,31 +59,23 @@ function OverflowTabs() {
   );
 }
 
-/** Pages through local state with arrows and numbers. */
+/** Pages through local state with arrow and number buttons. */
 function StatefulPagination() {
   const [page, setPage] = useState(1);
-  const go = (nextPage: number) => (event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
-    setPage(Math.min(Math.max(nextPage, 1), PAGES.length));
-  };
+  return <Pagination page={page} pageCount={PAGE_COUNT} onPageChange={setPage} />;
+}
+
+/** Pages through the URL hash with links, as a router-backed list would. */
+function LinkedPagination() {
+  const [page, setPage] = useState(1);
   return (
-    <Pagination>
-      <PaginationContent>
-        <PaginationItem>
-          <PaginationPrevious href="#anterior" onClick={go(page - 1)} />
-        </PaginationItem>
-        {PAGES.map((pageNumber) => (
-          <PaginationItem key={pageNumber}>
-            <PaginationLink href={`#pagina-${pageNumber}`} isActive={page === pageNumber} onClick={go(pageNumber)}>
-              {pageNumber}
-            </PaginationLink>
-          </PaginationItem>
-        ))}
-        <PaginationItem>
-          <PaginationNext href="#siguiente" onClick={go(page + 1)} />
-        </PaginationItem>
-      </PaginationContent>
-    </Pagination>
+    <Pagination
+      label="Paginación enlazada"
+      page={page}
+      pageCount={PAGE_COUNT}
+      getHref={(pageNumber) => `#pagina-${pageNumber}`}
+      onPageChange={setPage}
+    />
   );
 }
 
@@ -131,6 +118,9 @@ createRoot(document.getElementById("root")!).render(
       </section>
       <section>
         <StatefulPagination />
+      </section>
+      <section>
+        <LinkedPagination />
       </section>
     </main>
   </BeezUIProvider>,

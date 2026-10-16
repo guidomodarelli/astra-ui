@@ -28,7 +28,8 @@ test("preserves the default theme and shared interactions", async ({ page }) => 
   await page.getByRole("button", { name: /jueves, 10 de septiembre/i }).click();
   await expect(page.getByLabel("Día seleccionado")).toHaveText("10");
   await expect(page.getByText("Texto animado")).toBeVisible();
-  await expect(page.getByAltText("Perfil de prueba")).not.toBeVisible();
+  await expect(page.getByRole("img", { name: "Perfil de prueba" }).locator("img")).not.toBeVisible();
+  await expect(page.getByRole("img", { name: "Perfil de prueba" })).toContainText("PD");
   await page.getByRole("button", { name: "Abrir panel largo" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
@@ -48,8 +49,8 @@ test("activates Next adapters only through their optional entrypoint", async ({ 
   page.on("pageerror", error => errors.push(error.message));
   await page.goto(`${NEXT_ORIGIN}/`);
   await expect(page.getByLabel("Carga del servidor")).toBeVisible();
-  await expect(page.getByLabel("Carga del servidor")).toHaveAttribute("data-slot", "skeleton");
-  const image = page.getByRole("img", { name: "Avatar Next" });
+  await expect(page.getByRole("status", { name: "Carga del servidor" })).toHaveAttribute("data-slot", "skeleton-placeholder");
+  const image = page.getByRole("img", { name: "Avatar Next" }).locator("img");
   await expect(image).toBeVisible();
   await expect(image).toHaveAttribute("data-nimg", "1");
   await expect(page.getByText("GH", { exact: true })).toHaveCount(0);
@@ -79,7 +80,7 @@ test("uses TanStack navigation, Unpic images and the shared theme", async ({ pag
   page.on("pageerror", error => errors.push(error.message));
   await page.goto("/tanstack.html");
   await expect(page.getByRole("img", { name: "Avatar TanStack" })).toBeVisible();
-  await expect(page.getByRole("img", { name: "Avatar TanStack" })).not.toHaveAttribute("data-nimg");
+  await expect(page.getByRole("img", { name: "Avatar TanStack" }).locator("img")).not.toHaveAttribute("data-nimg");
   await page.getByRole("button", { name: "Alternar tema" }).click();
   await page.getByRole("menuitemradio", { name: "Oscuro" }).click();
   await expect(page.locator("html")).toHaveClass(/dark/);

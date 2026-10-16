@@ -1,13 +1,13 @@
-/** Demonstrates Avatar through its public component contract. */
+/** Demonstrates Avatar and AvatarGroup through their public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Avatar, AvatarImage, AvatarFallback, AvatarBadge } from "beez-ui";
+import { PlusIcon } from "lucide-react";
+import { Avatar, AvatarGroup } from "beez-ui";
 
 /** Editable inputs specific to this example. */
 type Args = {
+  name: string;
   src: string;
-  alt: string;
-  initials: string;
-  size: "default" | "sm" | "lg" | "xl";
+  size: "sm" | "md" | "lg" | "xl";
   status: "none" | "online" | "offline";
   showBadge: boolean;
 };
@@ -15,26 +15,22 @@ type Args = {
 const meta = {
   title: "Components/Avatar",
   args: {
+    name: "Gonzalo Herrera",
     src: "avatar.svg",
-    alt: "Perfil de ejemplo",
-    initials: "GH",
-    size: "default",
+    size: "md",
     status: "none",
     showBadge: false,
   },
   argTypes: {
+    name: {
+      control: "text",
+    },
     src: {
-      control: "text",
-    },
-    alt: {
-      control: "text",
-    },
-    initials: {
       control: "text",
     },
     size: {
       control: "select",
-      options: ["default", "sm", "lg", "xl"],
+      options: ["sm", "md", "lg", "xl"],
     },
     status: {
       control: "select",
@@ -45,14 +41,16 @@ const meta = {
     },
   },
   parameters: {
-    controls: { include: ["src", "alt", "initials", "size", "status", "showBadge"] },
+    controls: { include: ["name", "src", "size", "status", "showBadge"] },
   },
-  render: ({ src, alt, initials, size, status, showBadge }) => (
-    <Avatar size={size} status={status === "none" ? undefined : status}>
-      <AvatarImage src={src} alt={alt} />
-      <AvatarFallback>{initials}</AvatarFallback>
-      {showBadge && <AvatarBadge aria-label="Disponible" />}
-    </Avatar>
+  render: ({ name, src, size, status, showBadge }) => (
+    <Avatar
+      name={name}
+      src={src || undefined}
+      size={size}
+      status={status === "none" ? undefined : status}
+      badge={showBadge ? <PlusIcon aria-hidden="true" /> : undefined}
+    />
   ),
 } satisfies Meta<Args>;
 
@@ -62,4 +60,22 @@ export const Playground: Story = {
   args: {
     status: "online",
   },
+};
+
+/** Arc's avatar group: the members past `max` collapse into the +N chip. */
+export const Group: Story = {
+  render: ({ size }) => (
+    <AvatarGroup
+      label="Integrantes"
+      max={3}
+      size={size === "xl" ? "lg" : size}
+      members={[
+        { name: "Ana Núñez", src: "avatar.svg", status: "online" },
+        { name: "Lucía Paz" },
+        { name: "Tomás Gil" },
+        { name: "Sara Ruiz" },
+        { name: "Inés Ma" },
+      ]}
+    />
+  ),
 };

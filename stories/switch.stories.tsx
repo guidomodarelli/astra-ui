@@ -8,7 +8,6 @@ type Args = {
   label: string;
   checked: boolean;
   disabled: boolean;
-  size: "default" | "sm";
   inlineLabel: boolean;
 };
 
@@ -18,7 +17,6 @@ const meta = {
     label: "Recibir notificaciones",
     checked: false,
     disabled: false,
-    size: "default",
     inlineLabel: true,
   },
   argTypes: {
@@ -31,17 +29,13 @@ const meta = {
     disabled: {
       control: "boolean",
     },
-    size: {
-      control: "select",
-      options: ["default", "sm"],
-    },
     inlineLabel: {
       control: "boolean",
       description: "Pasa el texto en `label` (dentro del control) en lugar de un `Label` externo.",
     },
   },
   parameters: {
-    controls: { include: ["label", "checked", "disabled", "size", "inlineLabel"] },
+    controls: { include: ["label", "checked", "disabled", "inlineLabel"] },
   },
   render: function Render(args) {
     const [, updateArgs] = useArgs<Args>();
@@ -54,7 +48,6 @@ const meta = {
                 label={args.label}
                 checked={checked}
                 disabled={args.disabled}
-                size={args.size}
                 onCheckedChange={(checked) => setChecked(checked)}
               />
             );
@@ -64,7 +57,6 @@ const meta = {
                 id="story-switch"
                 checked={checked}
                 disabled={args.disabled}
-                size={args.size}
                 onCheckedChange={(checked) => setChecked(checked)}
               />
               <Label htmlFor="story-switch">{args.label}</Label>

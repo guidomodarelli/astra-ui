@@ -39,14 +39,14 @@ test("should spring the badge to the width of a longer label", async ({ page }) 
 });
 
 test("should pop the presence dot in and out of the avatar corner", async ({ page }) => {
-  const avatar = page.getByLabel("Ana");
+  const avatar = page.getByRole("img", { name: /^Ana(, En línea)?$/ });
   const toggle = page.getByRole("button", { name: "Cambiar presencia" });
 
   await toggle.click();
 
   const dot = avatar.locator('[data-slot="avatar-status"]');
   await expect(dot).toBeVisible();
-  await expect(avatar.getByText("En línea")).toBeAttached();
+  await expect(avatar).toHaveAccessibleName("Ana, En línea");
   // The dot pops in from a smaller scale, so its box is only measured once the spring has settled.
   await expect(dot).toHaveCSS("transform", "none", { timeout: SETTLE_TIMEOUT_MS });
   const [avatarBox, dotBox] = await Promise.all([avatar.boundingBox(), dot.boundingBox()]);
@@ -91,15 +91,57 @@ test("should float only the interactive card and zoom its media on hover", async
   await interactiveCard.hover();
 
   await expect(interactiveCard).toHaveCSS("translate", "0px -2px", { timeout: SETTLE_TIMEOUT_MS });
-  const zoom = page.getByLabel("Foto de la tribu").locator(":scope > div");
+  const zoom = page.getByRole("img", { name: "Foto de la tribu" }).locator("xpath=..");
   await expect(zoom).toHaveCSS("scale", "1.04", { timeout: SETTLE_TIMEOUT_MS });
+});
+
+test("should grow the quick look out of its card and hand focus back to the title when it closes", async ({ page }) => {
+  const card = page.getByRole("article", { name: "Tarjeta con vista rápida" });
+  const trigger = card.getByRole("button", { name: "Tribu de cocina" });
+  await expect(card.getByRole("status").locator(".sr-only")).toHaveText("Actualizada hace 2 horas");
+  const cardBox = (await card.boundingBox())!;
+
+  await trigger.click();
+
+  const quickLook = page.getByRole("dialog", { name: "Tribu de cocina" });
+  await expect(quickLook).toBeVisible();
+  await expect(quickLook).toHaveAccessibleDescription("Recetas de estación.");
+  await expect(quickLook.getByText("Encuentros los sábados.")).toBeVisible();
+  // The panel settles centered in the viewport, larger than the card it grew from and inside the viewport edges.
+  await expect
+    .poll(async () => {
+      const box = (await quickLook.boundingBox())!;
+      const viewport = page.viewportSize()!;
+      return box.width >= cardBox.width - 1 && box.x >= 0 && box.x + box.width <= viewport.width + 1;
+    }, { timeout: SETTLE_TIMEOUT_MS })
+    .toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.keyboard.press("Escape");
+  await expect(page.locator('[data-slot="card-quick-look"]')).toHaveCount(0, { timeout: SETTLE_TIMEOUT_MS });
+  await expect(trigger).toBeFocused();
+  // The pointer leaves the card, so its hover lift does not count as a shift left behind by the morph.
+  await page.mouse.move(0, 0);
+  await expect.poll(async () => Math.abs((await card.boundingBox())!.y - cardBox.y), { timeout: SETTLE_TIMEOUT_MS }).toBeLessThan(1);
+});
+
+test("should open and close the quick look with a plain fade when motion is reduced", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const trigger = page.getByRole("button", { name: "Tribu de cocina" });
+
+  await trigger.click();
+
+  const quickLook = page.getByRole("dialog", { name: "Tribu de cocina" });
+  await expect(quickLook).toBeVisible();
+  await quickLook.getByRole("button", { name: "Cerrar vista rápida" }).click();
+  await expect(page.locator('[data-slot="card-quick-look"]')).toHaveCount(0, { timeout: SETTLE_TIMEOUT_MS });
+  await expect(trigger).toBeFocused();
 });
 
 test("should collapse a dismissed alert so the content below closes the gap", async ({ page }) => {
   const marker = page.getByText("Debajo del aviso");
   const startTop = (await marker.boundingBox())!.y;
 
-  await page.getByRole("button", { name: "Descartar aviso", exact: true }).click();
+  await page.getByRole("button", { name: "Descartar aviso: Nueva versión disponible", exact: true }).click();
 
   await expect(page.getByText("Nueva versión disponible")).toHaveCount(0, { timeout: SETTLE_TIMEOUT_MS });
   const endTop = (await marker.boundingBox())!.y;
@@ -119,15 +161,20 @@ test("should lay out an alert action beside the dismiss button without overlap",
   await dismiss.click({ trial: true });
 });
 
-test("should size the group counter like the profile-size avatars beside it", async ({ page }) => {
-  const group = page.getByLabel("Equipo destacado");
+test("should size the group counter like its avatars and roll it up when someone joins", async ({ page }) => {
+  const group = page.getByRole("group", { name: "Equipo destacado" });
   const avatar = group.locator('[data-slot="avatar"]').first();
-  const counter = page.getByLabel("Tres personas más");
+  const counter = group.getByRole("img", { name: "2 equipo destacado más" });
 
   const [avatarBox, counterBox] = await Promise.all([avatar.boundingBox(), counter.boundingBox()]);
 
   expect(counterBox!.width).toBeCloseTo(avatarBox!.width, 0);
   expect(counterBox!.height).toBeCloseTo(avatarBox!.height, 0);
+  const groupWidth = (await group.boundingBox())!.width;
+  await page.getByRole("button", { name: "Sumar integrante" }).click();
+  await expect(group.getByRole("img", { name: "3 equipo destacado más" })).toHaveText("+3", { timeout: SETTLE_TIMEOUT_MS });
+  // Only the count changes: the stack keeps its width, since only `max` avatars render.
+  expect((await group.boundingBox())!.width).toBeCloseTo(groupWidth, 0);
 });
 
 test("should hand height and opacity back to the consumer once an alert has opened", async ({ page }) => {
@@ -139,7 +186,7 @@ test("should hand height and opacity back to the consumer once an alert has open
 });
 
 test("should keep the consumer overflow on a reveal before and after it moves", async ({ page }) => {
-  const reveal = page.getByLabel("Resumen con desplazamiento");
+  const reveal = page.getByTestId("scrolling-reveal").locator('[data-slot="skeleton-reveal"]');
   await expect(reveal).toHaveCSS("overflow-y", "auto");
 
   await page.getByRole("button", { name: "Alternar carga", exact: true }).click();
@@ -149,8 +196,8 @@ test("should keep the consumer overflow on a reveal before and after it moves", 
 });
 
 test("should keep a custom avatar badge and the presence dot in separate corners", async ({ page }) => {
-  for (const size of ["sm", "default", "lg", "xl"]) {
-    const avatar = page.getByLabel(`Avatar con insignia ${size}`);
+  for (const size of ["sm", "md", "lg", "xl"]) {
+    const avatar = page.getByRole("img", { name: `Avatar con insignia ${size}, En línea` });
     const [badgeBox, dotBox] = await Promise.all([
       avatar.locator('[data-slot="avatar-badge"]').boundingBox(),
       avatar.locator('[data-slot="avatar-status"]').boundingBox(),
@@ -162,7 +209,7 @@ test("should keep a custom avatar badge and the presence dot in separate corners
 });
 
 test("should keep a fixed reveal height from its class before and after loading", async ({ page }) => {
-  const reveal = page.getByLabel("Resumen de alto fijo");
+  const reveal = page.getByTestId("fixed-reveal").locator('[data-slot="skeleton-reveal"]');
   await expect(reveal).toHaveCSS("height", "160px");
 
   await page.getByRole("button", { name: "Alternar carga fija" }).click();

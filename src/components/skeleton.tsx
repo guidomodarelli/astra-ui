@@ -2,12 +2,13 @@
 
 /**
  * Arc's Skeleton (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): placeholders that reserve space while
- * content loads, with a calm, finite pulse that ripples down the blocks and rests after about 20 seconds. Besides the
- * bare block it renders Arc's composed placeholder (`lines`, `avatar`) and its reveal, which crossfades into the
- * content while the height springs to its new size (`loading` with children).
+ * content loads, with a calm, finite pulse that ripples down the blocks and rests after about 20 seconds. It draws
+ * Arc's placeholder of text lines and an optional avatar, and with children its reveal, which crossfades into the
+ * content while the height springs to its new size. Like Arc, it only draws lines and an avatar: other shapes are
+ * built by the consumer.
  */
 import { useEffect, useLayoutEffect, useRef } from "react"
-import type { ComponentProps, CSSProperties, ReactNode, Ref, RefObject } from "react"
+import type { CSSProperties, ReactNode, Ref, RefObject } from "react"
 import { AnimatePresence, animate, motion, useIsPresent } from "motion/react"
 import type { AnimationPlaybackControls, HTMLMotionProps } from "motion/react"
 
@@ -32,18 +33,19 @@ const blockClassName =
 /** Custom property that staggers each block's pulse. */
 type IndexedStyle = CSSProperties & { "--index"?: number }
 
-export type SkeletonProps = ComponentProps<"div"> & {
-  /** Draws Arc's composed placeholder with this many text lines, from 1 to 6. */
-  lines?: number
-  /** Adds a round avatar block before the lines of the composed placeholder. */
-  avatar?: boolean
-  /** Accessible name of the composed placeholder; defaults to "Cargando contenido". */
+export type SkeletonProps = {
+  /** Accessible name of the loading status; defaults to "Cargando contenido". */
   label?: string
-  /**
-   * Turns the skeleton into Arc's reveal: while true it shows the composed placeholder, and once false it crossfades
-   * into `children` while the height springs to the content's size.
-   */
+  /** Number of text lines, clamped to 1-6; defaults to 3. */
+  lines?: number
+  /** Adds a round avatar block before the lines. */
+  avatar?: boolean
+  /** Content to reveal once loading finishes; with children the placeholder crossfades into them. */
+  children?: ReactNode
+  /** Keeps the placeholder visible while true (the default). Only used together with `children`. */
   loading?: boolean
+  /** Classes for the outer element: the placeholder, or the reveal frame when there are children. */
+  className?: string
 }
 
 /**
@@ -102,14 +104,15 @@ function useMorphHeight(contentRef: RefObject<HTMLDivElement | null>, busy: bool
   }, [contentRef, reduceMotion])
 }
 
-type SkeletonPlaceholderProps = ComponentProps<"div"> & {
+type SkeletonPlaceholderProps = {
   lines: number
   avatar: boolean
   label: string
+  className?: string
 }
 
 /** Arc's composed placeholder: an optional avatar and a column of lines, announced once as a busy status. */
-function SkeletonPlaceholder({ lines, avatar, label, className, ...props }: SkeletonPlaceholderProps) {
+function SkeletonPlaceholder({ lines, avatar, label, className }: SkeletonPlaceholderProps) {
   const lineCount = Math.min(Math.max(Math.floor(lines), SKELETON_LINE_LIMITS.min), SKELETON_LINE_LIMITS.max)
   const firstLineIndex = avatar ? 1 : 0
   return (
@@ -119,7 +122,6 @@ function SkeletonPlaceholder({ lines, avatar, label, className, ...props }: Skel
       aria-label={label}
       aria-busy="true"
       className={cn("flex w-full min-w-0 items-start gap-(--space-4)", className)}
-      {...props}
     >
       {avatar ? (
         <span
@@ -159,25 +161,21 @@ function SkeletonBranch({ ref, ...props }: SkeletonBranchProps) {
   return <motion.div ref={ref} {...props} aria-hidden={isPresent ? undefined : true} inert={!isPresent || undefined} />
 }
 
-type SkeletonRevealProps = ComponentProps<"div"> & {
+type SkeletonRevealProps = {
   loading: boolean
   placeholder: ReactNode
+  children: ReactNode
+  className?: string
 }
 
 /** Arc's reveal: the placeholder crossfades into the content while the frame springs to the new height. */
-function SkeletonReveal({ loading, placeholder, children, className, style, ...props }: SkeletonRevealProps) {
+function SkeletonReveal({ loading, placeholder, children, className }: SkeletonRevealProps) {
   const reduceMotion = usePrefersReducedMotion()
   const contentRef = useRef<HTMLDivElement>(null)
   useMorphHeight(contentRef, loading, reduceMotion)
   const exitTransition = { duration: reduceMotion ? ARC_DURATION.instant : ARC_DURATION.fast }
   return (
-    <motion.div
-      data-slot="skeleton-reveal"
-      aria-busy={loading}
-      className={className}
-      {...(props as HTMLMotionProps<"div">)}
-      style={style}
-    >
+    <div data-slot="skeleton-reveal" aria-busy={loading} className={className}>
       <div ref={contentRef} className="relative flow-root">
         <AnimatePresence mode="popLayout" initial={false}>
           {loading ? (
@@ -209,30 +207,33 @@ function SkeletonReveal({ loading, placeholder, children, className, style, ...p
           )}
         </AnimatePresence>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
 /**
- * Reserves space while content loads. Without Arc's props it is a bare block sized by `className`; with `lines` or
- * `avatar` it draws Arc's composed placeholder; with `loading` it reveals `children` once loading finishes.
- * @param props - Optional placeholder shape, label and loading state, plus native div attributes.
- * @returns The placeholder, or the reveal frame when `loading` is set.
+ * Reserves space while content loads. Without children it draws Arc's placeholder, three text lines by default; with
+ * children it shows that placeholder while `loading` and then crossfades into them.
+ * @param props - Placeholder shape, accessible label, loading state and classes.
+ * @returns The placeholder, or the reveal frame when there are children.
  */
-function Skeleton({ lines, avatar, label = SKELETON_DEFAULT_LABEL, loading, className, children, ...props }: SkeletonProps) {
-  const shape = { lines: lines ?? SKELETON_DEFAULT_LINES, avatar: avatar ?? false, label }
-  if (loading !== undefined) {
-    return (
-      <SkeletonReveal loading={loading} placeholder={<SkeletonPlaceholder {...shape} />} className={className} {...props}>
-        {children}
-      </SkeletonReveal>
-    )
-  }
-  if (lines !== undefined || avatar) return <SkeletonPlaceholder {...shape} className={className} {...props} />
+function Skeleton({
+  label = SKELETON_DEFAULT_LABEL,
+  lines = SKELETON_DEFAULT_LINES,
+  avatar = false,
+  children,
+  loading = true,
+  className,
+}: SkeletonProps) {
+  if (children === undefined) return <SkeletonPlaceholder lines={lines} avatar={avatar} label={label} className={className} />
   return (
-    <div data-slot="skeleton" className={cn(blockClassName, className)} {...props}>
+    <SkeletonReveal
+      loading={loading}
+      placeholder={<SkeletonPlaceholder lines={lines} avatar={avatar} label={label} />}
+      className={className}
+    >
       {children}
-    </div>
+    </SkeletonReveal>
   )
 }
 

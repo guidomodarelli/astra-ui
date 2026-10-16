@@ -46,8 +46,7 @@ export const GLIDE_PRESETS = {
     containerSelector: '[role="tablist"]',
     attributes: ["data-state"],
     isActive: (item) => item.getAttribute("data-state") === "active",
-    surface: (container) =>
-      container.getAttribute("data-variant") === "line" ? "after" : "background",
+    surface: () => "background",
     // Arc glides the tab highlight and the current page mark with its morph spring.
     spring: ARC_SPRING_MORPH,
   },
@@ -93,34 +92,77 @@ interface Box {
   height: number;
 }
 
-/** Converts a viewport rectangle into the container's scrolling coordinate space. */
-function toContainerBox(container: HTMLElement, rect: Box): Box {
-  const origin = container.getBoundingClientRect();
+/** Laid-out size of the border box, unaffected by any transform on the element or its ancestors. */
+function layoutSize(element: HTMLElement): { width: number; height: number } {
+  const style = getComputedStyle(element);
+  const width = Number.parseFloat(style.width);
+  const height = Number.parseFloat(style.height);
+  if (!Number.isFinite(width) || !Number.isFinite(height)) {
+    return { width: element.offsetWidth, height: element.offsetHeight };
+  }
+  if (style.boxSizing === "border-box") return { width, height };
+  const sum = (...values: string[]) =>
+    values.reduce((total, value) => total + (Number.parseFloat(value) || 0), 0);
   return {
-    left: rect.left - origin.left - container.clientLeft + container.scrollLeft,
-    top: rect.top - origin.top - container.clientTop + container.scrollTop,
-    width: rect.width,
-    height: rect.height,
+    width:
+      width +
+      sum(style.paddingLeft, style.paddingRight, style.borderLeftWidth, style.borderRightWidth),
+    height:
+      height +
+      sum(style.paddingTop, style.paddingBottom, style.borderTopWidth, style.borderBottomWidth),
   };
 }
 
-/** Translation an item's own running entrance adds, read from its computed `matrix()`. */
-function inFlightTranslation(item: Element): { x: number; y: number } {
-  const values = /^matrix\(([^)]+)\)$/.exec(getComputedStyle(item).transform);
-  if (!values) return { x: 0, y: 0 };
+/**
+ * Converts a viewport rectangle into the container's own scrolling coordinate space. A container
+ * still scaling in (a menu or listbox entrance) paints everything inside it smaller, so painted
+ * distances are divided by that scale to land where absolute positioning places the copy.
+ */
+function toContainerBox(container: HTMLElement, rect: Box): Box {
+  const origin = container.getBoundingClientRect();
+  const layout = layoutSize(container);
+  const scaleX = layout.width > 0 && origin.width > 0 ? origin.width / layout.width : 1;
+  const scaleY = layout.height > 0 && origin.height > 0 ? origin.height / layout.height : 1;
+  return {
+    left: (rect.left - origin.left) / scaleX - container.clientLeft + container.scrollLeft,
+    top: (rect.top - origin.top) / scaleY - container.clientTop + container.scrollTop,
+    width: rect.width / scaleX,
+    height: rect.height / scaleY,
+  };
+}
+
+/** Scale and translation an item's own running entrance adds, read from its computed `matrix()`. */
+function inFlightTransform(item: Element) {
+  const style = getComputedStyle(item);
+  const values = /^matrix\(([^)]+)\)$/.exec(style.transform);
+  const [originX = 0, originY = 0] = style.transformOrigin.split(" ").map(Number.parseFloat);
+  if (!values) return { scaleX: 1, scaleY: 1, x: 0, y: 0, originX, originY };
   const parts = values[1]!.split(",").map(Number.parseFloat);
-  return { x: parts[4] ?? 0, y: parts[5] ?? 0 };
+  return {
+    scaleX: parts[0] || 1,
+    scaleY: parts[3] || 1,
+    x: parts[4] ?? 0,
+    y: parts[5] ?? 0,
+    originX,
+    originY,
+  };
 }
 
 /**
- * Measures the highlight: the item box, or its positioned `::after` bar for line variants.
- * An item still sliding into place (staggered Select options) is measured where it will
- * settle, so the highlight does not land offset and jump when the entrance ends.
+ * Measures the highlight in the container's coordinates: the item box, or its positioned `::after`
+ * bar for line variants. An item still entering (Select options settle from a slight scale) is
+ * measured where it will rest, so the highlight neither lands undersized nor jumps when it ends.
  */
-function highlightBox(item: Element, surface: GlideSurface): Box {
-  const box = item.getBoundingClientRect();
-  const offset = inFlightTranslation(item);
-  const rect = { left: box.left - offset.x, top: box.top - offset.y, width: box.width, height: box.height };
+function highlightBox(container: HTMLElement, item: Element, surface: GlideSurface): Box {
+  const painted = toContainerBox(container, item.getBoundingClientRect());
+  const motion = inFlightTransform(item);
+  // The entrance scales around the transform origin, so the resting corner sits that far back.
+  const rect = {
+    left: painted.left - motion.x - motion.originX * (1 - motion.scaleX),
+    top: painted.top - motion.y - motion.originY * (1 - motion.scaleY),
+    width: painted.width / motion.scaleX,
+    height: painted.height / motion.scaleY,
+  };
   if (surface === "background") return rect;
   const pseudo = getComputedStyle(item, "::after");
   return {
@@ -252,15 +294,15 @@ export function attachGlideIndicator(
   /** Starts, or redirects, the glide from the previous highlight to the new active item. */
   function glide(from: HTMLElement, to: HTMLElement) {
     const surface = preset.surface(container);
-    const origin = overlay
-      ? overlay.getBoundingClientRect()
-      : highlightBox(from, surface);
+    const start = overlay
+      ? toContainerBox(container, overlay.getBoundingClientRect())
+      : highlightBox(container, from, surface);
     settle();
     // The previous item drops its highlight instantly: the copy is what leaves it.
     freezeTransitions(from)();
     // Read the target's settled paint before any transition has a chance to start.
     const thawTarget = freezeTransitions(to);
-    const destination = toContainerBox(container, highlightBox(to, surface));
+    const destination = highlightBox(container, to, surface);
     const paint = highlightPaint(to, surface);
     if (destination.width === 0 || destination.height === 0) {
       thawTarget();
@@ -281,7 +323,6 @@ export function attachGlideIndicator(
       zIndex: "-1",
       margin: "0",
     });
-    const start = toContainerBox(container, origin);
     container.prepend(overlay);
     releaseTarget = hideTarget(to, surface, thawTarget);
     animation = animate(

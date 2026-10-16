@@ -7,8 +7,6 @@ import {
   Dialog,
   DialogTrigger,
   DialogContent,
-  DialogTitle,
-  DialogDescription,
   DialogClose,
   Select,
   SelectTrigger,
@@ -24,9 +22,7 @@ it("should remove a closing dialog even when it contains an unopened select", as
       <DialogTrigger asChild>
         <Button>Abrir formulario</Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogTitle>Datos</DialogTitle>
-        <DialogDescription>Elegí una opción.</DialogDescription>
+      <DialogContent title="Datos" description="Elegí una opción.">
         <Select>
           <SelectTrigger aria-label="Categoría">
             <SelectValue placeholder="Seleccionar" />
