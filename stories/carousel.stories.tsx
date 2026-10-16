@@ -6,6 +6,7 @@ import {
   CarouselItem,
   CarouselPrevious,
   CarouselNext,
+  CarouselIndicators,
 } from "beez-ui";
 
 /** Editable inputs specific to this example. */
@@ -13,6 +14,7 @@ type Args = {
   orientation: "horizontal" | "vertical";
   loop: boolean;
   slides: number;
+  indicators: boolean;
 };
 const meta = {
   title: "Components/Carousel",
@@ -20,6 +22,7 @@ const meta = {
     orientation: "horizontal",
     loop: false,
     slides: 4,
+    indicators: true,
   },
   argTypes: {
     orientation: {
@@ -37,9 +40,12 @@ const meta = {
         step: 1,
       },
     },
+    indicators: {
+      control: "boolean",
+    },
   },
-  parameters: { controls: { include: ["orientation", "loop", "slides"] } },
-  render: ({ orientation, loop, slides }) => (
+  parameters: { controls: { include: ["orientation", "loop", "slides", "indicators"] } },
+  render: ({ orientation, loop, slides, indicators }) => (
     <Carousel
       key={`${orientation}-${loop}`}
       orientation={orientation}
@@ -59,6 +65,7 @@ const meta = {
       </CarouselContent>
       <CarouselPrevious />
       <CarouselNext />
+      {indicators ? <CarouselIndicators /> : null}
     </Carousel>
   ),
 } satisfies Meta<Args>;

@@ -63,6 +63,7 @@ test("should unfold the alert dialog from its center and keep its actions workin
 });
 
 test("should reveal popovers and hover cards from their trigger", async ({ page }) => {
+  // Arc's floating layers travel and scale from their trigger and fade; they no longer clip.
   const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
   await page.getByRole("button", { name: "Ver filtros" }).click();
@@ -70,7 +71,7 @@ test("should reveal popovers and hover cards from their trigger", async ({ page 
   await expect(popover).toBeVisible();
   await expect
     .poll(() => motion.properties({ slot: "popover-content" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform", "clipPath"]));
+    .toEqual(expect.arrayContaining(["opacity", "transform"]));
   await expectSettled(popover);
   await page.keyboard.press("Escape");
   await expect(page.getByText("Filtros disponibles")).toHaveCount(0);
@@ -80,7 +81,7 @@ test("should reveal popovers and hover cards from their trigger", async ({ page 
   await expect(card).toBeVisible();
   await expect
     .poll(() => motion.properties({ slot: "hover-card-content" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform", "clipPath"]));
+    .toEqual(expect.arrayContaining(["opacity", "transform"]));
   await expectSettled(page.locator("[data-slot=hover-card-content]"));
 });
 
@@ -111,16 +112,47 @@ test("should open a submenu with motion and glide inside it", async ({ page }) =
 });
 
 test("should press radios and pop their dot on selection", async ({ page }) => {
-  const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
   const yearly = page.getByRole("radio", { name: "Anual" });
-  await yearly.click();
-  await expect(yearly).toBeChecked();
+  const dot = yearly.locator("[data-slot=radio-group-indicator]");
+  await expect(dot).toHaveCSS("opacity", "0");
+  // Held down, the mark dips and previews a faint dot before anything is chosen. The press waits for the mark to stop
+  // moving, since a busy page can still shift layout around it.
   await expect
-    .poll(() => motion.properties({ slot: "radio-group-indicator" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform"]));
+    .poll(async () => {
+      const before = JSON.stringify(await yearly.boundingBox());
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      return before === JSON.stringify(await yearly.boundingBox());
+    })
+    .toBe(true);
+  const pressBox = (await yearly.boundingBox())!;
+  await page.mouse.move(pressBox.x + pressBox.width / 2, pressBox.y + pressBox.height / 2);
+  await page.mouse.down();
+  await expect.poll(() => yearly.evaluate((mark) => getComputedStyle(mark).scale)).toBe("0.88");
+  await expect
+    .poll(() => yearly.evaluate((mark) => Number(getComputedStyle(mark, "::before").opacity)))
+    .toBeCloseTo(0.22, 2);
+  await expect(yearly).not.toBeChecked();
+  // Reads the dot's scale at the very moment the radio reports the new choice, before any frame can advance it.
+  await dot.evaluate((element) => {
+    const observer = new MutationObserver(() => {
+      if (element.getAttribute("data-state") !== "checked") return;
+      const transform = getComputedStyle(element).transform;
+      Object.assign(window, { __dotScaleOnCheck: transform === "none" ? 1 : new DOMMatrixReadOnly(transform).a });
+      observer.disconnect();
+    });
+    observer.observe(element, { attributes: true, attributeFilter: ["data-state"] });
+  });
+  // Releases over where the mark is now: a busy page can still shift layout while the button is held.
+  const releaseBox = (await yearly.boundingBox())!;
+  await page.mouse.move(releaseBox.x + releaseBox.width / 2, releaseBox.y + releaseBox.height / 2);
+  await page.mouse.up();
+  await expect(yearly).toBeChecked();
   await expectSettled(yearly);
-  await expectSettled(page.locator("[data-slot=radio-group-indicator]"));
+  await expectSettled(dot);
+  // The new dot springs up from its smaller hidden scale to full size instead of appearing at full size.
+  const dotScaleOnCheck = await page.evaluate(() => (window as unknown as { __dotScaleOnCheck: number }).__dotScaleOnCheck);
+  expect(dotScaleOnCheck).toBeCloseTo(0.4, 2);
 });
 
 test("should shake the whole input group and textarea when they turn invalid", async ({
@@ -184,23 +216,39 @@ test("should keep long selects responsive and blur only the first options", asyn
 });
 
 test("should not jump a switch thumb that was hidden when the page loaded", async ({ page }) => {
-  const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
   await page.getByRole("button", { name: "Mostrar preferencia" }).click();
   const toggle = page.getByRole("switch", { name: "Avisos por correo" });
   await expect(toggle).toBeVisible();
   const thumb = page.locator("#catalog-switch [data-slot=switch-thumb]");
-  const uncheckedLeft = (await thumb.boundingBox())!.x;
+  // Positions are read against the track, so a page that still shifts around the switch cannot skew them.
+  const offsetInTrack = () =>
+    thumb.evaluate((element) => {
+      const track = element.closest("[data-slot=switch-track]")!;
+      return element.getBoundingClientRect().left - track.getBoundingClientRect().left;
+    });
+  const uncheckedOffset = await offsetInTrack();
+  // Reads the thumb's offset at the very moment the switch reports the new state, before any frame can advance it.
+  await thumb.evaluate((element) => {
+    const track = element.closest("[data-slot=switch-track]")!;
+    const observer = new MutationObserver(() => {
+      if (element.getAttribute("data-state") !== "checked") return;
+      Object.assign(window, { __thumbOffsetOnCheck: element.getBoundingClientRect().left - track.getBoundingClientRect().left });
+      observer.disconnect();
+    });
+    observer.observe(element, { attributes: true, attributeFilter: ["data-state"] });
+  });
   await toggle.click();
   await expect(toggle).toBeChecked();
-  // The glide starts where the thumb was, never from the track's left edge beyond it.
+  // Arc's thumb rests at the far end of the track: 18px of travel, held by its transform.
+  await expect.poll(async () => (await offsetInTrack()) - uncheckedOffset).toBeCloseTo(18, 0);
   await expect
-    .poll(() => motion.properties({ slot: "switch-thumb" }))
-    .toContain("transform");
-  await expect(thumb).toHaveCSS("transform", "none");
-  expect((await thumb.boundingBox())!.x).toBeGreaterThan(uncheckedLeft);
+    .poll(() => thumb.evaluate((element) => new DOMMatrixReadOnly(getComputedStyle(element).transform).e))
+    .toBeCloseTo(18, 0);
+  // The glide starts where the thumb was painted, never from the track's edge beyond it, and travels from there.
+  const offsetOnCheck = await page.evaluate(() => (window as unknown as { __thumbOffsetOnCheck: number }).__thumbOffsetOnCheck);
+  expect(offsetOnCheck).toBeCloseTo(uncheckedOffset, 0);
 });
-
 test("should glide the underline of line tabs and restore it", async ({ page }) => {
   const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");

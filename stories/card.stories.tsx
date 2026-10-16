@@ -7,6 +7,7 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
+  CardMedia,
   Button,
 } from "beez-ui";
 
@@ -17,6 +18,7 @@ type Args = {
   content: string;
   size: "default" | "sm";
   footer: boolean;
+  media: boolean;
 };
 
 const meta = {
@@ -27,6 +29,7 @@ const meta = {
     content: "Hay tres tareas pendientes de revisión.",
     size: "default",
     footer: true,
+    media: false,
   },
   argTypes: {
     title: {
@@ -45,14 +48,22 @@ const meta = {
     footer: {
       control: "boolean",
     },
+    media: {
+      control: "boolean",
+    },
   },
   parameters: {
     controls: {
-      include: ["title", "description", "content", "size", "footer"],
+      include: ["title", "description", "content", "size", "footer", "media"],
     },
   },
-  render: ({ title, description, content, size, footer }) => (
+  render: ({ title, description, content, size, footer, media }) => (
     <Card className="StoryCard" size={size}>
+      {media && (
+        <CardMedia>
+          <img src="avatar.svg" alt="" />
+        </CardMedia>
+      )}
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>

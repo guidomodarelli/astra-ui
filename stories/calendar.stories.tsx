@@ -11,6 +11,7 @@ type Args = {
   showOutsideDays: boolean;
   captionLayout: "label" | "dropdown";
   weekStartsOn: 0 | 1;
+  showToday: boolean;
 };
 const meta = {
   title: "Components/Calendar",
@@ -21,6 +22,7 @@ const meta = {
     showOutsideDays: true,
     captionLayout: "label",
     weekStartsOn: 1,
+    showToday: true,
   },
   argTypes: {
     selected: {
@@ -48,6 +50,9 @@ const meta = {
       control: "select",
       options: [0, 1],
     },
+    showToday: {
+      control: "boolean",
+    },
   },
   parameters: {
     controls: {
@@ -58,6 +63,7 @@ const meta = {
         "showOutsideDays",
         "captionLayout",
         "weekStartsOn",
+        "showToday",
       ],
     },
   },
@@ -85,6 +91,7 @@ const meta = {
               showOutsideDays={args.showOutsideDays}
               captionLayout={args.captionLayout}
               weekStartsOn={args.weekStartsOn}
+              showToday={args.showToday}
             />
           );
         }}

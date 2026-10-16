@@ -13,7 +13,7 @@ const meta = {
   args: {
     content: "Guardá los cambios pendientes",
     side: "top",
-    sideOffset: 6,
+    sideOffset: 8,
   },
   argTypes: {
     content: {
@@ -47,3 +47,11 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Playground: Story = {};
+/** Arc's shorthand: the only child becomes the trigger, without a provider around it. */
+export const Shorthand: Story = {
+  render: ({ content, side }) => (
+    <Tooltip content={content} side={side}>
+      <Button variant="secondary">Pasá el cursor o enfocá</Button>
+    </Tooltip>
+  ),
+};

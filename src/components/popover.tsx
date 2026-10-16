@@ -1,11 +1,17 @@
 "use client"
 
+/**
+ * Arc's Popover (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): a raised panel with Arc's panel radius
+ * and floating shadow that starts a few pixels toward its trigger and settles on a spring, leaving faster than it
+ * arrives. It keeps the Radix composition and adds Arc's `PopoverClose`.
+ */
 import * as React from "react"
 import { Popover as PopoverPrimitive } from "radix-ui"
 
-import { MotionSlot } from "../motion/motion-slot.js"
+import { ArcFloatingSlot } from "../motion/arc-floating-slot.js"
 import { MotionPresence, MotionOpenProvider, useMotionOpenState } from "../motion/presence.js"
 import { cn } from "../lib/utils.js"
+import { POPOVER_COLLISION_PADDING_PX, POPOVER_MOTION, POPOVER_SIDE_OFFSET_PX } from "../constants/popover.js"
 
 function Popover({
   ...props
@@ -21,30 +27,50 @@ function PopoverTrigger({
   return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
 }
 
+/** Closes the popover that contains it, such as a "Listo" or "Cancelar" button inside the panel. */
+function PopoverClose({
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Close>) {
+  return <PopoverPrimitive.Close data-slot="popover-close" {...props} />
+}
+
+/** Every popover enters and leaves on the same path. */
+function resolvePopoverMotion() {
+  return POPOVER_MOTION
+}
+
 /**
- * Renders floating details with compact padding and spacing.
- * @param props - Primitive properties and optional consumer overrides.
- * @returns The styled primitive with its original interaction contract.
+ * Renders Arc's panel: raised surface, hairline border, panel radius and floating shadow, kept inside the viewport.
+ * @param props - Radix content properties. `align` defaults to `center`, `sideOffset` to 6px and `collisionPadding`
+ *   to 10px.
+ * @returns The portaled panel.
  */
 function PopoverContent({
   className,
   align = "center",
-  sideOffset = 4,
+  sideOffset = POPOVER_SIDE_OFFSET_PX,
+  collisionPadding = POPOVER_COLLISION_PADDING_PX,
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Content>) {
   return (
-    <PopoverPrimitive.Portal forceMount><MotionPresence scope="popover" forceMount={props.forceMount}>
-      <MotionSlot kind="surface"><PopoverPrimitive.Content forceMount
-        data-slot="popover-content"
-        align={align}
-        sideOffset={sideOffset}
-        className={cn(
-          "z-50 flex w-72 origin-(--radix-popover-content-transform-origin) flex-col gap-2.5 rounded-lg bg-popover p-2.5 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-hidden ",
-          className
-        )}
-        {...props}
-      /></MotionSlot>
-    </MotionPresence></PopoverPrimitive.Portal>
+    <PopoverPrimitive.Portal forceMount>
+      <MotionPresence scope="popover" forceMount={props.forceMount}>
+        <ArcFloatingSlot motion={resolvePopoverMotion}>
+          <PopoverPrimitive.Content
+            forceMount
+            data-slot="popover-content"
+            align={align}
+            sideOffset={sideOffset}
+            collisionPadding={collisionPadding}
+            className={cn(
+              "z-50 flex w-72 max-w-[calc(100vw-20px)] origin-(--radix-popover-content-transform-origin) flex-col gap-2.5 rounded-(--radius-panel) border border-border bg-surface-raised p-(--space-4) text-sm leading-(--leading-body) text-foreground shadow-(--shadow-floating) outline-hidden",
+              className
+            )}
+            {...props}
+          />
+        </ArcFloatingSlot>
+      </MotionPresence>
+    </PopoverPrimitive.Portal>
   )
 }
 
@@ -95,6 +121,7 @@ function PopoverDescription({
 export {
   Popover,
   PopoverAnchor,
+  PopoverClose,
   PopoverContent,
   PopoverDescription,
   PopoverHeader,
