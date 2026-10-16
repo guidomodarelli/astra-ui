@@ -14,7 +14,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "./dropdown-menu.js";
+} from "./primitives/dropdown-menu.js";
 import { MILLISECONDS_PER_SECOND, REDUCED_MOTION_QUERY } from "../constants/motion.js";
 import { cn } from "../lib/utils.js";
 

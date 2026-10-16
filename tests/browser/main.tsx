@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { createRoot } from "react-dom/client";
-import { Alert, AnimatedThemeToggler, Avatar, BeezUIProvider, Button, Calendar, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Highlighter, InputGroup, InputGroupInput, InputGroupAddon, RadioGroup, Sheet, SheetTrigger, SheetContent, SheetTitle, SheetDescription, ThemedToaster, toast, TypingAnimation } from "beez-ui";
+import { Alert, AnimatedThemeToggler, Avatar, BeezUIProvider, Button, Calendar, DataTable, DropdownMenu, Highlighter, InputGroup, InputGroupInput, InputGroupAddon, RadioGroup, Sheet, SheetTrigger, SheetContent, SheetTitle, SheetDescription, ThemedToaster, toast, TypingAnimation } from "beez-ui";
 import "./styles.css";
 
 const ROWS = [{ name: "Luz", amount: 20 }, { name: "Internet", amount: 40 }];
@@ -18,13 +18,15 @@ function BrowserExample() {
     <h1>Componentes compartidos</h1>
     <div className="controls"><AnimatedThemeToggler /><Button onClick={() => toast.success("Cambios guardados")}>Notificar</Button><Avatar name="Perfil de prueba" src="/missing-avatar.png" /></div>
     <section>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild><Button size="sm" aria-label="Acciones de envío">⋮</Button></DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={() => setSelectedAction("Editar datos de envío")}><Pencil /><span>Editar datos de envío</span></DropdownMenuItem>
-          <DropdownMenuItem variant="destructive"><Trash2 /><span>Eliminar datos de envío</span></DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <DropdownMenu
+        label="Acciones de envío"
+        trigger={<Button size="sm" aria-label="Acciones de envío">⋮</Button>}
+        align="end"
+        items={[
+          { label: "Editar datos de envío", icon: <Pencil />, onSelect: () => setSelectedAction("Editar datos de envío") },
+          { label: "Eliminar datos de envío", icon: <Trash2 />, destructive: true },
+        ]}
+      />
       <output aria-label="Acción seleccionada">{selectedAction}</output>
     </section>
     <section><Alert title="Listo para usar en React" /><Avatar name="Avatar nativo" src="/avatar.svg" /></section>

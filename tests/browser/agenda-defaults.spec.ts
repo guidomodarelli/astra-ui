@@ -23,16 +23,14 @@ test("should retain compact controls and disabled textarea feedback", async ({ p
   await expect(page.getByRole("dialog", { name: "Detalle" })).toHaveCSS("padding", "16px");
 });
 
-test("should render compact action menus and readable submenus", async ({ page }) => {
+test("should render compact, readable action menus", async ({ page }) => {
   await page.getByRole("button", { name: "Abrir acciones" }).click();
   // Arc menu rows are 36px tall with the text 11px from the edge, instead of padding-driven compact rows.
   const editItem = page.getByRole("menuitem", { name: "Editar", exact: true });
   await expect(editItem).toHaveCSS("min-height", "36px");
   await expect(editItem).toHaveCSS("padding-left", "11px");
   expect(await editItem.evaluate(element => (element as HTMLElement).offsetHeight)).toBe(36);
-  await page.getByRole("menuitem", { name: "Carpetas" }).click();
-  await expect(page.getByRole("menuitem", { name: "Archivo" })).toBeVisible();
-  await expect(page.locator('[data-slot="dropdown-menu-sub-content"]')).toHaveCSS("min-width", "192px");
+  await expect(page.getByRole("menu", { name: "Abrir acciones" })).toHaveCSS("min-width", "192px");
 });
 
 for (const kind of ["dialog", "alert-dialog"] as const) {

@@ -11,7 +11,7 @@ import {
 } from "../lib/rich-text/link-markdown-constants.js";
 import type { RichLinkEditorController } from "../hooks/use-rich-link-editor.js";
 import { ControlButton } from "./control-button.js";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover.js";
+import { Popover, PopoverContent, PopoverTrigger } from "./primitives/popover.js";
 
 const BUTTON_TYPE = "button";
 const BUTTON_VARIANT = {

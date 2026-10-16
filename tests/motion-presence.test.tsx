@@ -9,10 +9,6 @@ import {
   DialogContent,
   DialogClose,
   Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
 } from "beez-ui";
 
 it("should remove a closing dialog even when it contains an unopened select", async () => {
@@ -23,14 +19,7 @@ it("should remove a closing dialog even when it contains an unopened select", as
         <Button>Abrir formulario</Button>
       </DialogTrigger>
       <DialogContent title="Datos" description="Elegí una opción.">
-        <Select>
-          <SelectTrigger aria-label="Categoría">
-            <SelectValue placeholder="Seleccionar" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="one">Primera</SelectItem>
-          </SelectContent>
-        </Select>
+        <Select label="Categoría" placeholder="Seleccionar" options={[{ value: "one", label: "Primera" }]} />
         <DialogClose asChild>
           <Button>Cerrar formulario</Button>
         </DialogClose>

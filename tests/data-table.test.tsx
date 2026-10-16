@@ -686,4 +686,25 @@ describe("DataTable", () => {
       screen.getByRole("combobox", { name: "Filtro unificado" }),
     ).toHaveValue("carpeta:casa");
   });
+
+  it("renders extra items at the top of the column menu and runs them", async () => {
+    const user = userEvent.setup();
+    const onCompactView = vi.fn();
+    const columns: ColumnDef<TableRow>[] = [{ accessorKey: "label", header: "Estado" }];
+    render(
+      <DataTable
+        columns={columns}
+        data={[{ label: "Luz", paid: true }]}
+        emptyMessage="Sin datos"
+        showColumnVisibilityToggle
+        columnVisibilityMenuExtraItems={[{ label: "Vista compacta", onSelect: onCompactView }]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Columnas" }));
+    const menuItems = screen.getAllByRole("menuitem");
+    expect(menuItems[0]).toHaveTextContent("Vista compacta");
+    await user.click(menuItems[0]!);
+    expect(onCompactView).toHaveBeenCalledTimes(1);
+  });
 });

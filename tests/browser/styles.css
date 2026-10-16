@@ -8,6 +8,7 @@ h1 { font-family: var(--font-display); font-size: 2rem; }
 .motion-skeleton { width: 12rem; height: 1rem; margin-block: 1rem; }
 .summary-card { max-width: 20rem; }
 .narrow-field { max-width: 20rem; }
+.overlay-select { width: 12rem; }
 .clipping-scroller { height: 6rem; overflow: auto; transform: translateZ(0); border: 1px solid var(--border); }
 .clipping-scroller-content { height: 12rem; padding: 0.5rem; }
 .sheet-body { padding-inline: 1rem; }

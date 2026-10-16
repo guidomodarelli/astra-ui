@@ -13,10 +13,11 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "./dropdown-menu.js";
+} from "./primitives/dropdown-menu.js";
+import { DropdownMenuItems, type DropdownItem } from "./primitives/dropdown-menu-items.js";
 import { Link } from "./link.js";
 import { useOptionalSidebarPanel } from "./sidebar-panel-context.js";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip.js";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./primitives/tooltip.js";
 
 export type AccountMenuStatus = "authenticated" | "unauthenticated";
 
@@ -83,8 +84,8 @@ export interface AccountMenuProps {
   align?: "start" | "center" | "end";
   side?: "top" | "right" | "bottom" | "left";
   sideOffset?: number;
-  /** Extra items rendered between the identity header and the session action. */
-  children?: ReactNode;
+  /** Extra rows rendered between the identity header and the session action, as in `DropdownMenu`'s `items`. */
+  items?: DropdownItem[];
 }
 
 interface AccountAvatarProps {
@@ -150,7 +151,7 @@ export function AccountMenu({
   align = "end",
   side = "bottom",
   sideOffset = 4,
-  children,
+  items,
 }: AccountMenuProps) {
   const resolvedLabels = { ...ACCOUNT_MENU_DEFAULT_LABELS, ...labels };
   const isAuthenticated = status === "authenticated";
@@ -204,7 +205,7 @@ export function AccountMenu({
           </span>
         </div>
         <DropdownMenuSeparator />
-        {children}
+        {items ? <DropdownMenuItems items={items} /> : null}
         {isAuthenticated ? (
           <DropdownMenuItem className={classNames?.item} disabled={signOutDisabled} onSelect={() => void onSignOut()}>
             <LogOutIcon aria-hidden="true" />

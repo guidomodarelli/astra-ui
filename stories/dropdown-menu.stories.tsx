@@ -1,20 +1,8 @@
-/** Demonstrates DropdownMenu as a complete, interactive composition. */
+/** Demonstrates Arc's closed DropdownMenu: items are data, with beez-ui's checkbox, radio and link rows. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import {
-  Button,
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuItem,
-  DropdownMenuCheckboxItem,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-  DropdownMenuShortcut,
-} from "beez-ui";
-import { PencilIcon, Trash2Icon } from "lucide-react";
+import { Button, DropdownMenu } from "beez-ui";
+import { EllipsisIcon, ListFilterIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { useState } from "react";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */
@@ -64,41 +52,31 @@ const meta = {
         {({ open, checked }, { open: setOpen, checked: setChecked }) => {
           return (
             <DropdownMenu
+              label="Acciones del registro"
               open={open}
               onOpenChange={(open) => setOpen(open)}
-            >
-              <DropdownMenuTrigger asChild>
-                <Button variant="secondary">Abrir acciones</Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align={args.align}>
-                <DropdownMenuLabel>Registro</DropdownMenuLabel>
-                <DropdownMenuItem disabled={args.disabled}>
-                  <PencilIcon aria-hidden="true" />
-                  Editar datos
-                  <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuCheckboxItem
-                  checked={checked}
-                  onCheckedChange={(checked) => setChecked(checked)}
-                >
-                  Mostrar detalles
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>Carpetas</DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuItem>Comprobantes</DropdownMenuItem>
-                    <DropdownMenuItem>Archivo histórico</DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant={args.destructive ? "destructive" : "default"}
-                >
-                  <Trash2Icon aria-hidden="true" />
-                  Eliminar registro
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              align={args.align}
+              items={[
+                {
+                  label: "Editar datos",
+                  icon: <PencilIcon />,
+                  disabled: args.disabled,
+                  trailing: "⌘E",
+                },
+                {
+                  label: "Mostrar detalles",
+                  checked,
+                  onSelect: () => setChecked(!checked),
+                },
+                { label: "Ver la guía", href: "#guia" },
+                {
+                  label: "Eliminar registro",
+                  icon: <Trash2Icon />,
+                  destructive: args.destructive,
+                  separatorBefore: true,
+                },
+              ]}
+            />
           );
         }}
       </LiveArgs>
@@ -108,3 +86,36 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const Playground: Story = {};
+/** A custom icon trigger: `label` names the menu while the button keeps its own accessible name. */
+export const CustomTrigger: Story = {
+  render: () => (
+    <DropdownMenu
+      label="Acciones de la fila"
+      trigger={
+        <Button variant="ghost" size="sm" aria-label="Más acciones">
+          <EllipsisIcon />
+        </Button>
+      }
+      align="end"
+      items={[{ label: "Duplicar" }, { label: "Archivar" }]}
+    />
+  ),
+};
+/** A single selection: rows with a `value` render as radio items. */
+export const Selection: Story = {
+  render: function Render() {
+    const [order, setOrder] = useState("recent");
+    return (
+      <DropdownMenu
+        label="Ordenar"
+        icon={<ListFilterIcon />}
+        selection={{ value: order, onValueChange: setOrder }}
+        items={[
+          { label: "Más recientes", value: "recent" },
+          { label: "Por nombre", value: "name" },
+          { label: "Por importe", value: "amount" },
+        ]}
+      />
+    );
+  },
+};

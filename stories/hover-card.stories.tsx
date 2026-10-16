@@ -1,12 +1,6 @@
-/** Demonstrates HoverCard as a complete, interactive composition. */
+/** Demonstrates Arc's closed HoverCard with the HoverCardProfile preset. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import {
-  Button,
-  HoverCard,
-  HoverCardTrigger,
-  HoverCardContent,
-  HoverCardProfile,
-} from "beez-ui";
+import { Button, HoverCard, HoverCardProfile } from "beez-ui";
 
 /** Editable inputs specific to this example. */
 type Args = {
@@ -14,7 +8,8 @@ type Args = {
   bio: string;
   openDelay: number;
   closeDelay: number;
-  side: "top" | "bottom";
+  side: "top" | "right" | "bottom" | "left";
+  align: "start" | "center" | "end";
 };
 const meta = {
   title: "Components/HoverCard",
@@ -24,6 +19,7 @@ const meta = {
     openDelay: 500,
     closeDelay: 140,
     side: "bottom",
+    align: "start",
   },
   argTypes: {
     name: {
@@ -50,18 +46,23 @@ const meta = {
     },
     side: {
       control: "select",
-      options: ["top", "bottom"],
+      options: ["top", "right", "bottom", "left"],
+    },
+    align: {
+      control: "select",
+      options: ["start", "center", "end"],
     },
   },
   parameters: {
-    controls: { include: ["name", "bio", "openDelay", "closeDelay", "side"] },
+    controls: { include: ["name", "bio", "openDelay", "closeDelay", "side", "align"] },
   },
-  render: ({ name, bio, openDelay, closeDelay, side }) => (
-    <HoverCard openDelay={openDelay} closeDelay={closeDelay}>
-      <HoverCardTrigger asChild>
-        <Button variant="ghost">@{name}</Button>
-      </HoverCardTrigger>
-      <HoverCardContent side={side}>
+  render: ({ name, bio, openDelay, closeDelay, side, align }) => (
+    <HoverCard
+      openDelay={openDelay}
+      closeDelay={closeDelay}
+      side={side}
+      align={align}
+      content={
         <HoverCardProfile
           name={name}
           role="Ingeniero de producto, Plataforma"
@@ -72,7 +73,9 @@ const meta = {
           ]}
           meta="Buenos Aires"
         />
-      </HoverCardContent>
+      }
+    >
+      <Button variant="ghost">@{name}</Button>
     </HoverCard>
   ),
 } satisfies Meta<Args>;

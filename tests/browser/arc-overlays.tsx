@@ -4,15 +4,12 @@ import {
   BeezUIProvider,
   Button,
   HoverCard,
-  HoverCardContent,
   HoverCardProfile,
-  HoverCardTrigger,
   Popover,
   PopoverClose,
   PopoverContent,
   PopoverTrigger,
   Tooltip,
-  TooltipProvider,
 } from "beez-ui";
 import "./styles.css";
 
@@ -22,14 +19,16 @@ function App() {
       <main>
         <h1>Capas flotantes</h1>
         <section className="controls">
-          <TooltipProvider>
-            <Tooltip content="Guardá los cambios pendientes">
-              <Button variant="secondary">Guardar</Button>
-            </Tooltip>
-            <Tooltip content="Copiar enlace">
-              <Button variant="secondary">Compartir</Button>
-            </Tooltip>
-          </TooltipProvider>
+          {/* Two tooltips without any provider: the skip window is shared at module level. */}
+          <Tooltip content="Guardá los cambios pendientes">
+            <Button variant="secondary">Guardar</Button>
+          </Tooltip>
+          <Tooltip content="Copiar enlace">
+            <Button variant="secondary">Compartir</Button>
+          </Tooltip>
+          <Tooltip content="Abre el historial" side="right">
+            <Button variant="secondary">Historial</Button>
+          </Tooltip>
         </section>
         <section className="controls">
           <Popover>
@@ -45,11 +44,12 @@ function App() {
           </Popover>
         </section>
         <section className="controls">
-          <HoverCard>
-            <HoverCardTrigger href="#ana">Ana Pérez</HoverCardTrigger>
-            <HoverCardContent>
+          <HoverCard
+            content={
               <HoverCardProfile name="Ana Pérez" role="Diseñadora de producto, Pagos" bio="Diseña flujos de cobro." />
-            </HoverCardContent>
+            }
+          >
+            <a href="#ana">Ana Pérez</a>
           </HoverCard>
         </section>
       </main>

@@ -225,17 +225,6 @@ test.describe("with motion", () => {
     await expect(page.locator("[data-glide-indicator]")).toHaveCount(0);
   });
 
-  test("should nudge the submenu chevron toward its open submenu", async ({ page }) => {
-    await page.goto("/polish.html");
-    await page.getByRole("button", { name: "Más acciones" }).click();
-    const trigger = page.getByRole("menuitem", { name: "Compartir" });
-    const chevron = trigger.locator('[data-slot="dropdown-menu-sub-trigger-icon"]');
-    await expect(chevron).toHaveCSS("translate", "none");
-    await trigger.press("ArrowRight");
-    await expect(page.getByRole("menuitem", { name: "Por enlace" })).toBeVisible();
-    await expect(chevron).toHaveCSS("translate", "2px");
-  });
-
   test("should keep the interactive card outline while its hover shadow lifts it", async ({ page }) => {
     await page.goto("/polish.html");
     const canHover = await page.evaluate(() => window.matchMedia("(hover: hover) and (pointer: fine)").matches);

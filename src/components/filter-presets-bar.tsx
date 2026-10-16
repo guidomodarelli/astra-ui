@@ -13,8 +13,8 @@ import { FilterQueryBar } from "./filter-query-bar.js";
 import type { FilterQualifierConfig } from "./filter-query-grammar.js";
 import { Input } from "./input.js";
 import { Label } from "./label.js";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover.js";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip.js";
+import { Popover, PopoverContent, PopoverTrigger } from "./primitives/popover.js";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./primitives/tooltip.js";
 
 /** A named, reusable query of the filter bar. */
 export interface FilterPreset {

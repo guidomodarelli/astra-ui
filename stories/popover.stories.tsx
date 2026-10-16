@@ -1,15 +1,6 @@
-/** Demonstrates Popover as a complete, interactive composition. */
+/** Demonstrates Arc's Popover composition with a close button inside the panel. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import {
-  Button,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverHeader,
-  PopoverTitle,
-  PopoverDescription,
-  PopoverClose,
-} from "beez-ui";
+import { Button, Popover, PopoverTrigger, PopoverContent, PopoverClose } from "beez-ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */
@@ -27,7 +18,7 @@ const meta = {
     title: "Información adicional",
     description: "Un detalle contextual sin abandonar la página.",
     side: "bottom",
-    align: "center",
+    align: "start",
   },
   argTypes: {
     open: {
@@ -61,11 +52,13 @@ const meta = {
               <PopoverTrigger asChild>
                 <Button variant="secondary">Ver detalle</Button>
               </PopoverTrigger>
-              <PopoverContent side={args.side} align={args.align}>
-                <PopoverHeader>
-                  <PopoverTitle>{args.title}</PopoverTitle>
-                  <PopoverDescription>{args.description}</PopoverDescription>
-                </PopoverHeader>
+              <PopoverContent side={args.side} align={args.align} aria-labelledby="popover-story-title">
+                <div style={{ display: "grid", gap: "0.125rem" }}>
+                  <h2 id="popover-story-title" style={{ margin: 0, fontSize: "0.875rem", fontWeight: 500 }}>
+                    {args.title}
+                  </h2>
+                  <p style={{ margin: 0, color: "var(--text-secondary)" }}>{args.description}</p>
+                </div>
                 <PopoverClose asChild>
                   <Button size="sm">Listo</Button>
                 </PopoverClose>

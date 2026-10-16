@@ -26,7 +26,7 @@ import {
 } from "../motion/arc-swap.js"
 import { useMorphWidth } from "../motion/use-morph-width.js"
 import { Button } from "./button.js"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./dropdown-menu.js"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./primitives/dropdown-menu.js"
 import { MorphText } from "./morph-text.js"
 
 export type { SplitButtonVariant } from "../constants/split-button.js"

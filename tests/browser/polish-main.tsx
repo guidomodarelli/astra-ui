@@ -9,12 +9,6 @@ import {
   Calendar,
   Card,
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
   FilterQueryBar,
   type FilterQualifierConfig,
   Pagination,
@@ -138,22 +132,11 @@ function PolishExamples() {
               <SheetDescription>Preferencias del panel.</SheetDescription>
             </SheetContent>
           </Sheet>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>Más acciones</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>Renombrar</DropdownMenuItem>
-              <DropdownMenuItem>Duplicar</DropdownMenuItem>
-              <DropdownMenuItem>Archivar</DropdownMenuItem>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>Compartir</DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem>Por enlace</DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <DropdownMenu
+            label="Más acciones"
+            trigger={<Button>Más acciones</Button>}
+            items={[{ label: "Renombrar" }, { label: "Duplicar" }, { label: "Archivar" }, { label: "Compartir" }]}
+          />
         </section>
       </main>
     </BeezUIProvider>
