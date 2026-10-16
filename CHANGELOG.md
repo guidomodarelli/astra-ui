@@ -4,6 +4,14 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+### Added
+
+- `beez-ui/motion-tokens` suma los presets de Arc que faltaban: `MOTION_TIMING.instant`, `MOTION_TIMING.standard`, `MOTION_TIMING.considered`, `MOTION_EASE_EXIT`, `MOTION_EASE_STANDARD`, `MOTION_EXIT_SCALE`, `MOTION_TOOLTIP_SCALE` y `MOTION_DIALOG_EXIT_DISTANCE`.
+
+### Changed
+
+- Los tokens de `beez-ui/motion-tokens` toman los valores de los presets de Arc y conservan sus nombres: los springs pasan a `snappy`, `smooth` o `morph` (expresados con `visualDuration` y `bounce` en lugar de `stiffness`, `damping` y `mass`), las duraciones y curvas usan las de Arc y la presión baja a 0.97.
+
 ## [2.6.2] - 2026-10-16
 
 ### Fixed
