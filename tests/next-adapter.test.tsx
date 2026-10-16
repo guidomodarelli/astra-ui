@@ -1,7 +1,7 @@
 /** Verifies the optional entrypoint using real Next.js and Base UI components. */
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { Avatar, PaginationNext } from "beez-ui";
+import { Avatar, Pagination } from "beez-ui";
 import { BeezUIProvider } from "beez-ui/next";
 
 describe("BeezUIProvider", () => {
@@ -22,8 +22,8 @@ describe("BeezUIProvider", () => {
   });
 
   it("should preserve navigation hrefs through the Next adapter", () => {
-    render(<BeezUIProvider><PaginationNext href="/page/2" text="Siguiente" /></BeezUIProvider>);
-    expect(screen.getByRole("link")).toHaveAttribute("href", "/page/2");
+    render(<BeezUIProvider><Pagination page={1} pageCount={2} getHref={(page) => `/page/${page}`} /></BeezUIProvider>);
+    expect(screen.getByRole("link", { name: "Ir a la página siguiente" })).toHaveAttribute("href", "/page/2");
   });
 });
 

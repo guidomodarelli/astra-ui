@@ -9,7 +9,7 @@ import { CircleCheck, Info, TriangleAlert, OctagonAlert, Loader } from "lucide-r
 
 /**
  * Renders shared notification styling using the consumer's resolved theme, on top of beez-ui's `Toaster`, so its
- * toasts stay usable from an open `Dialog`, `AlertDialog` or `Sheet`.
+ * toasts stay usable from an open `Dialog` (also in `alert` mode) or `Sheet`.
  */
 const ThemedToaster = ({ theme, className, ...props }: ToasterProps) => {
   const { resolvedTheme } = useTheme()

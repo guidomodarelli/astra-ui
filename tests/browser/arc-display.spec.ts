@@ -119,8 +119,9 @@ test("should grow the quick look out of its card and hand focus back to the titl
   await page.keyboard.press("Escape");
   await expect(page.locator('[data-slot="card-quick-look"]')).toHaveCount(0, { timeout: SETTLE_TIMEOUT_MS });
   await expect(trigger).toBeFocused();
-  const settledBox = (await card.boundingBox())!;
-  expect(Math.abs(settledBox.y - cardBox.y)).toBeLessThan(1);
+  // The pointer leaves the card, so its hover lift does not count as a shift left behind by the morph.
+  await page.mouse.move(0, 0);
+  await expect.poll(async () => Math.abs((await card.boundingBox())!.y - cardBox.y), { timeout: SETTLE_TIMEOUT_MS }).toBeLessThan(1);
 });
 
 test("should open and close the quick look with a plain fade when motion is reduced", async ({ page }) => {

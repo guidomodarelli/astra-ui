@@ -45,8 +45,8 @@ test.describe("with motion", () => {
   test("should glide the current page highlight and hand it back to the selected page", async ({ page }) => {
     const motion = await recordMotion(page);
     await page.goto("/polish.html");
-    const firstPage = page.getByRole("link", { name: "1", exact: true });
-    const thirdPage = page.getByRole("link", { name: "3", exact: true });
+    const firstPage = page.getByRole("link", { name: "Página 1" });
+    const thirdPage = page.getByRole("link", { name: "Página 3" });
     const activeBackground = await firstPage.evaluate((link) => getComputedStyle(link).backgroundColor);
     await expect(firstPage).toHaveAttribute("aria-current", "page");
     await thirdPage.click();
@@ -59,7 +59,7 @@ test.describe("with motion", () => {
     await page.mouse.move(0, 0);
     await thirdPage.blur();
     await expect(thirdPage).toHaveCSS("background-color", activeBackground);
-    expect(page.url()).not.toContain("#pagina-3");
+    await expect(page).toHaveURL(/#pagina-3$/);
   });
 
   test("should glide the filter suggestion highlight as the keyboard moves through it", async ({ page }) => {
@@ -310,8 +310,8 @@ test.describe("with reduced motion", () => {
     await expect(page.locator('[data-slot="calendar-month"]')).toContainText("febrero 2026");
     await page.getByRole("button", { name: "Cargar foto" }).click();
     await expect(page.getByRole("img", { name: "Foto de Ana" })).toBeVisible();
-    await page.getByRole("link", { name: "2", exact: true }).click();
-    await expect(page.getByRole("link", { name: "2", exact: true })).toHaveAttribute("aria-current", "page");
+    await page.getByRole("link", { name: "Página 2" }).click();
+    await expect(page.getByRole("link", { name: "Página 2" })).toHaveAttribute("aria-current", "page");
     expect(await motion.properties({ slot: "calendar-month" })).toEqual([]);
     expect(await motion.properties({ slot: "avatar-image" })).toEqual([]);
     expect(await motion.glides()).toEqual([]);

@@ -3,14 +3,11 @@ import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { useForm } from "react-hook-form";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+  Alert,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTrigger,
   BeezUIProvider,
   Button,
   DropdownMenu,
@@ -66,7 +63,7 @@ import "./styles.css";
 const SECTIONS = ["Inicio", "Reportes", "Ajustes"] as const;
 const MANY_COUNTRIES = Array.from({ length: 40 }, (_, index) => `País ${index + 1}`);
 
-/** Validates a required name so the form message and invalid shake appear on submit. */
+/** Validates a required name so the form message and the invalid state appear on submit. */
 function ProfileForm() {
   const form = useForm({ defaultValues: { name: "" } });
   return (
@@ -118,6 +115,7 @@ function MotionCatalog() {
   const [isCodeInvalid, setIsCodeInvalid] = useState(false);
   const [isNoteInvalid, setIsNoteInvalid] = useState(false);
   const [isSwitchShown, setIsSwitchShown] = useState(false);
+  const [isNoticeShown, setIsNoticeShown] = useState(false);
   const [lastAction, setLastAction] = useState("");
   return (
     <BeezUIProvider>
@@ -153,21 +151,25 @@ function MotionCatalog() {
               <SheetDescription>Contenido del panel.</SheetDescription>
             </SheetContent>
           </Sheet>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+          <Dialog alert>
+            <DialogTrigger asChild>
               <Button>Eliminar cuenta</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogTitle>¿Eliminar la cuenta?</AlertDialogTitle>
-              <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Conservar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => setLastAction("Cuenta eliminada")}>
-                  Eliminar
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+            </DialogTrigger>
+            <DialogContent
+              title="¿Eliminar la cuenta?"
+              description="Esta acción no se puede deshacer."
+              footer={
+                <>
+                  <DialogClose asChild>
+                    <Button variant="secondary">Conservar</Button>
+                  </DialogClose>
+                  <DialogClose asChild>
+                    <Button onClick={() => setLastAction("Cuenta eliminada")}>Eliminar</Button>
+                  </DialogClose>
+                </>
+              }
+            />
+          </Dialog>
           <Popover>
             <PopoverTrigger asChild>
               <Button>Ver filtros</Button>
@@ -219,6 +221,13 @@ function MotionCatalog() {
           <ProfileForm />
         </section>
 
+        <section>
+          <Button onClick={() => setIsNoticeShown(true)}>Mostrar aviso</Button>
+          {isNoticeShown ? (
+            <Alert title="Cambios guardados">El perfil se actualizó.</Alert>
+          ) : null}
+        </section>
+
         <section className="controls">
           <Select>
             <SelectTrigger aria-label="País">
@@ -241,7 +250,7 @@ function MotionCatalog() {
 
         <section>
           <Tabs defaultValue="activos">
-            <TabsList variant="line" aria-label="Estados">
+            <TabsList aria-label="Estados">
               <TabsTrigger value="activos">Activos</TabsTrigger>
               <TabsTrigger value="pausados">Pausados</TabsTrigger>
             </TabsList>
