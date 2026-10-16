@@ -9,11 +9,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   Dialog,
+  DialogClose,
   DialogTrigger,
   DialogContent,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
   TypingAnimation,
   Skeleton,
   Highlighter,
@@ -116,33 +114,44 @@ function MotionExamples() {
             <DialogTrigger asChild>
               <Button>Abrir diálogo</Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogTitle>Confirmar cambios</DialogTitle>
-              <DialogDescription>
-                El foco y el cierre siguen funcionando.
-              </DialogDescription>
-              <DialogFooter showCloseButton />
-            </DialogContent>
+            <DialogContent
+              title="Confirmar cambios"
+              description="El foco y el cierre siguen funcionando."
+              footer={
+                <DialogClose asChild>
+                  <Button variant="secondary">Cerrar</Button>
+                </DialogClose>
+              }
+            />
           </Dialog>
           <Dialog>
             <DialogTrigger asChild>
               <Button>Abrir detalle</Button>
             </DialogTrigger>
-            <DialogContent closeButtonPlacement="viewport">
-              <DialogTitle>Detalle</DialogTitle>
-              <DialogDescription>
-                El botón de cerrar queda en la esquina de la pantalla.
-              </DialogDescription>
-            </DialogContent>
+            <DialogContent
+              closeButtonPlacement="viewport"
+              title="Detalle"
+              description="El botón de cerrar queda en la esquina de la pantalla."
+            />
           </Dialog>
           <Dialog>
             <DialogTrigger asChild>
               <Button>Abrir ficha</Button>
             </DialogTrigger>
-            <DialogContent style={{ borderRadius: "0 24px 24px 0" }}>
-              <DialogTitle>Ficha</DialogTitle>
+            <DialogContent
+              style={{ borderRadius: "0 24px 24px 0" }}
+              title="Ficha"
+              description="Solo el borde derecho es redondeado."
+            />
+          </Dialog>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>Abrir nota</Button>
+            </DialogTrigger>
+            <DialogContent style={{ transform: "rotate(2deg)", opacity: 0.9 }}>
+              <DialogTitle>Nota</DialogTitle>
               <DialogDescription>
-                Solo el borde derecho es redondeado.
+                El panel descansa inclinado y algo translúcido.
               </DialogDescription>
             </DialogContent>
           </Dialog>

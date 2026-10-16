@@ -24,9 +24,6 @@ import {
   Input,
   Label,
   Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -144,26 +141,7 @@ function PreferencesForm() {
 /** Pages through local state, so the current-page highlight glides between pages. */
 function ReportPagination() {
   const [page, setPage] = useState(1);
-  return (
-    <Pagination>
-      <PaginationContent>
-        {Array.from({ length: PAGE_COUNT }, (_, index) => index + 1).map((pageNumber) => (
-          <PaginationItem key={pageNumber}>
-            <PaginationLink
-              href={`#reporte-${pageNumber}`}
-              isActive={page === pageNumber}
-              onClick={(event) => {
-                event.preventDefault();
-                setPage(pageNumber);
-              }}
-            >
-              {pageNumber}
-            </PaginationLink>
-          </PaginationItem>
-        ))}
-      </PaginationContent>
-    </Pagination>
-  );
+  return <Pagination page={page} pageCount={PAGE_COUNT} onPageChange={setPage} />;
 }
 
 const meta = {
@@ -172,7 +150,7 @@ const meta = {
     docs: {
       description: {
         story:
-          "Panel completo para evaluar el movimiento en contexto: pestañas y paginación con indicador deslizante, placeholders con brillo, validación con temblor, calendario con transición de mes y alerta con entrada suave.",
+          "Panel completo para evaluar el movimiento en contexto: pestañas y paginación con indicador deslizante, placeholders con brillo, validación con mensaje, calendario con transición de mes y alerta con entrada suave.",
       },
     },
   },

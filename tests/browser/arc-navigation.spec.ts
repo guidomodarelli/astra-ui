@@ -179,17 +179,48 @@ test.describe("with motion", () => {
   test("should glide the current page mark and move it with the arrows", async ({ page }) => {
     const motion = await recordMotion(page);
     await page.goto("/arc-navigation.html");
-    const navigation = page.getByRole("navigation", { name: "Paginación" });
+    const navigation = page.getByRole("navigation", { name: "Paginación", exact: true });
 
-    await navigation.getByRole("link", { name: "Ir a la página siguiente" }).click();
-    await expect(navigation.getByRole("link", { name: "2", exact: true })).toHaveAttribute("aria-current", "page");
-    await expect(navigation.getByRole("link", { name: "1", exact: true })).not.toHaveAttribute("aria-current");
+    await navigation.getByRole("button", { name: "Ir a la página siguiente" }).click();
+    await expect(navigation.getByRole("button", { name: "Página 2" })).toHaveAttribute("aria-current", "page");
+    await expect(navigation.getByRole("button", { name: "Página 1" })).not.toHaveAttribute("aria-current");
     await expect.poll(motion.glides).toContain("pagination-content");
     await expect(page.locator("[data-glide-indicator]")).toHaveCount(0, { timeout: SETTLE_TIMEOUT_MS });
 
-    await navigation.getByRole("link", { name: "4", exact: true }).click();
-    await expect(navigation.getByRole("link", { name: "4", exact: true })).toHaveAttribute("aria-current", "page");
-    expect(page.url()).not.toContain("#pagina-4");
+    await navigation.getByRole("button", { name: "Página 4" }).click();
+    await expect(navigation.getByRole("button", { name: "Página 4" })).toHaveAttribute("aria-current", "page");
+  });
+
+  test("should keep its width while the five page window shifts", async ({ page }) => {
+    await page.goto("/arc-navigation.html");
+    const navigation = page.getByRole("navigation", { name: "Paginación", exact: true });
+    const list = navigation.locator("[data-slot=pagination-content]");
+    const before = await list.boundingBox();
+
+    await navigation.getByRole("button", { name: "Página 5" }).click();
+    await expect(navigation.getByRole("button", { name: "Página 7" })).toBeVisible();
+    await expect(navigation.getByRole("button", { name: "Página 1" })).toHaveCount(0);
+    await expect(page.locator("[data-glide-indicator]")).toHaveCount(0, { timeout: SETTLE_TIMEOUT_MS });
+    const after = await list.boundingBox();
+
+    expect(Math.abs(after!.width - before!.width)).toBeLessThanOrEqual(1);
+    expect(Math.abs(after!.x - before!.x)).toBeLessThanOrEqual(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
+
+  test("should navigate pages as links and disable the previous arrow on the first page", async ({ page }) => {
+    await page.goto("/arc-navigation.html");
+    const navigation = page.getByRole("navigation", { name: "Paginación enlazada" });
+    const previous = navigation.getByRole("link", { name: "Ir a la página anterior" });
+    await expect(previous).toHaveAttribute("aria-disabled", "true");
+    await expect(previous).toHaveCSS("pointer-events", "none");
+
+    await navigation.getByRole("link", { name: "Página 3" }).click();
+
+    await expect(page).toHaveURL(/#pagina-3$/);
+    await expect(navigation.getByRole("link", { name: "Página 3" })).toHaveAttribute("aria-current", "page");
+    await expect(previous).not.toHaveAttribute("aria-disabled");
+    await expect(previous).toHaveAttribute("href", "#pagina-2");
   });
 });
 
@@ -226,7 +257,8 @@ test("should switch panels and pages without sliding or gliding when motion is r
   expect((await samplePanel(tabs.getByRole("tabpanel"))).x).toBe(0);
   await expect(tabs.getByRole("tabpanel")).toHaveText("Actividad reciente de la tribu.");
 
-  await page.getByRole("link", { name: "3", exact: true }).click();
-  await expect(page.getByRole("link", { name: "3", exact: true })).toHaveAttribute("aria-current", "page");
+  const navigation = page.getByRole("navigation", { name: "Paginación", exact: true });
+  await navigation.getByRole("button", { name: "Página 3" }).click();
+  await expect(navigation.getByRole("button", { name: "Página 3" })).toHaveAttribute("aria-current", "page");
   expect(await motion.glides()).toEqual([]);
 });

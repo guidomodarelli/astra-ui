@@ -1,18 +1,19 @@
 /** Resolves entry and exit playback for floating and modal surfaces from their rendered placement. */
 import type { AnimationOptions, DOMKeyframesDefinition } from "motion/react";
 import {
-  MOTION_CENTER_MORPH_FOLDED_PERCENT,
   MOTION_DIALOG_DISTANCE,
+  MOTION_DIALOG_EXIT_DISTANCE,
   MOTION_EASE,
   MOTION_EASE_DRAWER,
-  MOTION_EASE_UNFOLD,
+  MOTION_EASE_STANDARD,
+  MOTION_EXIT_SCALE,
   MOTION_SURFACE_CLIP_BLEED_PX,
   MOTION_SURFACE_CLIP_PERCENT,
   MOTION_SURFACE_SCALE,
   MOTION_TIMING,
   MOTION_TOOLTIP_DISTANCE,
+  MOTION_TOOLTIP_SCALE,
   SPRING_PANEL,
-  SPRING_TOOLTIP,
 } from "./tokens.js";
 
 /** Surface kinds whose presence is animated on mount and before removal. */
@@ -29,7 +30,7 @@ type Align = "start" | "center" | "end";
 
 const EASE_OUT: [number, number, number, number] = [...MOTION_EASE];
 const EASE_DRAWER: [number, number, number, number] = [...MOTION_EASE_DRAWER];
-const EASE_UNFOLD: [number, number, number, number] = [...MOTION_EASE_UNFOLD];
+const EASE_STANDARD: [number, number, number, number] = [...MOTION_EASE_STANDARD];
 const SIDES: readonly Side[] = ["top", "right", "bottom", "left"];
 const ALIGNS: readonly Align[] = ["start", "center", "end"];
 
@@ -86,44 +87,11 @@ function collapsedClip(side: Side | undefined, align: Align): string {
     : `inset(${top} ${OPEN_EDGE} ${bottom} ${hidden})`;
 }
 
-/** Computed radius of each corner, clockwise from the top left, as border-radius serializes it. */
-const CORNER_RADIUS_PROPERTIES = [
-  "borderTopLeftRadius",
-  "borderTopRightRadius",
-  "borderBottomRightRadius",
-  "borderBottomLeftRadius",
-] as const;
-
 /**
- * Builds the `round` part of an inset clip that repeats the surface's own corners, each grown by
- * the bleed so the clip edge stays parallel to the border. A corner serializes as one radius or
- * as a horizontal and vertical pair (elliptical), in pixels or percentages of the box.
+ * Arc's dialog leave: a short tween on the standard curve, so it never lingers and a reopen
+ * retargets from wherever the panel is.
  */
-function bleedingCornerRadii(element: Element): string {
-  const computed = getComputedStyle(element);
-  const grow = (radius: string) => `calc(${radius} + ${MOTION_SURFACE_CLIP_BLEED_PX}px)`;
-  const corners = CORNER_RADIUS_PROPERTIES.map((property) => {
-    const [horizontal = "0px", vertical = horizontal] = computed[property].trim().split(/\s+/);
-    return { horizontal: grow(horizontal), vertical: grow(vertical) };
-  });
-  const horizontals = corners.map((corner) => corner.horizontal).join(" ");
-  const verticals = corners.map((corner) => corner.vertical).join(" ");
-  return `round ${horizontals} / ${verticals}`;
-}
-
-/**
- * Folded and unfolded clips of a center-morph surface. Both share the surface's own corners,
- * so the shape matches the panel once unfolded and the clip never spends its last frames
- * rounding corners.
- */
-function centerMorphClips(element: Element) {
-  const round = bleedingCornerRadii(element);
-  const folded = `${MOTION_CENTER_MORPH_FOLDED_PERCENT}%`;
-  return {
-    folded: `inset(${folded} ${folded} ${folded} ${folded} ${round})`,
-    unfolded: `inset(${OPEN_EDGE} ${OPEN_EDGE} ${OPEN_EDGE} ${OPEN_EDGE} ${round})`,
-  };
-}
+const DIALOG_LEAVE = { duration: MOTION_TIMING.fast, ease: EASE_STANDARD };
 
 /** Edge-panel travel: fully off-screen on the side the sheet is attached to. */
 function sheetOffset(element: Element) {
@@ -134,7 +102,7 @@ function sheetOffset(element: Element) {
   return { x: "100%", y: "0%" };
 }
 
-/** Entrance playback matching the beui surface family for each kind. */
+/** Entrance playback for each surface kind, on Arc's motion presets. */
 export function surfaceEnter(element: Element, kind: SurfaceKind): MotionStep {
   const { side, align } = readPlacement(element);
   if (kind === "overlay") {
@@ -144,34 +112,28 @@ export function surfaceEnter(element: Element, kind: SurfaceKind): MotionStep {
     };
   }
   if (kind === "tooltip") {
+    // Arc's tooltip: a short rise from its trigger and a fade, without blur.
     const offset = offsetAwayFromTrigger(side, MOTION_TOOLTIP_DISTANCE);
     return {
       keyframes: {
         opacity: [0, 1],
-        transform: [transform(offset.x, offset.y, 0.9), transform(0, 0)],
-        filter: ["blur(5px)", "blur(0px)"],
+        transform: [transform(offset.x, offset.y, MOTION_TOOLTIP_SCALE), transform(0, 0)],
       },
-      transition: {
-        ...SPRING_TOOLTIP,
-        opacity: { duration: MOTION_TIMING.fast, ease: EASE_OUT },
-        filter: { duration: MOTION_TIMING.enter, ease: EASE_OUT },
-      },
+      transition: { duration: MOTION_TIMING.fast, ease: EASE_OUT },
     };
   }
-  if (kind === "dialog") {
+  // The deprecated center morph now plays Arc's dialog transition, like the library's own dialogs.
+  if (kind === "dialog" || kind === "center-morph") {
+    // Arc's dialog: the panel rises and scales in on the smooth spring while it fades in quickly.
     return {
       keyframes: {
         opacity: [0, 1],
-        transform: [transform(0, MOTION_DIALOG_DISTANCE, 0.97), transform(0, 0)],
+        transform: [transform(0, MOTION_DIALOG_DISTANCE, MOTION_SURFACE_SCALE), transform(0, 0)],
       },
-      transition: SPRING_PANEL,
-    };
-  }
-  if (kind === "center-morph") {
-    const { folded, unfolded } = centerMorphClips(element);
-    return {
-      keyframes: { clipPath: [folded, unfolded] },
-      transition: { duration: MOTION_TIMING.centerMorph, ease: EASE_UNFOLD },
+      transition: {
+        ...SPRING_PANEL,
+        opacity: { duration: MOTION_TIMING.fast, ease: EASE_OUT },
+      },
     };
   }
   if (kind === "sheet") {
@@ -199,40 +161,55 @@ export function surfaceEnter(element: Element, kind: SurfaceKind): MotionStep {
   };
 }
 
+/** Transform and opacity a surface rests at, which its caller may set through a class or style. */
+export interface RestingStyle {
+  transform: string;
+  opacity: number;
+}
+
+/**
+ * Composes surface playback with the surface's resting transform and opacity, so a caller-owned
+ * tilt, offset or translucency holds through the whole entrance and exit instead of being
+ * replaced by identity and full opacity, then snapping back once playback restores it.
+ */
+export function withRestingStyle(
+  keyframes: DOMKeyframesDefinition,
+  resting: RestingStyle,
+): DOMKeyframesDefinition {
+  const composed = { ...keyframes } as Record<string, unknown>;
+  const { transform, opacity } = composed;
+  if (Array.isArray(transform) && resting.transform && resting.transform !== "none") {
+    composed.transform = transform.map((value) => `${String(value)} ${resting.transform}`);
+  }
+  if (Array.isArray(opacity) && Number.isFinite(resting.opacity) && resting.opacity !== 1) {
+    composed.opacity = opacity.map((value) => Number(value) * resting.opacity);
+  }
+  return composed as DOMKeyframesDefinition;
+}
+
 /** Exit playback: brief and eased so dismissal never blocks the next interaction. */
 export function surfaceExit(element: Element, kind: SurfaceKind): MotionStep {
   const exitTween = { duration: MOTION_TIMING.exit, ease: EASE_OUT };
   if (kind === "overlay") {
-    return { keyframes: { opacity: [1, 0] }, transition: exitTween };
+    return { keyframes: { opacity: [1, 0] }, transition: DIALOG_LEAVE };
   }
   if (kind === "tooltip") {
-    const offset = offsetAwayFromTrigger(
-      readPlacement(element).side,
-      MOTION_TOOLTIP_DISTANCE * 0.6,
-    );
+    // Arc's tooltip leaves in place, shrinking slightly while it fades, on the instant timing.
     return {
       keyframes: {
         opacity: [1, 0],
-        transform: [transform(0, 0), transform(offset.x, offset.y, 0.94)],
-        filter: ["blur(0px)", "blur(3px)"],
+        transform: [transform(0, 0), transform(0, 0, MOTION_EXIT_SCALE)],
       },
-      transition: exitTween,
+      transition: { duration: MOTION_TIMING.instant, ease: EASE_STANDARD },
     };
   }
-  if (kind === "dialog") {
+  if (kind === "dialog" || kind === "center-morph") {
     return {
       keyframes: {
         opacity: [1, 0],
-        transform: [transform(0, 0), transform(0, MOTION_DIALOG_DISTANCE, 0.98)],
+        transform: [transform(0, 0), transform(0, MOTION_DIALOG_EXIT_DISTANCE, MOTION_EXIT_SCALE)],
       },
-      transition: { duration: MOTION_TIMING.enter, ease: EASE_OUT },
-    };
-  }
-  if (kind === "center-morph") {
-    const { folded, unfolded } = centerMorphClips(element);
-    return {
-      keyframes: { clipPath: [unfolded, folded] },
-      transition: { duration: MOTION_TIMING.centerMorphFold, ease: EASE_UNFOLD },
+      transition: DIALOG_LEAVE,
     };
   }
   if (kind === "sheet") {
