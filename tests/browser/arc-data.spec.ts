@@ -385,6 +385,27 @@ test.describe("Carousel", () => {
 
     await expect(rotation.locator('[role="tab"][aria-selected="true"]')).toHaveAttribute("aria-label", selected!);
   });
+
+  test("should not rotate when it mounts in a hidden tab", async ({ page }) => {
+    // The page loads already hidden, so no visibilitychange event ever reports it.
+    await page.addInitScript(() => {
+      Object.defineProperty(Document.prototype, "visibilityState", { configurable: true, get: () => "hidden" });
+    });
+    await openCarouselPage(page);
+    const rotation = page.getByRole("region", { name: "Rotación" });
+    await rotation.scrollIntoViewIfNeeded();
+    await page.mouse.move(0, 0);
+
+    const selectedTab = rotation.locator('[role="tab"][aria-selected="true"]');
+    const selections: (string | null)[] = [];
+    // Sampled across two intervals: a looping rotation could otherwise come back to the first slide unnoticed.
+    for (let sample = 0; sample < SAMPLED_FRAMES; sample += 1) {
+      selections.push(await selectedTab.getAttribute("aria-label"));
+      await page.waitForTimeout(200);
+    }
+
+    expect(new Set(selections)).toEqual(new Set(["Aviso 1 de 3"]));
+  });
 });
 
 test.describe("with reduced motion", () => {

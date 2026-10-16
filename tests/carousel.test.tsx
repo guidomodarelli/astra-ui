@@ -120,7 +120,20 @@ describe("Carousel", () => {
 
     // Assert
     expect(container.querySelector('[data-slot="carousel-controls"]')).not.toBeInTheDocument();
-    expect(screen.getByRole("tabpanel", { name: "Diapositiva 1 de 1" })).not.toHaveAttribute("inert");
+    expect(screen.queryByRole("tabpanel")).not.toBeInTheDocument();
+    const slide = screen.getByRole("group", { name: "Diapositiva 1 de 1" });
+    expect(slide).toHaveAttribute("aria-roledescription", "diapositiva");
+    expect(slide).not.toHaveAttribute("inert");
+  });
+
+  it("should describe slides as groups, not tab panels, when the indicator tabs are hidden", () => {
+    // Arrange & Act
+    renderCarousel({ showIndicators: false });
+
+    // Assert
+    expect(screen.queryByRole("tabpanel", { hidden: true })).not.toBeInTheDocument();
+    const slides = SLIDES.map((_, index) => screen.getByRole("group", { name: `Diapositiva ${index + 1} de 3`, hidden: true }));
+    for (const slide of slides) expect(slide).toHaveAttribute("aria-roledescription", "diapositiva");
   });
 
   it("should add a rotation control only when an interval is given", () => {

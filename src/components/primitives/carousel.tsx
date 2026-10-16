@@ -250,14 +250,15 @@ function CarouselContent({
 }
 
 /**
- * One slide. Its trailing margin is the gap to the next slide, so Embla measures it and centers the slide itself.
+ * One slide. Its trailing margin is the gap to the next slide, so Embla measures it and centers the slide itself. It is
+ * a group described as a slide; pass `role="tabpanel"` only when indicator tabs control it.
  * @param props - Native attributes of the slide panel.
  * @returns The slide panel.
  */
 function CarouselItem({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      role="tabpanel"
+      role="group"
       aria-roledescription={CAROUSEL_COPY.slideRoleDescription}
       data-slot="carousel-item"
       className={cn("me-4 min-w-0 shrink-0 grow-0 basis-full", className)}

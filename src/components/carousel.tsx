@@ -289,6 +289,8 @@ function Carousel({
   const rotation = useRotation({ api, count, interval, autoplay, reduceMotion, isHydrated, selectedIndex, loop, isRotatingRef })
   const visibleIndex = clampSlideIndex(selectedIndex, count)
   const hasControlRow = count > 1 && (showControls || showIndicators || rotation.hasControl)
+  // Slides are tab panels only while indicator tabs exist to control them.
+  const hasIndicators = count > 1 && showIndicators
   const rootStyle = { [CAROUSEL_SLIDE_SIZE_PROPERTY]: slideSize } as React.CSSProperties
 
   return (
@@ -313,6 +315,7 @@ function Carousel({
           <CarouselItem
             key={React.isValidElement(slide) && slide.key != null ? slide.key : slideIndex}
             id={getSlideId(slideIndex)}
+            role={hasIndicators ? "tabpanel" : "group"}
             aria-label={slideLabel(slideIndex, count)}
             inert={slideIndex !== visibleIndex || undefined}
             className={cn("basis-(--carousel-slide)", slideClassName)}
@@ -452,6 +455,8 @@ function useRotation({ api, count, interval, autoplay, reduceMotion, isHydrated,
           })
     observer?.observe(root)
     const handleVisibilityChange = () => setIsPageVisible(document.visibilityState !== "hidden")
+    // A carousel mounted in a hidden tab, or re-enabled after one, starts from the current state.
+    handleVisibilityChange()
     document.addEventListener("visibilitychange", handleVisibilityChange)
     return () => {
       observer?.disconnect()
