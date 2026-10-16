@@ -153,6 +153,42 @@ describe("Card", () => {
     expect(screen.getByText("Borradores: 1")).toBeInTheDocument();
   });
 
+  it("should keep a single live copy of its avatar, action and footer while the quick look is open", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    function Counter({ label }: { label: string }) {
+      const [count, setCount] = useState(0);
+      return (
+        <button type="button" onClick={() => setCount((current) => current + 1)}>
+          {label}: {count}
+        </button>
+      );
+    }
+    render(
+      <Card
+        title="Tribu de lectura"
+        meta="Ana Núñez"
+        avatar={<img id="owner-avatar" alt="Ana Núñez" src="data:," />}
+        action={<Counter label="Me gusta" />}
+        footer={<Counter label="Guardados" />}
+        details={<p>Reglamento y calendario.</p>}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Me gusta: 0" }));
+    await user.click(screen.getByRole("button", { name: "Guardados: 0" }));
+
+    // Act
+    await user.click(screen.getByRole("button", { name: "Tribu de lectura" }));
+
+    // Assert
+    await screen.findByRole("dialog", { name: "Tribu de lectura" });
+    expect(document.querySelectorAll("#owner-avatar")).toHaveLength(1);
+    expect(screen.getAllByText(/Me gusta:/)).toHaveLength(1);
+    expect(screen.getAllByText(/Guardados:/)).toHaveLength(1);
+    expect(screen.getByText("Me gusta: 1")).toBeInTheDocument();
+    expect(screen.getByText("Guardados: 1")).toBeInTheDocument();
+  });
+
   it("should hide the returning quick look from assistive technology and the tab order as soon as it closes", async () => {
     // Arrange
     const user = userEvent.setup();

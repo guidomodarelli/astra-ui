@@ -262,14 +262,18 @@ function Card({
         }
       : {}
 
-  const byline = (side: Side) =>
-    avatar || meta || status || action ? (
+  /** The quick look repeats only the meta and status: the avatar and action stay mounted in the card alone, so their
+   * state survives and their ids stay unique. */
+  const byline = (side: Side) => {
+    const bylineAvatar = side === "card" ? avatar : null
+    const bylineAction = side === "card" ? action : null
+    return bylineAvatar || meta || status || bylineAction ? (
       <div data-slot="card-byline" className="mt-(--space-5) flex items-center justify-between gap-(--space-3)">
-        {avatar || meta || status ? (
+        {bylineAvatar || meta || status ? (
           <motion.div className="flex min-w-0 flex-auto items-center gap-(--space-3)" {...shared("byline", side, "position")}>
-            {avatar ? (
+            {bylineAvatar ? (
               <span className="grid size-(--space-8) flex-none overflow-hidden rounded-(--radius-pill) bg-surface-muted *:size-full *:object-cover">
-                {avatar}
+                {bylineAvatar}
               </span>
             ) : null}
             <span className="grid min-w-0 grid-cols-[minmax(0,1fr)] text-xs leading-(--leading-body)">
@@ -278,13 +282,14 @@ function Card({
             </span>
           </motion.div>
         ) : null}
-        {action ? (
+        {bylineAction ? (
           <motion.div data-slot="card-action" className="relative z-1 flex flex-none flex-wrap gap-(--space-3)" {...shared("action", side, "position")}>
-            {action}
+            {bylineAction}
           </motion.div>
         ) : null}
       </div>
     ) : null
+  }
 
   const footerRow = footer ? (
     <div data-slot="card-footer" className="relative z-1 mt-(--space-5) flex items-center justify-between gap-(--space-3)">
@@ -447,10 +452,9 @@ function Card({
                         </motion.p>
                       </DialogPrimitive.Description>
                     ) : null}
-                    {/* The children stay mounted in the card alone: a second copy here would restart their state and
-                        duplicate their ids. */}
+                    {/* The children, avatar, action and footer stay mounted in the card alone: a second copy here
+                        would restart their state and duplicate their ids. */}
                     {byline("panel")}
-                    {footerRow}
                     <motion.div
                       data-slot="card-details"
                       className="mt-(--space-6) border-t border-border pt-(--space-5) text-sm leading-(--leading-body) text-text-secondary"
