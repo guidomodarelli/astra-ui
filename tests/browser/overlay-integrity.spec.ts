@@ -104,6 +104,8 @@ for (const { prefix, open, surface } of CONTAINERS) {
       const trigger = page.getByRole("button", { name: `${prefix}: info` });
       // Radix closes a tooltip when its trigger scrolls, so the focus must not be what scrolls it into view.
       await trigger.scrollIntoViewIfNeeded();
+      // Engines dispatch the resulting `scroll` events on a later frame; let them fire before the tooltip opens.
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       await trigger.focus();
       const bubble = page.locator("[data-slot=tooltip-content]", { hasText: `${prefix}: ayuda` });
       await expect(bubble).toBeVisible();
