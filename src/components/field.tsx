@@ -50,6 +50,11 @@ const digitVariants = {
   }),
 }
 const instantTransition: Transition = { duration: 0 }
+/**
+ * Arc `spring.snappy` without its bounce: a rolled digit must land on its line, since even the small overshoot of the
+ * bouncy preset pushes it past rest toward the side it came from.
+ */
+const digitRollSpring: Transition = { ...ARC_SPRING_SNAPPY, bounce: 0 }
 
 /**
  * Reads one component of a count as a number, in English or Spanish formatting: grouping separators are dropped and
@@ -110,7 +115,7 @@ function RollingNumber({ word }: { word: string }) {
   const transition: Transition = reduceMotion
     ? instantTransition
     : {
-        y: ARC_SPRING_SNAPPY,
+        y: digitRollSpring,
         width: ARC_SPRING_MORPH,
         opacity: { duration: ARC_DURATION.fast },
         filter: { duration: ARC_DURATION.fast },
