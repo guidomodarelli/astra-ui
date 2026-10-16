@@ -4,6 +4,8 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-10-16
+
 ### Added
 
 - `Dialog` acepta `alert` para confirmaciones: se anuncia como `alertdialog`, no se cierra al hacer click afuera, abre con el foco en el primer `DialogClose` y oculta el botón de cerrar por defecto.
