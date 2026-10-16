@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { UserIcon } from "lucide-react";
 
-import { Avatar, AvatarGroup } from "beez-ui";
+import { Avatar, AvatarGroup, BeezUIProvider } from "beez-ui";
+import { BeezUIProvider as NextBeezUIProvider } from "beez-ui/next";
 
 describe("Avatar", () => {
   it("should name the avatar once and show the first two initials while there is no photo", () => {
@@ -55,6 +56,33 @@ describe("Avatar", () => {
     expect(image).toHaveAttribute("alt", "");
     fireEvent.error(image);
     expect(screen.getByText("GH")).toBeInTheDocument();
+  });
+
+  it("should give the xl photo its 88px intrinsic size through the default and Next image adapters", () => {
+    // Arrange
+    const { unmount } = render(
+      <BeezUIProvider>
+        <Avatar name="Perfil" src="https://images.unsplash.com/photo-example" size="xl" />
+      </BeezUIProvider>
+    );
+    const unpicImage = screen.getByRole("img", { name: "Perfil" }).querySelector("img")!;
+
+    // Act
+    const unpicSource = new URL(unpicImage.src).searchParams;
+
+    // Assert
+    expect(unpicSource.get("w")).toBe("88");
+    expect(unpicSource.get("h")).toBe("88");
+    expect(unpicImage.srcset).toContain(" 88w");
+    unmount();
+    render(
+      <NextBeezUIProvider>
+        <Avatar name="Perfil" src="/profile.png" size="xl" />
+      </NextBeezUIProvider>
+    );
+    const nextImage = screen.getByRole("img", { name: "Perfil" }).querySelector("img")!;
+    expect(nextImage).toHaveAttribute("width", "88");
+    expect(nextImage).toHaveAttribute("height", "88");
   });
 
   it("should draw a custom fallback and corner badge and forward native span attributes", () => {
@@ -142,6 +170,24 @@ describe("AvatarGroup", () => {
     } finally {
       toLocaleLowerCaseSpy.mockRestore();
     }
+  });
+
+  it("should hide a leaving member from assistive technology while their slot closes", () => {
+    // Arrange
+    const { rerender } = render(<AvatarGroup members={TEAM.slice(0, 3)} />);
+    const leavingAvatar = screen.getByRole("img", { name: "Tomás Gil" });
+    const leavingSlot = leavingAvatar.closest("[data-slot=avatar-group-slot]")!;
+    expect(leavingSlot).not.toHaveAttribute("aria-hidden");
+
+    // Act
+    rerender(<AvatarGroup members={TEAM.slice(0, 2)} />);
+
+    // Assert
+    expect(leavingSlot).toBeInTheDocument();
+    expect(leavingSlot).toHaveAttribute("aria-hidden", "true");
+    expect(leavingSlot).toHaveAttribute("inert");
+    expect(screen.queryByRole("img", { name: "Tomás Gil" })).not.toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Lucía Paz" }).closest("[data-slot=avatar-group-slot]")).not.toHaveAttribute("inert");
   });
 
   it("should keep members with the same name apart through their keys", () => {

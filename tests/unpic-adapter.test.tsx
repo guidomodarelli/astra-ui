@@ -16,7 +16,7 @@ describe("Unpic adapter", () => {
   it("should use the detected CDN's responsive URLs and preserve image load events", () => {
     render(<BeezUIProvider><Avatar name="Perfil" src="https://images.unsplash.com/photo-example" /></BeezUIProvider>);
     const image = getAvatarImage("Perfil");
-    expect(new URL(image.src).searchParams.get("w")).toBe("40");
+    expect(new URL(image.src).searchParams.get("w")).toBe("32");
     expect(image.srcset).not.toBe("");
     fireEvent.load(image);
     expect(screen.queryByText("P")).not.toBeInTheDocument();

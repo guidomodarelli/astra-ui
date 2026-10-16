@@ -74,6 +74,8 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ### Fixed
 
+- Las fotos de `Avatar` con `size="xl"` se piden y se dibujan a 88px, en lugar de 40px estirados, con el provider por defecto y con el de Next.
+- Cuando alguien sale de un `AvatarGroup` (cambian `members` o baja `max`), los lectores de pantalla dejan de anunciarlo apenas empieza a cerrarse su lugar.
 - En pantallas o contenedores angostos, la `action` de un `Alert` baja debajo del texto cuando no entra al lado, en lugar de desbordar el aviso y aplastar el texto.
 - Al moverse con el teclado mientras un `Select` o un `DropdownMenu` todavía se está abriendo, el resaltado se desliza hasta el tamaño y la posición finales de la opción y ya no salta al terminar.
 - Los números de la ayuda de `Input` y `Textarea` ruedan hasta su línea sin pasarse ni rebotar al asentarse.

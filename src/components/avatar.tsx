@@ -9,8 +9,8 @@
  */
 import { useState } from "react"
 import type { ComponentProps, CSSProperties, ReactNode } from "react"
-import { AnimatePresence, motion } from "motion/react"
-import type { Variants } from "motion/react"
+import { AnimatePresence, motion, useIsPresent } from "motion/react"
+import type { HTMLMotionProps, Variants } from "motion/react"
 
 import {
   AVATAR_GROUP_COUNT_OFFSET_EM,
@@ -70,7 +70,15 @@ function Avatar({ name, src, size = "md", status, statusLabel, fallback, badge, 
   return (
     <AvatarRoot role="img" aria-label={buildAvatarLabel(alt ?? name, presence)} size={size} status={status} {...props}>
       {/* The image and initials are decorative: the root already names the person once. */}
-      {src ? <AvatarImage src={src} alt="" sizes={`${AVATAR_SIZE_PX[size]}px`} /> : null}
+      {src ? (
+        <AvatarImage
+          src={src}
+          alt=""
+          width={AVATAR_SIZE_PX[size]}
+          height={AVATAR_SIZE_PX[size]}
+          sizes={`${AVATAR_SIZE_PX[size]}px`}
+        />
+      ) : null}
       <AvatarFallback aria-hidden="true">{fallback ?? getNameInitials(name)}</AvatarFallback>
       {badge ? <AvatarBadge>{badge}</AvatarBadge> : null}
     </AvatarRoot>
@@ -157,6 +165,24 @@ const ringClassName =
   "border-2 border-surface shadow-[0_0_0_1px_var(--border)] transition-shadow duration-(--duration-fast) ease-(--ease-standard) pointer-fine:group-hover/avatar-group-slot:shadow-[0_0_0_1px_var(--border-strong)]"
 
 /**
+ * One slot of the stack. A slot that is closing turns inert and hidden from assistive technology, so a person who left
+ * is no longer announced while the exit spring plays.
+ * @param props - Motion span props for the slot.
+ * @returns The slot.
+ */
+function AvatarGroupSlot(props: HTMLMotionProps<"span">) {
+  const isPresent = useIsPresent()
+  return (
+    <motion.span
+      data-slot="avatar-group-slot"
+      {...props}
+      aria-hidden={isPresent ? props["aria-hidden"] : true}
+      inert={!isPresent || undefined}
+    />
+  )
+}
+
+/**
  * Builds the overflow chip's accessible name, as in "2 integrantes más".
  * @param overflow - How many members are hidden.
  * @param label - Accessible name of the group.
@@ -191,9 +217,8 @@ function AvatarGroup({ members, max = AVATAR_GROUP_DEFAULT_MAX, size = "md", lab
     >
       <AnimatePresence initial={false}>
         {visibleMembers.map((member, index) => (
-          <motion.span
+          <AvatarGroupSlot
             key={member.key ?? member.name}
-            data-slot="avatar-group-slot"
             className={slotClassName}
             style={{ "--index": index } as StackStyle}
             {...slotPresence}
@@ -209,12 +234,11 @@ function AvatarGroup({ members, max = AVATAR_GROUP_DEFAULT_MAX, size = "md", lab
                 {member.name}
               </span>
             </span>
-          </motion.span>
+          </AvatarGroupSlot>
         ))}
         {overflow > 0 ? (
-          <motion.span
+          <AvatarGroupSlot
             key="overflow"
-            data-slot="avatar-group-slot"
             className={slotClassName}
             style={{ "--index": visibleMembers.length } as StackStyle}
             {...slotPresence}
@@ -246,7 +270,7 @@ function AvatarGroup({ members, max = AVATAR_GROUP_DEFAULT_MAX, size = "md", lab
                 </motion.span>
               </AnimatePresence>
             </span>
-          </motion.span>
+          </AvatarGroupSlot>
         ) : null}
       </AnimatePresence>
     </div>
