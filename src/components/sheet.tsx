@@ -6,6 +6,7 @@ import { Dialog as SheetPrimitive } from "radix-ui"
 import { MotionSlot } from "../motion/motion-slot.js"
 import { MotionPresence, MotionOpenProvider, useMotionOpenState } from "../motion/presence.js"
 import { cn } from "../lib/utils.js"
+import { keepOpenOnToastInteraction } from "../lib/toast-layer.js"
 import { ControlButton } from "./control-button.js"
 import { XIcon } from "lucide-react"
 
@@ -75,6 +76,7 @@ function SheetContent({
           className
         )}
         {...props}
+        onInteractOutside={keepOpenOnToastInteraction(props.onInteractOutside)}
       >
         {children}
         {showCloseButton && (

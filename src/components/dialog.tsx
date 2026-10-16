@@ -12,6 +12,7 @@ import { Dialog as DialogPrimitive } from "radix-ui"
 import { MotionSlot } from "../motion/motion-slot.js"
 import { MotionPresence, MotionOpenProvider, useMotionOpenState } from "../motion/presence.js"
 import { cn } from "../lib/utils.js"
+import { keepOpenOnToastInteraction } from "../lib/toast-layer.js"
 import { Button } from "./button.js"
 import { ControlButton } from "./control-button.js"
 import { XIcon } from "lucide-react"
@@ -126,6 +127,7 @@ function DialogContent({
           className
         )}
         {...props}
+        onInteractOutside={keepOpenOnToastInteraction(props.onInteractOutside)}
       >
         {children}
         {showCloseButton && closeButtonPlacement === "viewport" && <DialogViewportCloseButton />}
