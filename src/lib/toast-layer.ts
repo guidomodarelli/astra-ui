@@ -15,6 +15,28 @@ export function isToastLayerTarget(target: EventTarget | null): boolean {
 }
 
 /**
+ * Lets keyboard focus enter the toast layer while a modal traps focus. Radix's focus trap listens for `focusin` and
+ * `focusout` on the document and pulls focus back into the modal whenever it lands outside, so Sonner's hotkey could
+ * never move focus to a toast's controls. Focus changes that land on a toast stop at the body, after React has run
+ * its own handlers and before the document-level trap sees them; every other focus change still reaches the trap.
+ * @param ownerDocument - Document whose body hosts the app and the modal portals.
+ * @returns Removes the listeners.
+ */
+export function letFocusReachToastLayer(ownerDocument: Document): () => void {
+  const { body } = ownerDocument
+  const stopFocusIntoToast = (event: FocusEvent) => {
+    const focusedElement = event.type === "focusin" ? event.target : event.relatedTarget
+    if (isToastLayerTarget(focusedElement)) event.stopPropagation()
+  }
+  body.addEventListener("focusin", stopFocusIntoToast)
+  body.addEventListener("focusout", stopFocusIntoToast)
+  return () => {
+    body.removeEventListener("focusin", stopFocusIntoToast)
+    body.removeEventListener("focusout", stopFocusIntoToast)
+  }
+}
+
+/**
  * Wraps a modal's `onInteractOutside` so presses on toasts never dismiss it. The consumer's handler still runs first
  * and can keep preventing dismissal for its own reasons.
  * @param handler - The consumer's `onInteractOutside`, if any.

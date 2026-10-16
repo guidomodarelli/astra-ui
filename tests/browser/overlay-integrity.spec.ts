@@ -127,6 +127,24 @@ test("should run a toast action from an open dialog without closing the dialog",
   await expect(dialog).toBeVisible();
 });
 
+test("should run a toast action with the keyboard from an open dialog without closing the dialog", async ({ page }) => {
+  await page.getByRole("button", { name: "Abrir edición" }).click();
+  const dialog = page.getByRole("dialog", { name: "Editar evento" });
+  await dialog.getByRole("button", { name: "Guardar" }).click();
+  const retry = page.getByRole("button", { name: "Reintentar" });
+  await expect(retry).toBeVisible();
+  // Sonner's hotkey moves focus to the toast list; the modal's focus trap must not pull it back.
+  await page.keyboard.press("Alt+KeyT");
+  await expect(page.locator("[data-sonner-toaster]")).toBeFocused();
+  // The first Tab lands on the toast itself, the second on its action.
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Tab");
+  await expect(retry).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(dialog.getByRole("status", { name: "Reintentos" })).toHaveText("1");
+  await expect(dialog).toBeVisible();
+});
+
 test("should close a toast from an open sheet without closing the sheet", async ({ page }) => {
   await page.getByRole("button", { name: "Abrir panel" }).click();
   const sheet = page.getByRole("dialog", { name: "Panel lateral" });
