@@ -4,6 +4,10 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+### Fixed
+
+- El `Toaster` exportado por beez-ui (desde `beez-ui` y `beez-ui/sonner`) también responde al click y al teclado (Alt+T) mientras hay un `Dialog`, `AlertDialog` o `Sheet` abierto, y devuelve el foco al modal cuando se cierra el toast enfocado, sin cambiar su aspecto ni sus props.
+
 ## [2.6.1] - 2026-10-16
 
 ### Fixed
