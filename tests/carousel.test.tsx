@@ -132,6 +132,36 @@ describe("Carousel", () => {
     expect(onIndexChange).not.toHaveBeenCalled();
   });
 
+  it("should keep the slide the user chose over a pending default index once more slides arrive", async () => {
+    // Arrange
+    const twoSlides = SLIDES.slice(0, 2);
+    const { rerender } = render(
+      <Carousel label="Destacados" defaultIndex={2}>
+        {twoSlides.map((slide) => (
+          <p key={slide}>{slide}</p>
+        ))}
+      </Carousel>,
+    );
+    await act(async () => {
+      screen.getByRole("button", { name: "Diapositiva anterior" }).click();
+    });
+
+    // Act
+    await act(async () => {
+      rerender(
+        <Carousel label="Destacados" defaultIndex={2}>
+          {SLIDES.map((slide) => (
+            <p key={slide}>{slide}</p>
+          ))}
+        </Carousel>,
+      );
+    });
+
+    // Assert
+    const panels = screen.getAllByRole("tabpanel", { hidden: true });
+    expect(panels.map((panel) => panel.hasAttribute("inert"))).toEqual([false, true, true]);
+  });
+
   it("should clamp an initial slide beyond the last one", () => {
     // Arrange & Act
     renderCarousel({ defaultIndex: 9 });

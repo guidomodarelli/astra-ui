@@ -266,6 +266,8 @@ function Carousel({
       const nextIndex = api.selectedScrollSnap()
       setSelectedIndex(nextIndex)
       if (nextIndex !== reportedIndexRef.current) {
+        // A real selection outranks a default still waiting for its slide.
+        pendingDefaultIndexRef.current = undefined
         reportedIndexRef.current = nextIndex
         const { onIndexChange: reportIndex, slideLabel: nameSlide } = callbacksRef.current
         reportIndex?.(nextIndex)
