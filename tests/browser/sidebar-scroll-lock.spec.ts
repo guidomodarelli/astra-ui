@@ -7,6 +7,9 @@ import { expect, test } from "@playwright/test";
 /** Width of a classic desktop scrollbar, which takes layout room unlike overlay scrollbars. */
 const CLASSIC_SCROLLBAR_WIDTH_PX = 15;
 
+/** Frames the page scroll must hold still to count as settled: a wheel scroll can keep animating after it starts. */
+const SCROLL_SETTLED_FRAMES = 10;
+
 /** Root styles a consumer may use around the scrollbar: with the last two, its gutter stays reserved under the lock. */
 const ROOT_SCROLLBAR_SETUPS = [
   { name: "a scrollbar that disappears with the lock", rootStyles: "" },
@@ -38,6 +41,18 @@ for (const { name, rootStyles } of ROOT_SCROLLBAR_SETUPS) {
     expect(scrollbarWidth).toBe(CLASSIC_SCROLLBAR_WIDTH_PX);
     await page.mouse.wheel(0, 300);
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    // Measured mid-scroll, the page would move on its own between this read and the lock, which pins the latest offset.
+    await page.evaluate((settledFrames) => new Promise<void>((resolve) => {
+      let lastScrollY = window.scrollY;
+      let stillFrames = 0;
+      const checkFrame = () => {
+        stillFrames = window.scrollY === lastScrollY ? stillFrames + 1 : 0;
+        lastScrollY = window.scrollY;
+        if (stillFrames >= settledFrames) resolve();
+        else requestAnimationFrame(checkFrame);
+      };
+      requestAnimationFrame(checkFrame);
+    }), SCROLL_SETTLED_FRAMES);
     const before = await content.boundingBox();
     // A synthetic click: a real one would first scroll the trigger back into view and move the page by itself.
     await page.getByRole("button", { name: "Alternar navegación" }).dispatchEvent("click");
