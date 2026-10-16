@@ -1,5 +1,5 @@
 /** Verifies Arc's closed Card and its quick look through the public barrel, as a consumer would use them. */
-import { useState } from "react";
+import { createRef, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -132,6 +132,40 @@ describe("Card", () => {
 
     // Assert
     expect(within(dialog).getByText("0")).toBeInTheDocument();
+  });
+
+  it("should hand its article node to a consumer object ref and callback ref", () => {
+    // Arrange
+    const objectRef = createRef<HTMLElement>();
+    const callbackRef = vi.fn();
+
+    // Act
+    const { unmount } = render(
+      <>
+        <Card aria-label="Con objeto" ref={objectRef} title="Objeto" />
+        <Card aria-label="Con callback" ref={callbackRef} title="Callback" />
+      </>,
+    );
+
+    // Assert
+    expect(objectRef.current).toBe(screen.getByRole("article", { name: "Con objeto" }));
+    expect(callbackRef).toHaveBeenCalledWith(screen.getByRole("article", { name: "Con callback" }));
+    unmount();
+    expect(objectRef.current).toBeNull();
+    expect(callbackRef).toHaveBeenLastCalledWith(null);
+  });
+
+  it("should show a description of 0 in the card and describe its quick look with it", async () => {
+    // Arrange
+    render(<Card title="Pendientes" description={0} details="Sin tareas." open />);
+
+    // Act
+    const dialog = await screen.findByRole("dialog", { name: "Pendientes" });
+
+    // Assert
+    const cardDescription = document.querySelector("[data-slot=card] [data-slot=card-description]");
+    expect(cardDescription).toHaveTextContent("0");
+    expect(dialog).toHaveAccessibleDescription("0");
   });
 
   it("should keep a single live copy of its children while the quick look is open", async () => {

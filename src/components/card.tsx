@@ -31,6 +31,7 @@ import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
 import { cn } from "../lib/utils.js"
 import { ARC_BLUR, ARC_DURATION, ARC_EASE, ARC_SPRING_SMOOTH, ARC_SPRING_SNAPPY } from "../motion/arc-tokens.js"
 import { MotionSlot } from "../motion/motion-slot.js"
+import { useAttachedElement } from "../motion/use-attached-element.js"
 
 export type { CardHeadingLevel }
 
@@ -162,6 +163,15 @@ function toPixels(node: Element, value: string): number | undefined {
 }
 
 /**
+ * Tells whether an optional slot was given: `0` and `""` are content, while `undefined`, `null` and `false` leave it out.
+ * @param node - Slot content.
+ * @returns Whether the slot renders.
+ */
+function hasContent(node: ReactNode): boolean {
+  return node !== undefined && node !== null && node !== false
+}
+
+/**
  * A content card with optional media, byline, action and footer that can grow into a quick look dialog.
  * @param props - Arc's card content and quick look state, the heading level, a footer and native article attributes.
  * @returns The card article, wrapped in its quick look dialog when `details` is set.
@@ -183,20 +193,21 @@ function Card({
   children,
   className,
   style,
+  ref,
   ...props
 }: CardProps) {
   const reduceMotion = usePrefersReducedMotion()
   const layoutGroupId = useId()
-  const cardRef = useRef<HTMLElement>(null)
+  const [cardNode, attachCard] = useAttachedElement<HTMLElement>(ref)
   const descriptionRef = useRef<HTMLParagraphElement>(null)
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen)
   const [geometry, setGeometry] = useState<Geometry>({})
   const [landing, setLanding] = useState<Landing | null>(null)
-  const hasQuickLook = details !== undefined && details !== null && details !== false && title !== undefined && title !== null
+  const hasQuickLook = hasContent(details) && title !== undefined && title !== null
   const isOpen = hasQuickLook ? (openProp ?? uncontrolledOpen) : false
   const shouldMorph = hasQuickLook && !reduceMotion
   const isReturning = !isOpen && landing !== null
-  const hasDescription = Boolean(description)
+  const hasDescription = hasContent(description)
   const MotionHeading = MOTION_HEADING[headingLevel]
   const setOpen = useCallback(
     (nextOpen: boolean) => {
@@ -208,7 +219,7 @@ function Card({
 
   // The quick look keeps the card's line length, so the description never rewraps while it travels.
   useEffect(() => {
-    const node = cardRef.current
+    const node = cardNode
     const text = descriptionRef.current
     if (!shouldMorph || !node || typeof ResizeObserver === "undefined") return
     const observer = new ResizeObserver(() => {
@@ -225,21 +236,21 @@ function Card({
     observer.observe(node)
     if (text) observer.observe(text)
     return () => observer.disconnect()
-  }, [shouldMorph, hasDescription])
+  }, [shouldMorph, hasDescription, cardNode])
 
   // Closing keeps the quick look mounted and sends it back to the card's box, so it never drops behind the page.
   const wasOpen = useRef(isOpen)
   useLayoutEffect(() => {
     const hasClosed = wasOpen.current && !isOpen
     wasOpen.current = isOpen
-    const node = cardRef.current
+    const node = cardNode
     if (isOpen) {
       setLanding(null)
     } else if (hasClosed && shouldMorph && node) {
       const box = node.getBoundingClientRect()
       setLanding({ top: box.top, left: box.left, width: box.width, height: box.height })
     }
-  }, [isOpen, shouldMorph])
+  }, [isOpen, shouldMorph, cardNode])
   // Once the surface has visually landed, the card takes over, so the handoff has no seam.
   useEffect(() => {
     if (!isReturning) return
@@ -301,7 +312,7 @@ function Card({
     <MotionSlot kind="card">
       <motion.article
         {...(props as HTMLMotionProps<"article">)}
-        ref={cardRef}
+        ref={attachCard}
         data-slot="card"
         className={cn(cardClassName, className)}
         style={{ ...style, borderRadius: geometry.card ?? style?.borderRadius }}
@@ -335,7 +346,7 @@ function Card({
                 )}
             </MotionHeading>
           ) : null}
-          {description ? (
+          {hasDescription ? (
             <motion.p ref={descriptionRef} data-slot="card-description" className={descriptionClassName} {...shared("description", "card", "position")}>
               {description}
             </motion.p>
@@ -395,7 +406,7 @@ function Card({
                   </DialogPrimitive.Overlay>
                 ) : null}
               </AnimatePresence>
-              <DialogPrimitive.Content asChild forceMount {...(description ? {} : { "aria-describedby": undefined })}>
+              <DialogPrimitive.Content asChild forceMount {...(hasDescription ? {} : { "aria-describedby": undefined })}>
                 <motion.div
                   data-slot="card-quick-look"
                   data-returning={isReturning || undefined}
@@ -453,7 +464,7 @@ function Card({
                         {title}
                       </motion.h2>
                     </DialogPrimitive.Title>
-                    {description ? (
+                    {hasDescription ? (
                       <DialogPrimitive.Description asChild>
                         <motion.p
                           className={cn(descriptionClassName, "max-w-[var(--card-measure,34ch)]")}
