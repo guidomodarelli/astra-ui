@@ -44,18 +44,17 @@ test("should slide the sheet in and out from its edge", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Abrir panel" })).toBeFocused();
 });
 
-test("should unfold the alert dialog from its center and keep its actions working", async ({ page }) => {
+test("should rise the alert dialog in like a dialog and keep its actions working", async ({ page }) => {
   const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
   await page.getByRole("button", { name: "Eliminar cuenta" }).click();
   const alert = page.getByRole("alertdialog", { name: "¿Eliminar la cuenta?" });
   await expect(alert).toBeVisible();
+  // Arc's dialog transition: the panel fades in while it rises and scales on a spring; it no longer clips.
   await expect
     .poll(() => motion.properties({ role: "alertdialog" }))
-    .toContain("clipPath");
-  const properties = await motion.properties({ role: "alertdialog" });
-  expect(properties).not.toContain("opacity");
-  expect(properties).not.toContain("transform");
+    .toEqual(expect.arrayContaining(["opacity", "transform"]));
+  expect(await motion.properties({ role: "alertdialog" })).not.toContain("clipPath");
   await expectSettled(alert);
   await page.getByRole("button", { name: "Eliminar", exact: true }).click();
   await expect(page.getByLabel("Última acción")).toHaveText("Cuenta eliminada");

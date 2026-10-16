@@ -1,6 +1,6 @@
 /** Verifies motion and its accessible fallback in real browser layout and interactions. */
 import { expect, test, type Page } from "@playwright/test";
-import { recordMotion } from "./motion-recorder.js";
+import { recordMotion, samplePaintedBoxes, waitForSettledLayout } from "./motion-recorder.js";
 
 test("should animate menus and dialogs while preserving keyboard dismissal", async ({
   page,
@@ -424,21 +424,35 @@ test("should blur-swap the theme icon and pop in the dialog close button", async
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
-/** Clip keyframes and duration Motion handed to the browser for one dialog animation. */
-type DialogClipPlayback = { clipPath: string[]; otherProperties: string[]; durationMs: number };
+/** One native animation Motion handed to the browser for a dialog panel. */
+type DialogPlayback = {
+  /** Animated properties, without timing keys. */
+  properties: string[];
+  /** Opacity of each keyframe, when the animation drives it. */
+  opacity: number[];
+  /** Vertical offset and scale of each transform keyframe, when the animation drives the transform. */
+  transforms: { translateY: number; scale: number }[];
+  durationMs: number;
+};
 
 /** One painted frame of a closing dialog: whether its layers still take input, and the page does. */
-type FoldSample = { isContentInert: boolean; isOverlayInert: boolean; bodyPointerEvents: string };
+type LeaveSample = { isContentInert: boolean; isOverlayInert: boolean; bodyPointerEvents: string };
+
+/** Arc's dialog: the panel rises 8px and scales from 0.96 on the way in, drops 4px to 0.98 on the way out. */
+const DIALOG_ENTER = { translateY: 8, scale: 0.96 };
+const DIALOG_EXIT = { translateY: 4, scale: 0.98 };
+/** Arc's `duration.fast`, in ms: the panel fades in and leaves on it. */
+const DIALOG_FAST_MS = 160;
 
 /**
  * Records the keyframes of every native dialog animation as it is created, delegating unchanged
  * to the real browser API so the playback itself is never altered.
  */
-async function recordDialogClips(page: Page) {
+async function recordDialogPlayback(page: Page) {
   const handle = await page.evaluateHandle(() => {
-    const recorded: DialogClipPlayback[] = [];
+    const recorded: DialogPlayback[] = [];
     const nativeAnimate = Element.prototype.animate;
-    const timingKeys = ["clipPath", "offset", "easing", "composite", "computedOffset"];
+    const timingKeys = ["offset", "easing", "composite", "computedOffset"];
 
     /** Observes real dialog animations without replacing their effects, timing or controls. */
     Element.prototype.animate = function (...args) {
@@ -446,10 +460,16 @@ async function recordDialogClips(page: Page) {
       if (this.getAttribute("role") === "dialog" && animation.effect instanceof KeyframeEffect) {
         const frames = animation.effect.getKeyframes();
         recorded.push({
-          clipPath: frames.map((frame) => String(frame.clipPath ?? "")).filter(Boolean),
-          otherProperties: frames.flatMap((frame) =>
-            Object.keys(frame).filter((property) => !timingKeys.includes(property)),
-          ),
+          properties: [
+            ...new Set(frames.flatMap((frame) => Object.keys(frame).filter((key) => !timingKeys.includes(key)))),
+          ],
+          opacity: frames.filter((frame) => frame.opacity !== undefined).map((frame) => Number(frame.opacity)),
+          transforms: frames
+            .filter((frame) => typeof frame.transform === "string")
+            .map((frame) => {
+              const matrix = new DOMMatrixReadOnly(String(frame.transform));
+              return { translateY: matrix.f, scale: matrix.a };
+            }),
           durationMs: Number(animation.effect.getTiming().duration),
         });
       }
@@ -462,14 +482,25 @@ async function recordDialogClips(page: Page) {
       },
     };
   });
+  /** Waits until a playback matching the predicate has been recorded after the given count, and returns it. */
+  const find = async (after: number, matches: (playback: DialogPlayback) => boolean) => {
+    let found: DialogPlayback | undefined;
+    await expect
+      .poll(async () => {
+        const recorded = await handle.evaluate(({ recorded }) => recorded);
+        found = recorded.slice(after).find(matches);
+        return found !== undefined;
+      })
+      .toBe(true);
+    return found!;
+  };
   return {
-    /** Waits for the animation recorded at a position and returns it. */
-    at: async (index: number) => {
-      await expect
-        .poll(() => handle.evaluate(({ recorded }, position) => recorded.length > position, index))
-        .toBe(true);
-      return handle.evaluate(({ recorded }, position) => recorded[position]!, index);
-    },
+    count: () => handle.evaluate(({ recorded }) => recorded.length),
+    /** The transform playback recorded after the given count. */
+    transformAfter: (after: number) => find(after, (playback) => playback.transforms.length > 0),
+    /** The opacity playback recorded after the given count. */
+    opacityAfter: (after: number) => find(after, (playback) => playback.opacity.length > 0),
+    all: () => handle.evaluate(({ recorded }) => recorded),
     stop: async () => {
       await handle.evaluate(({ stop }) => stop());
       await handle.dispose();
@@ -477,34 +508,37 @@ async function recordDialogClips(page: Page) {
   };
 }
 
-/** Matches an `inset()` clip that keeps the given share of the surface hidden on every side. */
-const insetOnEverySide = (percent: number) =>
-  new RegExp(`^inset\\(${percent}%( ${percent}%){0,3} round `);
-
-test("should unfold the dialog from its center and fold it back when it closes", async ({
+test("should rise the dialog in on Arc's transition and let it leave quickly", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/motion.html");
-  const playback = await recordDialogClips(page);
+  const playback = await recordDialogPlayback(page);
 
   try {
     await page.getByRole("button", { name: "Abrir diálogo" }).click();
     const dialog = page.getByRole("dialog");
-    const opening = await playback.at(0);
-    expect(opening.clipPath[0]).toMatch(insetOnEverySide(48));
-    expect(opening.clipPath.at(-1)).not.toMatch(insetOnEverySide(48));
-    // The surface unfolds in place: it neither fades nor travels while it opens.
-    expect(opening.otherProperties).toEqual([]);
+    const openingMove = await playback.transformAfter(0);
+    const openingFade = await playback.opacityAfter(0);
+    // The panel rises 8px and grows from 0.96 to rest while it fades in, all at once.
+    expect(openingMove.transforms[0]!.translateY).toBeCloseTo(DIALOG_ENTER.translateY, 1);
+    expect(openingMove.transforms[0]!.scale).toBeCloseTo(DIALOG_ENTER.scale, 2);
+    expect(openingMove.transforms.at(-1)!.translateY).toBeCloseTo(0, 1);
+    expect(openingMove.transforms.at(-1)!.scale).toBeCloseTo(1, 2);
+    expect(openingFade.opacity[0]).toBe(0);
+    expect(openingFade.opacity.at(-1)).toBe(1);
+    expect(openingFade.durationMs).toBeCloseTo(DIALOG_FAST_MS, 0);
+    // It no longer unfolds behind a clip.
+    expect((await playback.all()).flatMap((recorded) => recorded.properties)).not.toContain("clipPath");
     await expect(dialog).toHaveCSS("clip-path", "none");
     await expect(dialog).toHaveCSS("opacity", "1");
     await expect(dialog).toHaveCSS("transform", "none");
 
-    // Samples every frame of the fold, started before Escape so the first one is never missed.
-    const foldSamples = page.evaluate(
+    // Samples every frame of the exit, started before Escape so the first one is never missed.
+    const leaveSamples = page.evaluate(
       () =>
-        new Promise<FoldSample[]>((resolve) => {
-          const samples: FoldSample[] = [];
+        new Promise<LeaveSample[]>((resolve) => {
+          const samples: LeaveSample[] = [];
           let sawDialog = false;
           const tick = () => {
             const content = document.querySelector("[data-slot=dialog-content]");
@@ -523,14 +557,17 @@ test("should unfold the dialog from its center and fold it back when it closes",
           requestAnimationFrame(tick);
         }),
     );
+    const openedCount = await playback.count();
     await page.keyboard.press("Escape");
-    const closing = await playback.at(1);
-    expect(closing.clipPath.at(-1)).toMatch(insetOnEverySide(48));
-    expect(closing.otherProperties).toEqual([]);
-    // Folding is brief, so focus and the rest of the page come back sooner than the unfold took.
-    expect(closing.durationMs).toBeLessThan(opening.durationMs);
-    // While it folds, the dialog no longer takes input and the page already does.
-    const samples = await foldSamples;
+    const closingMove = await playback.transformAfter(openedCount);
+    // It drops 4px and shrinks to 0.98 while it fades out, in Arc's fast timing.
+    expect(closingMove.transforms.at(-1)!.translateY).toBeCloseTo(DIALOG_EXIT.translateY, 1);
+    expect(closingMove.transforms.at(-1)!.scale).toBeCloseTo(DIALOG_EXIT.scale, 2);
+    expect(closingMove.durationMs).toBeCloseTo(DIALOG_FAST_MS, 0);
+    // Leaving is brief, so focus and the rest of the page come back sooner than the entrance took.
+    expect(closingMove.durationMs).toBeLessThan(openingMove.durationMs);
+    // While it leaves, the dialog no longer takes input and the page already does.
+    const samples = await leaveSamples;
     expect(samples.length).toBeGreaterThan(0);
     for (const sample of samples) {
       expect(sample).toEqual({
@@ -546,30 +583,112 @@ test("should unfold the dialog from its center and fold it back when it closes",
   }
 });
 
-test("should keep every corner of a custom dialog shape while it unfolds", async ({ page }) => {
+test("should land the dialog where it rests, without a jump or a page shift", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/motion.html");
-  const playback = await recordDialogClips(page);
+  const trigger = page.getByRole("button", { name: "Abrir diálogo" });
+  // Held as a node: the open modal hides the page from the accessibility tree, so roles no longer find it.
+  const triggerNode = (await trigger.elementHandle())!;
+  // Brought into view first, so the click itself never has to scroll the page.
+  await triggerNode.scrollIntoViewIfNeeded();
+  await waitForSettledLayout(trigger);
+  const triggerBefore = (await triggerNode.boundingBox())!;
+  const boxes = samplePaintedBoxes(page, "[data-slot=dialog-content]", 900, { origin: "viewport" });
+  await trigger.click();
+  const painted = await boxes;
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toHaveCSS("transform", "none");
+  const rest = (await dialog.boundingBox())!;
+  expect(painted.length).toBeGreaterThan(1);
+  // Every frame stays between the 8px rise and the resting place, centered on it: no overshoot, no drift sideways.
+  for (const box of painted) {
+    const centerX = box.x + box.width / 2;
+    const centerY = box.y + box.height / 2;
+    expect(centerX).toBeCloseTo(rest.x + rest.width / 2, 0);
+    expect(centerY).toBeGreaterThanOrEqual(rest.y + rest.height / 2 - 0.5);
+    expect(centerY).toBeLessThanOrEqual(rest.y + rest.height / 2 + DIALOG_ENTER.translateY + 0.5);
+    expect(box.width).toBeLessThanOrEqual(rest.width + 0.5);
+  }
+  // The last painted frame is the resting place, so settling never snaps.
+  const last = painted.at(-1)!;
+  expect(last.x).toBeCloseTo(rest.x, 0);
+  expect(last.y).toBeCloseTo(rest.y, 0);
+  // The page behind keeps its layout while the dialog is open.
+  expect(await triggerNode.boundingBox()).toEqual(triggerBefore);
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  expect(await triggerNode.boundingBox()).toEqual(triggerBefore);
+});
 
+test("should keep a custom dialog shape whole while it enters", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/motion.html");
+  const radii = page.evaluate(
+    () =>
+      new Promise<string[]>((resolve) => {
+        const samples: string[] = [];
+        // The window opens once the panel exists, so a slow click never eats its entrance.
+        let start: number | null = null;
+        const tick = () => {
+          const content = document.querySelector("[data-slot=dialog-content]");
+          if (content) {
+            start ??= performance.now();
+            const style = getComputedStyle(content);
+            samples.push(`${style.clipPath}|${style.borderTopLeftRadius}|${style.borderTopRightRadius}`);
+          }
+          if (start === null || performance.now() - start < 900) requestAnimationFrame(tick);
+          else resolve(samples);
+        };
+        tick();
+      }),
+  );
+  await page.getByRole("button", { name: "Abrir ficha" }).click();
+  const samples = await radii;
+  expect(samples.length).toBeGreaterThan(1);
+  // Nothing clips the panel, and its square left and rounded right corners hold on every frame.
+  const [first] = samples;
+  const [clipPath, topLeft, topRight] = first!.split("|");
+  expect(clipPath).toBe("none");
+  expect(topLeft).not.toBe(topRight);
+  expect(new Set(samples)).toEqual(new Set([first]));
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("should open and close the dialog without motion when it is reduced", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/motion.html");
+  const playback = await recordDialogPlayback(page);
   try {
-    await page.getByRole("button", { name: "Abrir ficha" }).click();
-    const opening = await playback.at(0);
-    const unfolded = opening.clipPath.at(-1)!;
-    // Square left corners and rounded right ones must reach the clip as different radii.
-    const horizontalRadii = unfolded
-      .slice(unfolded.indexOf(" round ") + " round ".length, -1)
-      .split(" / ")[0]!
-      .match(/calc\([^)]*\)|\S+/g)!;
-    // Browsers serialize the shortest equivalent list, so expand it like the CSS shorthand.
-    const [topLeft, topRight = topLeft, bottomRight = topLeft, bottomLeft = topRight] = horizontalRadii;
-    expect(topLeft).toBe(bottomLeft);
-    expect(topRight).toBe(bottomRight);
-    expect(topLeft).not.toBe(topRight);
+    await page.getByRole("button", { name: "Abrir diálogo" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveCSS("opacity", "1");
+    await expect(dialog).toHaveCSS("transform", "none");
     await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Abrir diálogo" })).toBeFocused();
+    expect(await playback.all()).toEqual([]);
   } finally {
     await playback.stop();
   }
+});
+
+test("should reverse a dialog closed mid-entrance from where it is", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/motion.html");
+  const trigger = page.getByRole("button", { name: "Abrir diálogo" });
+  await trigger.click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  // A reopen right after still lands at rest.
+  await trigger.click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toHaveCSS("opacity", "1");
+  await expect(dialog).toHaveCSS("transform", "none");
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
 });
 
 /** One painted frame of the dialog close button. */

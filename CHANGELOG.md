@@ -11,6 +11,11 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 ### Changed
 
 - Los tokens de `beez-ui/motion-tokens` toman los valores de los presets de Arc y conservan sus nombres: los springs pasan a `snappy`, `smooth` o `morph` (expresados con `visualDuration` y `bounce` en lugar de `stiffness`, `damping` y `mass`), las duraciones y curvas usan las de Arc y la presión baja a 0.97.
+- `Dialog` y `AlertDialog` entran como el diálogo de Arc: el panel sube 8 px y crece desde 0.96 con un resorte suave mientras aparece, y sale rápido (0.16 s), en lugar de desplegarse desde el centro.
+
+### Deprecated
+
+- `MOTION_TIMING.centerMorph`, `MOTION_TIMING.centerMorphFold`, `MOTION_EASE_UNFOLD` y `MOTION_CENTER_MORPH_FOLDED_PERCENT`: los diálogos ya no se despliegan desde el centro. Siguen exportados con su valor.
 
 ## [2.6.2] - 2026-10-16
 
