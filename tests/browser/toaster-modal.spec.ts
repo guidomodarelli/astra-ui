@@ -6,10 +6,11 @@
 import { expect, test } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
 
-/** Modals that raise toasts, by the trigger that opens them and the counter their retries go to. */
+/** Modals that raise toasts, by the trigger that opens them, their ARIA role and the counter their retries go to. */
 const MODALS = [
-  { trigger: "Abrir edición", name: "Editar evento", counter: "Reintentos del diálogo" },
-  { trigger: "Abrir panel", name: "Panel lateral", counter: "Reintentos del panel" },
+  { trigger: "Abrir edición", role: "dialog", name: "Editar evento", counter: "Reintentos del diálogo" },
+  { trigger: "Abrir confirmación", role: "alertdialog", name: "Confirmar cambios", counter: "Reintentos de la confirmación" },
+  { trigger: "Abrir panel", role: "dialog", name: "Panel lateral", counter: "Reintentos del panel" },
 ] as const;
 
 /** Most Tab presses a toast control may take to reach from the toast list. */
@@ -56,15 +57,15 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/toaster-modal.html");
 });
 
-for (const { trigger, name, counter } of MODALS) {
+for (const { trigger, role, name, counter } of MODALS) {
   test.describe(`from ${name}`, () => {
     test.beforeEach(async ({ page }) => {
       await page.getByRole("button", { name: trigger }).click();
-      await page.getByRole("dialog", { name }).getByRole("button", { name: "Guardar" }).click();
+      await page.getByRole(role, { name }).getByRole("button", { name: "Guardar" }).click();
     });
 
     test("should run the toast action on click and keep the modal open", async ({ page }) => {
-      const modal = page.getByRole("dialog", { name });
+      const modal = page.getByRole(role, { name });
       const retry = page.getByRole("button", { name: "Reintentar" });
       await expect(retry).toBeVisible();
       await expectOnTop(retry);
@@ -74,7 +75,7 @@ for (const { trigger, name, counter } of MODALS) {
     });
 
     test("should close the toast with its close button and keep the modal open", async ({ page }) => {
-      const modal = page.getByRole("dialog", { name });
+      const modal = page.getByRole(role, { name });
       const closeToast = page.getByRole("button", { name: "Close toast" });
       await expectOnTop(closeToast);
       await closeToast.click();
@@ -83,7 +84,7 @@ for (const { trigger, name, counter } of MODALS) {
     });
 
     test("should run the toast action with Alt+T, Tab and Enter and return focus to the modal", async ({ page }) => {
-      const modal = page.getByRole("dialog", { name });
+      const modal = page.getByRole(role, { name });
       const retry = page.getByRole("button", { name: "Reintentar" });
       await expect(retry).toBeVisible();
       // Sonner's hotkey moves focus to the toast list; the modal's focus trap must not pull it back.

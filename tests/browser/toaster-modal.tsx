@@ -1,10 +1,19 @@
 /**
  * Mounts the plain `Toaster` beez-ui exports (Sonner's look, not `ThemedToaster`) with the props TuTribu uses, next to
- * a dialog and a sheet that raise toasts, so pointer input and keyboard focus run through real modal overlays.
+ * a dialog, an alert dialog and a sheet that raise toasts, so pointer input and keyboard focus run through real modal
+ * overlays.
  */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
   BeezUIProvider,
   Button,
   Dialog,
@@ -66,6 +75,21 @@ function App() {
               <SaveWithRetry label="Reintentos del diálogo" />
             </DialogContent>
           </Dialog>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button>Abrir confirmación</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmar cambios</AlertDialogTitle>
+                <AlertDialogDescription>Los cambios se aplican a todo el evento.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <SaveWithRetry label="Reintentos de la confirmación" />
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Sheet>
             <SheetTrigger asChild>
               <Button>Abrir panel</Button>
