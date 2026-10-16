@@ -356,16 +356,21 @@ function MobileSidebar({ ariaLabel, children, className, side }: MobileSidebarPr
     const previousBodyStyles = {
       left: body.style.left,
       overflow: body.style.overflow,
+      paddingRight: body.style.paddingRight,
       position: body.style.position,
       right: body.style.right,
       top: body.style.top,
     };
+    // A classic (non-overlay) scrollbar disappears with the lock; padding its width back keeps the page from shifting.
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const bodyPaddingRight = Number.parseFloat(getComputedStyle(body).paddingRight) || 0;
 
     body.style.position = "fixed";
     body.style.top = `-${scrollY}px`;
     body.style.left = "0";
     body.style.right = "0";
     body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) body.style.paddingRight = `${bodyPaddingRight + scrollbarWidth}px`;
 
     // Focus returns to whichever trigger is mounted when the sheet closes, not the one present on open.
     const restoreTriggerFocus = () => triggerRef.current?.focus({ preventScroll: true });
@@ -381,6 +386,7 @@ function MobileSidebar({ ariaLabel, children, className, side }: MobileSidebarPr
       body.style.left = previousBodyStyles.left;
       body.style.right = previousBodyStyles.right;
       body.style.overflow = previousBodyStyles.overflow;
+      body.style.paddingRight = previousBodyStyles.paddingRight;
       window.scrollTo(0, scrollY);
       restoreTriggerFocus();
     };
@@ -392,6 +398,10 @@ function MobileSidebar({ ariaLabel, children, className, side }: MobileSidebarPr
   const transition = reduce ? REDUCED_TRANSITION : PANEL_TRANSITION;
 
   const trapFocus = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    // React bubbles keys from layers portaled out of the panel (a menu, select or dialog opened from it) up to here.
+    // Those layers own their keys: Escape closes them, not the sheet behind them.
+    if (event.defaultPrevented || !panelRef.current?.contains(event.target as Node)) return;
+
     if (event.key === "Escape") {
       event.preventDefault();
       setOpenMobile(false);
