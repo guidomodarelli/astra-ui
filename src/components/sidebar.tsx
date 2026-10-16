@@ -361,8 +361,9 @@ function MobileSidebar({ ariaLabel, children, className, side }: MobileSidebarPr
       right: body.style.right,
       top: body.style.top,
     };
-    // A classic (non-overlay) scrollbar disappears with the lock; padding its width back keeps the page from shifting.
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    // A classic (non-overlay) scrollbar disappears with the lock; padding back only the width it frees keeps the page
+    // from shifting. A gutter the root keeps reserved (scrollbar-gutter: stable, overflow-y: scroll) frees nothing.
+    const clientWidthBeforeLock = document.documentElement.clientWidth;
     const bodyPaddingRight = Number.parseFloat(getComputedStyle(body).paddingRight) || 0;
 
     body.style.position = "fixed";
@@ -370,6 +371,7 @@ function MobileSidebar({ ariaLabel, children, className, side }: MobileSidebarPr
     body.style.left = "0";
     body.style.right = "0";
     body.style.overflow = "hidden";
+    const scrollbarWidth = document.documentElement.clientWidth - clientWidthBeforeLock;
     if (scrollbarWidth > 0) body.style.paddingRight = `${bodyPaddingRight + scrollbarWidth}px`;
 
     // Focus returns to whichever trigger is mounted when the sheet closes, not the one present on open.
