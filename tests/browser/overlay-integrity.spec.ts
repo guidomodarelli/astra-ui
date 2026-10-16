@@ -143,6 +143,27 @@ test("should run a toast action with the keyboard from an open dialog without cl
   await page.keyboard.press("Enter");
   await expect(dialog.getByRole("status", { name: "Reintentos" })).toHaveText("1");
   await expect(dialog).toBeVisible();
+  // The action dismisses its toast; focus must go back to the dialog instead of falling to the body.
+  await expect(retry).toHaveCount(0);
+  await expect.poll(() => dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+});
+
+test("should return focus to the dialog when a toast action dismisses its toast while others stay", async ({ page }) => {
+  await page.getByRole("button", { name: "Abrir edición" }).click();
+  const dialog = page.getByRole("dialog", { name: "Editar evento" });
+  const save = dialog.getByRole("button", { name: "Guardar" });
+  await save.click();
+  await save.click();
+  const retry = page.getByRole("button", { name: "Reintentar" });
+  await expect(retry).toHaveCount(2);
+  await page.keyboard.press("Alt+KeyT");
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Enter");
+  // The toast list stays mounted, so only the removed control could have held focus.
+  await expect(retry).toHaveCount(1);
+  await expect.poll(() => dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+  await expect(dialog).toBeVisible();
 });
 
 test("should close a toast from an open sheet without closing the sheet", async ({ page }) => {

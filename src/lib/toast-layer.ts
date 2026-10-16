@@ -19,18 +19,44 @@ export function isToastLayerTarget(target: EventTarget | null): boolean {
  * `focusout` on the document and pulls focus back into the modal whenever it lands outside, so Sonner's hotkey could
  * never move focus to a toast's controls. Focus changes that land on a toast stop at the body, after React has run
  * its own handlers and before the document-level trap sees them; every other focus change still reaches the trap.
+ * Because the trap never sees focus leave, it cannot pull it back either: when the focused toast control is removed
+ * (an action or close button dismisses its toast), focus returns to the element it came from instead of the body.
  * @param ownerDocument - Document whose body hosts the app and the modal portals.
  * @returns Removes the listeners.
  */
 export function letFocusReachToastLayer(ownerDocument: Document): () => void {
   const { body } = ownerDocument
+  let focusOrigin: HTMLElement | null = null
+  let focusedToastElement: Element | null = null
+  const restoreFocusAfterRemoval = new MutationObserver(() => {
+    if (focusedToastElement?.isConnected !== false) return
+    const activeElement = ownerDocument.activeElement
+    if (activeElement === null || activeElement === body) focusOrigin?.focus({ preventScroll: true })
+    stopTrackingToastFocus()
+  })
+  const stopTrackingToastFocus = () => {
+    restoreFocusAfterRemoval.disconnect()
+    focusOrigin = null
+    focusedToastElement = null
+  }
   const stopFocusIntoToast = (event: FocusEvent) => {
     const focusedElement = event.type === "focusin" ? event.target : event.relatedTarget
-    if (isToastLayerTarget(focusedElement)) event.stopPropagation()
+    if (!isToastLayerTarget(focusedElement)) {
+      if (event.type === "focusin") stopTrackingToastFocus()
+      return
+    }
+    event.stopPropagation()
+    if (event.type !== "focusin") return
+    if (focusedToastElement === null) {
+      focusOrigin = event.relatedTarget instanceof HTMLElement ? event.relatedTarget : null
+      restoreFocusAfterRemoval.observe(body, { childList: true, subtree: true })
+    }
+    focusedToastElement = focusedElement as Element
   }
   body.addEventListener("focusin", stopFocusIntoToast)
   body.addEventListener("focusout", stopFocusIntoToast)
   return () => {
+    stopTrackingToastFocus()
     body.removeEventListener("focusin", stopFocusIntoToast)
     body.removeEventListener("focusout", stopFocusIntoToast)
   }
