@@ -39,6 +39,12 @@ const menuItemClassName =
 /** Room at the end of checkbox and radio rows for their check, as in Arc's select options. */
 const menuSelectableItemClassName = "pr-[34px]"
 
+/**
+ * Arc's danger tone of a `destructive` row of any kind: danger text and icon over a faint danger fill when highlighted.
+ */
+const menuItemDestructiveClassName =
+  "data-[variant=destructive]:text-danger data-[variant=destructive]:*:[svg:not([class*='text-'])]:text-danger data-[variant=destructive]:data-highlighted:bg-[color-mix(in_oklab,var(--danger)_8%,var(--surface))]"
+
 /** Position and color of the check of checkbox and radio rows. */
 const menuItemIndicatorClassName =
   "pointer-events-none absolute right-2.5 flex items-center justify-center text-foreground"
@@ -119,7 +125,7 @@ function DropdownMenuItem({
       className={cn(
         "group/dropdown-menu-item",
         menuItemClassName,
-        "data-[variant=destructive]:text-danger data-[variant=destructive]:*:[svg:not([class*='text-'])]:text-danger data-[variant=destructive]:data-highlighted:bg-[color-mix(in_oklab,var(--danger)_8%,var(--surface))]",
+        menuItemDestructiveClassName,
         className
       )}
       {...props}
@@ -128,8 +134,8 @@ function DropdownMenuItem({
 }
 
 /**
- * Renders a selectable checkbox action with its check at the end of the row.
- * @param props - Primitive properties and `inset` to align with rows that carry an icon.
+ * Renders a selectable checkbox action with its check at the end of the row. `destructive` draws Arc's danger tone.
+ * @param props - Primitive properties, `inset` to align with rows that carry an icon, and the `variant`.
  * @returns The styled primitive with its original interaction contract.
  */
 function DropdownMenuCheckboxItem({
@@ -137,15 +143,18 @@ function DropdownMenuCheckboxItem({
   children,
   checked,
   inset,
+  variant = "default",
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem> & {
   inset?: boolean
+  variant?: "default" | "destructive"
 }) {
   return (
     <DropdownMenuPrimitive.CheckboxItem
       data-slot="dropdown-menu-checkbox-item"
       data-inset={inset}
-      className={cn(menuItemClassName, menuSelectableItemClassName, className)}
+      data-variant={variant}
+      className={cn(menuItemClassName, menuSelectableItemClassName, menuItemDestructiveClassName, className)}
       checked={checked}
       {...props}
     >
@@ -174,23 +183,26 @@ function DropdownMenuRadioGroup({
 }
 
 /**
- * Renders a mutually exclusive action with its check at the end of the row.
- * @param props - Primitive properties and `inset` to align with rows that carry an icon.
+ * Renders a mutually exclusive action with its check at the end of the row. `destructive` draws Arc's danger tone.
+ * @param props - Primitive properties, `inset` to align with rows that carry an icon, and the `variant`.
  * @returns The styled primitive with its original interaction contract.
  */
 function DropdownMenuRadioItem({
   className,
   children,
   inset,
+  variant = "default",
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.RadioItem> & {
   inset?: boolean
+  variant?: "default" | "destructive"
 }) {
   return (
     <DropdownMenuPrimitive.RadioItem
       data-slot="dropdown-menu-radio-item"
       data-inset={inset}
-      className={cn(menuItemClassName, menuSelectableItemClassName, className)}
+      data-variant={variant}
+      className={cn(menuItemClassName, menuSelectableItemClassName, menuItemDestructiveClassName, className)}
       {...props}
     >
       <span

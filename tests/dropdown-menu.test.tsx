@@ -189,6 +189,28 @@ describe("DropdownMenu", () => {
     expect(screen.getByRole("menuitemradio", { name: "Recientes" })).toHaveAttribute("aria-checked", "false");
   });
 
+  it("should draw the danger tone on destructive checkbox and radio rows", async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu
+        label="Peligro"
+        selection={{ value: "keep", onValueChange: () => {} }}
+        items={[
+          { label: "Conservar", value: "keep" },
+          { label: "Borrar todo", value: "wipe", destructive: true },
+          { label: "Borrar al salir", checked: false, destructive: true },
+          { label: "Recordar", checked: true },
+        ]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Peligro" }));
+    expect(screen.getByRole("menuitemradio", { name: "Borrar todo" })).toHaveAttribute("data-variant", "destructive");
+    expect(screen.getByRole("menuitemcheckbox", { name: "Borrar al salir" })).toHaveAttribute("data-variant", "destructive");
+    expect(screen.getByRole("menuitemradio", { name: "Conservar" })).toHaveAttribute("data-variant", "default");
+    expect(screen.getByRole("menuitemcheckbox", { name: "Recordar" })).toHaveAttribute("data-variant", "default");
+  });
+
   it("should place its content on the requested side and alignment, with a content class", async () => {
     const user = userEvent.setup();
     render(

@@ -101,21 +101,21 @@ function ItemRow({ item, hasSelection }: { item: DropdownItem; hasSelection: boo
     disabled: item.disabled,
     onSelect: item.onSelect,
   }
+  const variant = item.destructive ? "destructive" : "default"
   if (hasSelection && item.value !== undefined) {
     return (
-      <DropdownMenuRadioItem {...shared} value={item.value}>
+      <DropdownMenuRadioItem {...shared} variant={variant} value={item.value}>
         <ItemBody item={item} />
       </DropdownMenuRadioItem>
     )
   }
   if (item.checked !== undefined) {
     return (
-      <DropdownMenuCheckboxItem {...shared} checked={item.checked}>
+      <DropdownMenuCheckboxItem {...shared} variant={variant} checked={item.checked}>
         <ItemBody item={item} />
       </DropdownMenuCheckboxItem>
     )
   }
-  const variant = item.destructive ? "destructive" : "default"
   if (item.href !== undefined) {
     return (
       <DropdownMenuItem {...shared} variant={variant} asChild>
