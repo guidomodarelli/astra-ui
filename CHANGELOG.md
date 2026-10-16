@@ -11,7 +11,7 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 ### Changed
 
 - Los tokens de `beez-ui/motion-tokens` toman los valores de los presets de Arc y conservan sus nombres: los springs pasan a `snappy`, `smooth` o `morph` (expresados con `visualDuration` y `bounce` en lugar de `stiffness`, `damping` y `mass`), las duraciones y curvas usan las de Arc y la presión baja a 0.97.
-- `Dialog` y `AlertDialog` entran como el diálogo de Arc: el panel sube 8 px y crece desde 0.96 con un resorte suave mientras aparece, y sale rápido (0.16 s), en lugar de desplegarse desde el centro.
+- `Dialog` y `AlertDialog` entran como el diálogo de Arc: el panel sube 8 px y crece desde 0.96 con un resorte suave mientras aparece, y sale rápido (0.16 s), en lugar de desplegarse desde el centro. La transformación y la opacidad que el panel recibe por `className` o `style` se mantienen durante toda la animación, y reabrirlo mientras sale lo devuelve desde donde está.
 - `Input`, `Textarea`, `InputGroup` y `SelectTrigger` ya no tiemblan al pasar a `aria-invalid="true"`: el error se indica con el color y el mensaje, sin mover el campo.
 - Las opciones de `Select`, `Alert`, `FormMessage` y el ícono de `AnimatedThemeToggler` aparecen con un fundido y una escala breves, sin desenfoque; las opciones del `Select` entran todas juntas, sin escalonarse.
 - El ancho del `Sidebar` cambia con el resorte `smooth` de Arc (0.4 s, sin rebote), más suave que antes.

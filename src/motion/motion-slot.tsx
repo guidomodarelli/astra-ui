@@ -50,7 +50,12 @@ import {
   SPRING_THUMB,
   type MotionKind,
 } from "./tokens.js";
-import { surfaceEnter, surfaceExit, type SurfaceKind } from "./surface-keyframes.js";
+import {
+  surfaceEnter,
+  surfaceExit,
+  withRestingStyle,
+  type SurfaceKind,
+} from "./surface-keyframes.js";
 import { useAttachedElement } from "./use-attached-element.js";
 
 const EASE_OUT: [number, number, number, number] = [...MOTION_EASE];
@@ -154,8 +159,14 @@ export function MotionSlot({
   useLayoutEffect(() => {
     safeToRemoveRef.current = safeToRemove;
   });
-  /** Values an interrupted entrance had reached, so an exit continues from them. */
-  const interruptedRef = useRef<Partial<Record<AnimatedProperty, string>> | null>(null);
+  /**
+   * Values interrupted playback had reached on its element, so the opposite direction (an exit
+   * after a cut entrance, or a reopen during an exit) continues from them.
+   */
+  const interruptedRef = useRef<{
+    element: HTMLElement;
+    values: Partial<Record<AnimatedProperty, string>>;
+  } | null>(null);
 
   useLayoutEffect(() => {
     let active = true;
@@ -216,13 +227,17 @@ export function MotionSlot({
           // Motion cannot animate from "none", and needs opacity as a number like its target.
           if (value && value !== "none") snapshot[property] = value;
         });
-        interruptedRef.current = snapshot;
+        interruptedRef.current = { element: element!, values: snapshot };
       }
       cleanups.forEach((cleanup) => cleanup());
       cancel();
       restore();
       element!.removeAttribute(MOTION_ENTERING_ATTRIBUTE);
     }
+
+    // Consumed by this run only, even when it plays nothing, so it never resurfaces later.
+    const interrupted = interruptedRef.current;
+    interruptedRef.current = null;
 
     if (
       reduceMotion ||
@@ -290,16 +305,20 @@ export function MotionSlot({
 
     const tween = (duration: number) => ({ duration, ease: EASE_OUT });
 
-    const interrupted = interruptedRef.current;
-    interruptedRef.current = null;
     if (SURFACE_KINDS.includes(kind)) {
       const step = isPresent
         ? surfaceEnter(element, kind as SurfaceKind)
         : surfaceExit(element, kind as SurfaceKind);
-      const keyframes = { ...step.keyframes } as Record<string, unknown>;
-      // Closing mid-entrance continues from the reached values instead of jumping to rest first.
-      if (!isPresent && interrupted) {
-        Object.entries(interrupted).forEach(([property, value]) => {
+      // Read while no playback writes inline styles: the previous run's teardown restored them.
+      const computed = getComputedStyle(element);
+      const keyframes = withRestingStyle(step.keyframes, {
+        transform: computed.transform,
+        opacity: Number.parseFloat(computed.opacity),
+      }) as Record<string, unknown>;
+      // Closing mid-entrance, or reopening mid-exit, turns around from the reached values
+      // instead of jumping to rest or to the start of the entrance first.
+      if (interrupted?.element === element) {
+        Object.entries(interrupted.values).forEach(([property, value]) => {
           const frames = keyframes[property];
           if (!Array.isArray(frames) || !value) return;
           const start = property === "opacity" ? Number.parseFloat(value) : value;

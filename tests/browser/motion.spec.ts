@@ -776,6 +776,143 @@ test("should reverse a dialog closed mid-entrance from where it is", async ({ pa
   await expect(dialog).toHaveCount(0);
 });
 
+/** One painted frame of a dialog panel: its state, opacity, rotation in degrees and scale. */
+type PanelFrame = { state: string | null; opacity: number; rotation: number; scale: number };
+
+type PanelFrameWindow = Window & { __readPanelFrame: () => PanelFrame | null };
+
+/** Defines `__readPanelFrame` in the page: the painted state of the dialog panel, if mounted. */
+async function installPanelFrameReader(page: Page) {
+  await page.evaluate(() => {
+    Object.assign(window, {
+      __readPanelFrame: () => {
+        const content = document.querySelector("[data-slot=dialog-content]");
+        if (!content) return null;
+        const style = getComputedStyle(content);
+        const matrix = new DOMMatrixReadOnly(style.transform === "none" ? undefined : style.transform);
+        return {
+          state: content.getAttribute("data-state"),
+          opacity: Number(style.opacity),
+          rotation: (Math.atan2(matrix.b, matrix.a) * 180) / Math.PI,
+          scale: Math.hypot(matrix.a, matrix.b),
+        };
+      },
+    });
+  });
+}
+
+/** Rotation and opacity the fixture's "Nota" dialog rests at, set through its own `style`. */
+const TILTED_DIALOG_REST = { rotation: 2, opacity: 0.9 };
+
+test("should keep a caller's dialog transform and opacity through its entrance and exit", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/motion.html");
+  await installPanelFrameReader(page);
+  // Samples every painted frame from the click until the panel is removed after Escape.
+  const frames = page.evaluate(
+    () =>
+      new Promise<PanelFrame[]>((resolve) => {
+        const samples: PanelFrame[] = [];
+        const tick = () => {
+          const frame = (window as unknown as PanelFrameWindow).__readPanelFrame();
+          if (frame) samples.push(frame);
+          else if (samples.length) {
+            resolve(samples);
+            return;
+          }
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+  );
+  await page.getByRole("button", { name: "Abrir nota" }).click();
+  const dialog = page.getByRole("dialog", { name: "Nota" });
+  await expect(dialog).toHaveCSS("opacity", String(TILTED_DIALOG_REST.opacity));
+  await expect(dialog).not.toHaveAttribute("data-motion-entering");
+  await page.keyboard.press("Escape");
+  const samples = await frames;
+  await expect(dialog).toHaveCount(0);
+  const entrance = samples.filter((frame) => frame.state === "open");
+  const exit = samples.filter((frame) => frame.state === "closed");
+  expect(entrance.length).toBeGreaterThan(1);
+  expect(exit.length).toBeGreaterThan(0);
+  // The caller's tilt holds on every frame and its translucency is never exceeded, so nothing
+  // snaps when playback hands the styles back, on the way in or out.
+  for (const frame of samples) {
+    expect(frame.rotation).toBeCloseTo(TILTED_DIALOG_REST.rotation, 1);
+    expect(frame.opacity).toBeLessThanOrEqual(TILTED_DIALOG_REST.opacity + 0.001);
+  }
+  expect(entrance.at(-1)!.opacity).toBeCloseTo(TILTED_DIALOG_REST.opacity, 2);
+  // The exit leaves from the resting translucency instead of jumping to full opacity first.
+  expect(exit[0]!.opacity).toBeGreaterThan(TILTED_DIALOG_REST.opacity / 2);
+});
+
+test("should turn a dialog reopened mid-exit around from where it is", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/motion.html");
+  await installPanelFrameReader(page);
+  const trigger = page.getByRole("button", { name: "Abrir diálogo" });
+  // Held as a node: the open modal hides the page from the accessibility tree.
+  const triggerNode = (await trigger.elementHandle())!;
+  await trigger.click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toHaveCSS("opacity", "1");
+  await expect(dialog).not.toHaveAttribute("data-motion-entering");
+  // As soon as the exit is playing, reopens through the trigger and samples every following frame.
+  // A short timer polls for that moment: frames can be sparse on a busy runner, and the watcher is
+  // installed before Escape so the exit is never missed.
+  type ReopenWindow = PanelFrameWindow & {
+    __reopen: Promise<{ atReopen: PanelFrame; after: PanelFrame[] }>;
+  };
+  await page.evaluate(
+    ({ triggerElement, pollMs }) => {
+      const readFrame = (window as unknown as PanelFrameWindow).__readPanelFrame;
+      (window as unknown as ReopenWindow).__reopen = new Promise((resolve) => {
+        const after: PanelFrame[] = [];
+        const poll = () => {
+          const atReopen = readFrame();
+          const isExiting =
+            atReopen?.state === "closed" &&
+            document.querySelector("[data-slot=dialog-content]")!.getAnimations().length > 0;
+          if (!atReopen || !isExiting) {
+            window.setTimeout(poll, pollMs);
+            return;
+          }
+          const reopenedAt = performance.now();
+          (triggerElement as HTMLElement).click();
+          const tick = () => {
+            const frame = readFrame();
+            if (frame) after.push(frame);
+            if (performance.now() - reopenedAt > 800) resolve({ atReopen, after });
+            else requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        };
+        poll();
+      });
+    },
+    { triggerElement: triggerNode, pollMs: 4 },
+  );
+  await page.keyboard.press("Escape");
+  const { atReopen, after } = await page.evaluate(() => (window as unknown as ReopenWindow).__reopen);
+  // The reopen happened while the exit was playing, before the panel had faded out.
+  expect(atReopen.opacity).toBeGreaterThan(0.05);
+  expect(after.length).toBeGreaterThan(1);
+  // It turns around from that frame: it neither drops back to invisible nor to the full
+  // entrance pose, and settles at rest.
+  for (const frame of after) {
+    expect(frame.state).toBe("open");
+    expect(frame.opacity).toBeGreaterThanOrEqual(atReopen.opacity - 0.03);
+    expect(frame.scale).toBeGreaterThanOrEqual(atReopen.scale - 0.003);
+  }
+  await expect(dialog).toHaveCSS("opacity", "1");
+  await expect(dialog).toHaveCSS("transform", "none");
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+});
+
 /** One painted frame of the dialog close button. */
 type CloseButtonSample = {
   opacity: number;

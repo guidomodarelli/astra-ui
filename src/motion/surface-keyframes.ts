@@ -161,6 +161,32 @@ export function surfaceEnter(element: Element, kind: SurfaceKind): MotionStep {
   };
 }
 
+/** Transform and opacity a surface rests at, which its caller may set through a class or style. */
+export interface RestingStyle {
+  transform: string;
+  opacity: number;
+}
+
+/**
+ * Composes surface playback with the surface's resting transform and opacity, so a caller-owned
+ * tilt, offset or translucency holds through the whole entrance and exit instead of being
+ * replaced by identity and full opacity, then snapping back once playback restores it.
+ */
+export function withRestingStyle(
+  keyframes: DOMKeyframesDefinition,
+  resting: RestingStyle,
+): DOMKeyframesDefinition {
+  const composed = { ...keyframes } as Record<string, unknown>;
+  const { transform, opacity } = composed;
+  if (Array.isArray(transform) && resting.transform && resting.transform !== "none") {
+    composed.transform = transform.map((value) => `${String(value)} ${resting.transform}`);
+  }
+  if (Array.isArray(opacity) && Number.isFinite(resting.opacity) && resting.opacity !== 1) {
+    composed.opacity = opacity.map((value) => Number(value) * resting.opacity);
+  }
+  return composed as DOMKeyframesDefinition;
+}
+
 /** Exit playback: brief and eased so dismissal never blocks the next interaction. */
 export function surfaceExit(element: Element, kind: SurfaceKind): MotionStep {
   const exitTween = { duration: MOTION_TIMING.exit, ease: EASE_OUT };
