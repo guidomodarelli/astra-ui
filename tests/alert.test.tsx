@@ -76,6 +76,32 @@ describe("Alert", () => {
     expect(alertRef.current).toBe(layoutChild);
   });
 
+  it("should run the cleanup a consumer callback ref returns when a dismissible alert unmounts", () => {
+    // Arrange
+    const cleanupRef = vi.fn();
+    const attachedNodes: Array<HTMLDivElement | null> = [];
+    const { unmount } = render(
+      <Alert
+        tone="info"
+        onDismiss={() => undefined}
+        ref={(node) => {
+          attachedNodes.push(node);
+          return cleanupRef;
+        }}
+      >
+        <AlertTitle>Nueva versión</AlertTitle>
+      </Alert>,
+    );
+    expect(attachedNodes[0]).toBe(screen.getByRole("status"));
+
+    // Act
+    unmount();
+
+    // Assert
+    expect(cleanupRef).toHaveBeenCalledTimes(1);
+    expect(attachedNodes).not.toContain(null);
+  });
+
   it("should let a controlled alert decide when it closes", async () => {
     // Arrange
     const user = userEvent.setup();

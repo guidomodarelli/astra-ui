@@ -7,8 +7,8 @@
  * content while the height springs to its new size (`loading` with children).
  */
 import { useEffect, useLayoutEffect, useRef } from "react"
-import type { ComponentProps, CSSProperties, ReactNode, RefObject } from "react"
-import { AnimatePresence, animate, motion, useMotionValue } from "motion/react"
+import type { ComponentProps, CSSProperties, ReactNode, Ref, RefObject } from "react"
+import { AnimatePresence, animate, motion, useIsPresent, useMotionValue } from "motion/react"
 import type { AnimationPlaybackControls, HTMLMotionProps, MotionValue } from "motion/react"
 
 import {
@@ -140,6 +140,20 @@ function SkeletonPlaceholder({ lines, avatar, label, className, ...props }: Skel
   )
 }
 
+type SkeletonBranchProps = HTMLMotionProps<"div"> & {
+  /** AnimatePresence's popLayout needs the node to pull the leaving branch out of flow. */
+  ref?: Ref<HTMLDivElement>
+}
+
+/**
+ * One side of the reveal. While it fades out it turns inert and hidden from assistive technology, so stale content
+ * under the new branch cannot be clicked, focused or announced.
+ */
+function SkeletonBranch({ ref, ...props }: SkeletonBranchProps) {
+  const isPresent = useIsPresent()
+  return <motion.div ref={ref} {...props} aria-hidden={isPresent ? undefined : true} inert={!isPresent || undefined} />
+}
+
 type SkeletonRevealProps = ComponentProps<"div"> & {
   loading: boolean
   placeholder: ReactNode
@@ -162,7 +176,7 @@ function SkeletonReveal({ loading, placeholder, children, className, style, ...p
       <div ref={contentRef} className="relative flow-root">
         <AnimatePresence mode="popLayout" initial={false}>
           {loading ? (
-            <motion.div
+            <SkeletonBranch
               key="placeholder"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -173,9 +187,9 @@ function SkeletonReveal({ loading, placeholder, children, className, style, ...p
               }}
             >
               {placeholder}
-            </motion.div>
+            </SkeletonBranch>
           ) : (
-            <motion.div
+            <SkeletonBranch
               key="content"
               initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: SKELETON_REVEAL_OFFSET_PX }}
               animate={{ opacity: 1, y: 0 }}
@@ -186,7 +200,7 @@ function SkeletonReveal({ loading, placeholder, children, className, style, ...p
               }}
             >
               {children}
-            </motion.div>
+            </SkeletonBranch>
           )}
         </AnimatePresence>
       </div>

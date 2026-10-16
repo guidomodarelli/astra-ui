@@ -50,6 +50,28 @@ describe("Skeleton", () => {
     expect(content.closest("[data-slot=skeleton-reveal]")).toHaveAttribute("aria-busy", "false");
   });
 
+  it("should take leaving content out of reach as soon as loading starts again", () => {
+    // Arrange
+    const { rerender } = render(
+      <Skeleton loading={false}>
+        <button type="button">Ver resumen</button>
+      </Skeleton>,
+    );
+
+    // Act
+    rerender(
+      <Skeleton loading>
+        <button type="button">Ver resumen</button>
+      </Skeleton>,
+    );
+
+    // Assert
+    expect(screen.getByRole("status", { name: "Cargando contenido" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ver resumen" })).not.toBeInTheDocument();
+    const leavingButton = screen.queryByRole("button", { name: "Ver resumen", hidden: true });
+    if (leavingButton) expect(leavingButton.closest("[inert]")).toHaveAttribute("aria-hidden", "true");
+  });
+
   it("should stay a bare block sized by the consumer without Arc's props", () => {
     // Arrange
     render(<Skeleton aria-label="Cargando resumen" className="h-4 w-24" />);

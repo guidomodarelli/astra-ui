@@ -6,7 +6,7 @@
  * place when the tone changes; `onDismiss` adds a dismiss button and `open` collapses the alert's height while it
  * fades, so the content below closes the gap. The compound title, description and action parts are kept.
  */
-import { useRef, useState } from "react"
+import { useState } from "react"
 import type { ComponentProps, ReactNode } from "react"
 import { cva } from "class-variance-authority"
 import { AnimatePresence, motion, useIsPresent } from "motion/react"
@@ -28,6 +28,7 @@ import {
   ARC_SWAP_REST,
 } from "../motion/arc-swap.js"
 import { MotionSlot } from "../motion/motion-slot.js"
+import { useAttachedElement } from "../motion/use-attached-element.js"
 
 export type { AlertTone }
 
@@ -214,15 +215,10 @@ function AlertBox({
 function Alert({ open, onDismiss, ref: consumerRef, ...props }: AlertProps) {
   const reduceMotion = usePrefersReducedMotion()
   const [isDismissed, setIsDismissed] = useState(false)
-  const presenceRef = useRef<HTMLDivElement>(null)
+  // Shares the alert node with the consumer's ref, keeping its React 19 cleanup, and with the clip toggled while it moves.
+  const [presenceElement, attachPresence] = useAttachedElement<HTMLDivElement>(consumerRef)
   const setPresenceClip = (overflow: string) => {
-    if (presenceRef.current) presenceRef.current.style.overflow = overflow
-  }
-  /** Shares the alert node between the consumer's ref and the clip toggled while the alert moves. */
-  const attachPresence = (node: HTMLDivElement | null) => {
-    presenceRef.current = node
-    if (typeof consumerRef === "function") consumerRef(node)
-    else if (consumerRef) consumerRef.current = node
+    if (presenceElement) presenceElement.style.overflow = overflow
   }
   if (open === undefined && !onDismiss) {
     return <AlertBox {...props} ref={consumerRef} reduceMotion={reduceMotion} />
