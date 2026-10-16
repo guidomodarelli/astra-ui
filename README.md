@@ -71,47 +71,67 @@ Los `Sheet` superiores e inferiores limitan su altura al viewport dinámico (`10
 
 ## Movimiento
 
-Las nuevas animaciones usan la dependencia `motion`: `animate` controla la
-reproducción, `hover` y `press` los gestos, y `AnimatePresence` / `usePresence`
-retienen los overlays durante su salida. Los presets y tiempos viven en
-`src/motion/`. No se usan keyframes CSS para estas animaciones.
+El movimiento sigue a [Arc](https://uiarc.dev): explica causa y efecto (qué se abrió,
+qué cambió, de dónde vino) y no decora. Si una animación no explica nada, no está.
+Las animaciones usan la dependencia `motion`: `animate` controla la reproducción,
+`hover` y `press` los gestos, y `AnimatePresence` / `usePresence` retienen los
+overlays durante su salida. Los presets y tiempos viven en `src/motion/`. No se usan
+keyframes CSS para estas animaciones.
 
 `MotionSlot` anima el nodo original del primitive mediante refs compuestos,
-sin agregar wrappers al DOM ni reemplazar sus handlers. Las curvas y springs
-siguen los tokens de [beui motion](https://beui.dev/components/motion):
+sin agregar wrappers al DOM ni reemplazar sus handlers. Los tokens exportados en
+`beez-ui/motion-tokens` toman los valores de los presets de Arc
+(`components/arc/lib/motion-tokens.ts`):
 
-- `Button` usa la presión de Arc: se comprime a 0.97 con un spring rápido (un poco más en
+- Springs: `snappy` (0.26 s, rebote 0.12) para presiones, indicadores chicos y cambios de
+  ícono (`SPRING_PRESS`, `SPRING_POP`, `SPRING_CHEVRON`, `SPRING_HIGHLIGHT`, `SPRING_TOOLTIP`);
+  `smooth` (0.4 s, sin rebote) para paneles y todo lo que informa un estado
+  (`SPRING_PANEL`, `SPRING_THUMB`); `morph` (0.42 s, rebote 0.16) para resaltados compartidos
+  (`SPRING_LAYOUT`, `SPRING_TABS`).
+- Duraciones: `instant` 0.12 s, `fast` 0.16 s, `exit` 0.18 s, `enter`/`standard` 0.24 s y
+  `considered` 0.48 s. Las salidas son más cortas que las entradas.
+- Curvas: `MOTION_EASE` (entrada), `MOTION_EASE_EXIT`, `MOTION_EASE_STANDARD` y
+  `MOTION_EASE_IN_OUT`.
+
+Los nombres de los tokens se mantienen entre versiones; los del despliegue desde el centro
+y del temblor de campos inválidos quedan deprecados y conservan su valor.
+
+- `Button` usa la presión de Arc: se comprime a 0.97 con el spring `snappy` (un poco más en
   botones de solo ícono y menos en los anchos), sin escalar los disparadores de menús; su
   texto cambia de ancho con un spring. Los ítems de `Sidebar` y `Tabs` se comprimen a 0.98.
 - `Checkbox` y `RadioGroup` se comprimen a 0.92. La marca del checkbox aparece
-  con pop y trazo (`pathLength`) y sale con blur; el punto del radio aparece con spring.
-- El thumb de `Switch` viaja con un spring pesado y se aplasta mientras se presiona.
-- `Input`, `Textarea`, `InputGroup` y `SelectTrigger` tiemblan al pasar a
-  `aria-invalid="true"`; `FormMessage` entra con blur.
-- `Tooltip` entra con blur, escala y desplazamiento desde el trigger.
-  `Popover`, `HoverCard`, `DropdownMenu` y `Select` escalan desde 0.96 y se revelan
-  con un clip desde la esquina más cercana al trigger.
-- `Dialog` y `AlertDialog` se despliegan desde su centro y se pliegan al cerrar; `Sheet` entra desde su borde con spring
-  y sale con la curva de cajón (0.24 s), sin demorar la siguiente interacción.
+  con pop y trazo (`pathLength`); el punto del radio aparece con spring.
+- El thumb de `Switch` viaja con el spring `smooth`, sin rebote, y se aplasta mientras se presiona.
+- `Input`, `Textarea`, `InputGroup` y `SelectTrigger` no se mueven al pasar a
+  `aria-invalid="true"`: el error se indica con el color y el mensaje. `FormMessage` y
+  `Alert` aparecen con un fundido y una escala breves (desde 0.98), sin desenfoque.
+- `Tooltip` sube 3 px desde 0.97 mientras aparece y sale en el lugar, sin desenfoque.
+  `Popover` y `HoverCard` se acercan desde su trigger con escala y fundido; `DropdownMenu`
+  y `Select` escalan desde 0.96 y se revelan con un clip desde la esquina más cercana al trigger.
+- `Dialog` y `AlertDialog` entran como el diálogo de Arc: el fondo se oscurece en 0.24 s y el
+  panel sube 8 px y crece desde 0.96 con el spring `smooth` mientras aparece en 0.16 s; al
+  cerrar baja 4 px hasta 0.98 y se desvanece en 0.16 s, y una reapertura parte de donde
+  está. `Sheet` entra desde su borde con spring y sale con la curva de cajón (0.24 s), sin
+  demorar la siguiente interacción.
 - `GlideSlot` desliza el indicador activo entre ítems como un `layoutId` compartido:
   la pestaña activa de `Tabs` (fondo o subrayado), la
   página actual de `PaginationContent`, y al navegar con teclado el ítem resaltado de
   `DropdownMenu` y `Select` y la sugerencia activa de `FilterQueryBar`. Con el puntero,
   esos resaltados lo siguen al instante: el propio puntero ya marca la posición.
-- Las superficies flotantes se revelan con un clip que deja 24 px libres fuera de la
+- Las superficies que se revelan con clip dejan 24 px libres fuera de la
   caja, así su borde (`ring`) y su sombra se ven desde el primer frame. Una copia
   transitoria viaja entre ítems y se elimina al llegar, devolviendo el estilo al ítem.
 - El chevron de `SelectTrigger` gira 180° al abrir y los chevrons de `DataTable`
   (grupos y columnas) giran en lugar de cambiar de ícono; CSS define el ángulo final.
-- Las opciones del `Select` entran escalonadas con blur (las primeras 10; el resto
-  solo se desvanece) y los checks de ítems de `Select` y `DropdownMenu` aparecen con pop.
-- `Sidebar` sigue a [beui animated sidebar](https://beui.dev/components/motion/animated-sidebar):
-  el ancho cambia con un spring entre el panel y el riel de íconos, las etiquetas se
-  desvanecen al colapsar, una píldora compartida sigue al ítem activo y al hovereado, los
-  submenús se despliegan escalonados y en pantallas chicas se abre como hoja con foco atrapado.
-- El ícono de `AnimatedThemeToggler` cambia con blur y escala; el botón de cierre de
-  `Dialog` aparece con un pop demorado.
-- El contenido de `Tabs` entra con un desplazamiento de 4 px y `Alert` entra con blur.
+- Las opciones del `Select` entran todas juntas con un fundido y una escala breves, sin
+  escalonarse ni desenfocarse, y los checks de ítems de `Select` y `DropdownMenu` aparecen con pop.
+- El ancho de `Sidebar` cambia con el spring `smooth` entre el panel y el riel de íconos, las
+  etiquetas se desvanecen al colapsar, una píldora compartida sigue al ítem activo y al
+  hovereado, los submenús se despliegan escalonados y en pantallas chicas se abre como hoja
+  con foco atrapado.
+- El ícono de `AnimatedThemeToggler` crece desde 0.6 con el spring `snappy` mientras aparece,
+  sin desenfoque; el botón de cierre de `Dialog` aparece con un pop demorado.
+- El contenido de `Tabs` entra con un desplazamiento de 4 px.
   Cards y enlaces responden al hover; el avatar bajo el puntero de un `AvatarGroup` se
   eleva. Un brillo recorre el `Skeleton` desde su `::after` con reproducción nativa,
   sin trabajo por frame en JavaScript.
