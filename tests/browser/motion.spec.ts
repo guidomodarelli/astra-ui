@@ -1,6 +1,6 @@
 /** Verifies motion and its accessible fallback in real browser layout and interactions. */
 import { expect, test, type Page } from "@playwright/test";
-import { recordMotion } from "./motion-recorder.js";
+import { recordMotion, samplePaintedBoxes, waitForSettledLayout } from "./motion-recorder.js";
 
 test("should animate menus and dialogs while preserving keyboard dismissal", async ({
   page,
@@ -228,7 +228,7 @@ test("should pop and draw the checkbox mark and blur it out when unchecked", asy
   await expect.poll(fillScale).toBe(1);
 });
 
-test("should spring the switch thumb, blur in tooltips and shake invalid fields", async ({
+test("should spring the switch thumb, enter tooltips without blur and keep invalid fields in place", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -272,12 +272,21 @@ test("should spring the switch thumb, blur in tooltips and shake invalid fields"
     .toEqual(expect.arrayContaining(["transform", "opacity"]));
   expect(await motion.properties({ slot: "tooltip-content" })).not.toContain("filter");
 
+  // Turning invalid recolors the field without moving it: every frame paints it where it was.
+  await waitForSettledLayout(page.getByRole("textbox", { name: "Correo" }));
+  const emailBoxes = samplePaintedBoxes(page, '[aria-label="Correo"]', 600, {
+    from: '[aria-label="Correo"][aria-invalid="true"]',
+  });
   await page.getByRole("button", { name: "Validar correo" }).click();
   const email = page.getByRole("textbox", { name: "Correo" });
   await expect(email).toHaveAttribute("aria-invalid", "true");
-  await expect
-    .poll(() => motion.properties({ slot: "input" }))
-    .toContain("transform");
+  const boxes = await emailBoxes;
+  expect(boxes.length).toBeGreaterThan(1);
+  for (const box of boxes) {
+    expect(box.x).toBeCloseTo(boxes[0]!.x, 1);
+    expect(box.y).toBeCloseTo(boxes[0]!.y, 1);
+  }
+  expect(await motion.properties({ slot: "input" })).not.toContain("transform");
   await expect(email).toHaveCSS("transform", "none");
 });
 
@@ -339,7 +348,7 @@ test("should respond when the system motion preference changes", async ({
   ).toBeVisible({ timeout: 2000 });
 });
 
-test("should turn the select chevron and stagger its options in", async ({ page }) => {
+test("should turn the select chevron and fade its options in without blur", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   const motion = await recordMotion(page);
   await page.goto("/motion.html");
@@ -355,11 +364,85 @@ test("should turn the select chevron and stagger its options in", async ({ page 
     .toContain("transform");
   await expect
     .poll(() => motion.properties({ slot: "select-item" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform", "filter"]));
+    .toEqual(expect.arrayContaining(["opacity", "transform"]));
+  expect(await motion.properties({ slot: "select-item" })).not.toContain("filter");
+  await expect(page.getByRole("option", { name: "Dólares" })).toHaveCSS("transform", "none");
+  await expect(page.getByRole("option", { name: "Dólares" })).toHaveCSS("opacity", "1");
   await page.getByRole("option", { name: "Dólares" }).click();
   await expect(page.locator("[data-slot=select-trigger]")).toHaveText("Dólares");
   await expect(chevron).toHaveCSS("rotate", "none");
   await expect(chevron).toHaveCSS("transform", "none");
+});
+
+/** Painted boxes of the travelling select highlight and its target option in the glide's last frame. */
+type EnteringGlide = {
+  targetTransformAtStart: string;
+  indicator: { left: number; top: number; width: number; height: number };
+  target: { left: number; top: number; width: number; height: number };
+};
+
+test("should land the select highlight on an option still entering, without a snap", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/motion.html");
+  const trigger = page.getByRole("combobox", { name: "Moneda" });
+  await waitForSettledLayout(trigger);
+  // Moves the highlight on the first frame the list shows one, while the options still settle
+  // from their entrance scale, and samples the travelling copy until it hands the highlight back.
+  const glide = page.evaluate(
+    () =>
+      new Promise<EnteringGlide>((resolve, reject) => {
+        const toBox = (rect: DOMRect) => ({
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height,
+        });
+        let movedAt: number | null = null;
+        let targetTransformAtStart: string | null = null;
+        let last: Omit<EnteringGlide, "targetTransformAtStart"> | null = null;
+        const tick = () => {
+          const highlighted = document.querySelector<HTMLElement>("[role=option][data-highlighted]");
+          if (movedAt === null && highlighted) {
+            movedAt = performance.now();
+            highlighted.dispatchEvent(
+              new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true }),
+            );
+          }
+          const indicator = document.querySelector("[data-glide-indicator]");
+          const target = document.querySelector("[data-glide-target]");
+          if (indicator && target) {
+            targetTransformAtStart ??= getComputedStyle(target).transform;
+            last = {
+              indicator: toBox(indicator.getBoundingClientRect()),
+              target: toBox(target.getBoundingClientRect()),
+            };
+          } else if (last && targetTransformAtStart !== null) {
+            resolve({ targetTransformAtStart, ...last });
+            return;
+          }
+          if (movedAt !== null && performance.now() - movedAt > 2000) {
+            reject(new Error("motion.spec:select glide never handed the highlight back"));
+            return;
+          }
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+  );
+  await trigger.focus();
+  await page.keyboard.press("Enter");
+  const { targetTransformAtStart, indicator, target } = await glide;
+  await expect(page.getByRole("option", { name: "Dólares" })).toBeFocused();
+  // The glide started while the option was still scaling in, which is the case under test.
+  expect(targetTransformAtStart).not.toBe("none");
+  // The copy lands exactly on the option it hands the highlight to, so removing it never snaps.
+  expect(Math.abs(indicator.left - target.left)).toBeLessThan(1);
+  expect(Math.abs(indicator.top - target.top)).toBeLessThan(1);
+  expect(Math.abs(indicator.width - target.width)).toBeLessThan(1);
+  expect(Math.abs(indicator.height - target.height)).toBeLessThan(1);
+  await page.keyboard.press("Escape");
 });
 
 test("should pop the check of a menu checkbox item", async ({ page }) => {
@@ -397,7 +480,7 @@ test("should rotate the group chevron of the data table instead of swapping icon
   await expect(chevron).toHaveCSS("transform", "none");
 });
 
-test("should blur-swap the theme icon and pop in the dialog close button", async ({
+test("should swap the theme icon with a fade and scale and pop in the dialog close button", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -408,10 +491,12 @@ test("should blur-swap the theme icon and pop in the dialog close button", async
   await expect(page.locator("html")).toHaveClass(/dark/);
   await expect
     .poll(() => motion.properties({ buttonText: "Alternar tema" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform", "filter"]));
-  await expect(
-    page.getByRole("button", { name: "Alternar tema" }).locator("svg"),
-  ).toHaveCount(1);
+    .toEqual(expect.arrayContaining(["opacity", "transform"]));
+  expect(await motion.properties({ buttonText: "Alternar tema" })).not.toContain("filter");
+  const themeIcon = page.getByRole("button", { name: "Alternar tema" }).locator("svg");
+  await expect(themeIcon).toHaveCount(1);
+  await expect(themeIcon).toHaveCSS("transform", "none");
+  await expect(themeIcon).toHaveCSS("opacity", "1");
 
   await page.getByRole("button", { name: "Abrir diálogo" }).click();
   const close = page.locator("[data-slot=dialog-close]");
@@ -424,21 +509,35 @@ test("should blur-swap the theme icon and pop in the dialog close button", async
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
-/** Clip keyframes and duration Motion handed to the browser for one dialog animation. */
-type DialogClipPlayback = { clipPath: string[]; otherProperties: string[]; durationMs: number };
+/** One native animation Motion handed to the browser for a dialog panel. */
+type DialogPlayback = {
+  /** Animated properties, without timing keys. */
+  properties: string[];
+  /** Opacity of each keyframe, when the animation drives it. */
+  opacity: number[];
+  /** Vertical offset and scale of each transform keyframe, when the animation drives the transform. */
+  transforms: { translateY: number; scale: number }[];
+  durationMs: number;
+};
 
 /** One painted frame of a closing dialog: whether its layers still take input, and the page does. */
-type FoldSample = { isContentInert: boolean; isOverlayInert: boolean; bodyPointerEvents: string };
+type LeaveSample = { isContentInert: boolean; isOverlayInert: boolean; bodyPointerEvents: string };
+
+/** Arc's dialog: the panel rises 8px and scales from 0.96 on the way in, drops 4px to 0.98 on the way out. */
+const DIALOG_ENTER = { translateY: 8, scale: 0.96 };
+const DIALOG_EXIT = { translateY: 4, scale: 0.98 };
+/** Arc's `duration.fast`, in ms: the panel fades in and leaves on it. */
+const DIALOG_FAST_MS = 160;
 
 /**
  * Records the keyframes of every native dialog animation as it is created, delegating unchanged
  * to the real browser API so the playback itself is never altered.
  */
-async function recordDialogClips(page: Page) {
+async function recordDialogPlayback(page: Page) {
   const handle = await page.evaluateHandle(() => {
-    const recorded: DialogClipPlayback[] = [];
+    const recorded: DialogPlayback[] = [];
     const nativeAnimate = Element.prototype.animate;
-    const timingKeys = ["clipPath", "offset", "easing", "composite", "computedOffset"];
+    const timingKeys = ["offset", "easing", "composite", "computedOffset"];
 
     /** Observes real dialog animations without replacing their effects, timing or controls. */
     Element.prototype.animate = function (...args) {
@@ -446,10 +545,16 @@ async function recordDialogClips(page: Page) {
       if (this.getAttribute("role") === "dialog" && animation.effect instanceof KeyframeEffect) {
         const frames = animation.effect.getKeyframes();
         recorded.push({
-          clipPath: frames.map((frame) => String(frame.clipPath ?? "")).filter(Boolean),
-          otherProperties: frames.flatMap((frame) =>
-            Object.keys(frame).filter((property) => !timingKeys.includes(property)),
-          ),
+          properties: [
+            ...new Set(frames.flatMap((frame) => Object.keys(frame).filter((key) => !timingKeys.includes(key)))),
+          ],
+          opacity: frames.filter((frame) => frame.opacity !== undefined).map((frame) => Number(frame.opacity)),
+          transforms: frames
+            .filter((frame) => typeof frame.transform === "string")
+            .map((frame) => {
+              const matrix = new DOMMatrixReadOnly(String(frame.transform));
+              return { translateY: matrix.f, scale: matrix.a };
+            }),
           durationMs: Number(animation.effect.getTiming().duration),
         });
       }
@@ -462,14 +567,25 @@ async function recordDialogClips(page: Page) {
       },
     };
   });
+  /** Waits until a playback matching the predicate has been recorded after the given count, and returns it. */
+  const find = async (after: number, matches: (playback: DialogPlayback) => boolean) => {
+    let found: DialogPlayback | undefined;
+    await expect
+      .poll(async () => {
+        const recorded = await handle.evaluate(({ recorded }) => recorded);
+        found = recorded.slice(after).find(matches);
+        return found !== undefined;
+      })
+      .toBe(true);
+    return found!;
+  };
   return {
-    /** Waits for the animation recorded at a position and returns it. */
-    at: async (index: number) => {
-      await expect
-        .poll(() => handle.evaluate(({ recorded }, position) => recorded.length > position, index))
-        .toBe(true);
-      return handle.evaluate(({ recorded }, position) => recorded[position]!, index);
-    },
+    count: () => handle.evaluate(({ recorded }) => recorded.length),
+    /** The transform playback recorded after the given count. */
+    transformAfter: (after: number) => find(after, (playback) => playback.transforms.length > 0),
+    /** The opacity playback recorded after the given count. */
+    opacityAfter: (after: number) => find(after, (playback) => playback.opacity.length > 0),
+    all: () => handle.evaluate(({ recorded }) => recorded),
     stop: async () => {
       await handle.evaluate(({ stop }) => stop());
       await handle.dispose();
@@ -477,34 +593,37 @@ async function recordDialogClips(page: Page) {
   };
 }
 
-/** Matches an `inset()` clip that keeps the given share of the surface hidden on every side. */
-const insetOnEverySide = (percent: number) =>
-  new RegExp(`^inset\\(${percent}%( ${percent}%){0,3} round `);
-
-test("should unfold the dialog from its center and fold it back when it closes", async ({
+test("should rise the dialog in on Arc's transition and let it leave quickly", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/motion.html");
-  const playback = await recordDialogClips(page);
+  const playback = await recordDialogPlayback(page);
 
   try {
     await page.getByRole("button", { name: "Abrir diálogo" }).click();
     const dialog = page.getByRole("dialog");
-    const opening = await playback.at(0);
-    expect(opening.clipPath[0]).toMatch(insetOnEverySide(48));
-    expect(opening.clipPath.at(-1)).not.toMatch(insetOnEverySide(48));
-    // The surface unfolds in place: it neither fades nor travels while it opens.
-    expect(opening.otherProperties).toEqual([]);
+    const openingMove = await playback.transformAfter(0);
+    const openingFade = await playback.opacityAfter(0);
+    // The panel rises 8px and grows from 0.96 to rest while it fades in, all at once.
+    expect(openingMove.transforms[0]!.translateY).toBeCloseTo(DIALOG_ENTER.translateY, 1);
+    expect(openingMove.transforms[0]!.scale).toBeCloseTo(DIALOG_ENTER.scale, 2);
+    expect(openingMove.transforms.at(-1)!.translateY).toBeCloseTo(0, 1);
+    expect(openingMove.transforms.at(-1)!.scale).toBeCloseTo(1, 2);
+    expect(openingFade.opacity[0]).toBe(0);
+    expect(openingFade.opacity.at(-1)).toBe(1);
+    expect(openingFade.durationMs).toBeCloseTo(DIALOG_FAST_MS, 0);
+    // It no longer unfolds behind a clip.
+    expect((await playback.all()).flatMap((recorded) => recorded.properties)).not.toContain("clipPath");
     await expect(dialog).toHaveCSS("clip-path", "none");
     await expect(dialog).toHaveCSS("opacity", "1");
     await expect(dialog).toHaveCSS("transform", "none");
 
-    // Samples every frame of the fold, started before Escape so the first one is never missed.
-    const foldSamples = page.evaluate(
+    // Samples every frame of the exit, started before Escape so the first one is never missed.
+    const leaveSamples = page.evaluate(
       () =>
-        new Promise<FoldSample[]>((resolve) => {
-          const samples: FoldSample[] = [];
+        new Promise<LeaveSample[]>((resolve) => {
+          const samples: LeaveSample[] = [];
           let sawDialog = false;
           const tick = () => {
             const content = document.querySelector("[data-slot=dialog-content]");
@@ -523,14 +642,17 @@ test("should unfold the dialog from its center and fold it back when it closes",
           requestAnimationFrame(tick);
         }),
     );
+    const openedCount = await playback.count();
     await page.keyboard.press("Escape");
-    const closing = await playback.at(1);
-    expect(closing.clipPath.at(-1)).toMatch(insetOnEverySide(48));
-    expect(closing.otherProperties).toEqual([]);
-    // Folding is brief, so focus and the rest of the page come back sooner than the unfold took.
-    expect(closing.durationMs).toBeLessThan(opening.durationMs);
-    // While it folds, the dialog no longer takes input and the page already does.
-    const samples = await foldSamples;
+    const closingMove = await playback.transformAfter(openedCount);
+    // It drops 4px and shrinks to 0.98 while it fades out, in Arc's fast timing.
+    expect(closingMove.transforms.at(-1)!.translateY).toBeCloseTo(DIALOG_EXIT.translateY, 1);
+    expect(closingMove.transforms.at(-1)!.scale).toBeCloseTo(DIALOG_EXIT.scale, 2);
+    expect(closingMove.durationMs).toBeCloseTo(DIALOG_FAST_MS, 0);
+    // Leaving is brief, so focus and the rest of the page come back sooner than the entrance took.
+    expect(closingMove.durationMs).toBeLessThan(openingMove.durationMs);
+    // While it leaves, the dialog no longer takes input and the page already does.
+    const samples = await leaveSamples;
     expect(samples.length).toBeGreaterThan(0);
     for (const sample of samples) {
       expect(sample).toEqual({
@@ -546,30 +668,249 @@ test("should unfold the dialog from its center and fold it back when it closes",
   }
 });
 
-test("should keep every corner of a custom dialog shape while it unfolds", async ({ page }) => {
+test("should land the dialog where it rests, without a jump or a page shift", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/motion.html");
-  const playback = await recordDialogClips(page);
+  const trigger = page.getByRole("button", { name: "Abrir diálogo" });
+  // Held as a node: the open modal hides the page from the accessibility tree, so roles no longer find it.
+  const triggerNode = (await trigger.elementHandle())!;
+  // Brought into view first, so the click itself never has to scroll the page.
+  await triggerNode.scrollIntoViewIfNeeded();
+  await waitForSettledLayout(trigger);
+  const triggerBefore = (await triggerNode.boundingBox())!;
+  const boxes = samplePaintedBoxes(page, "[data-slot=dialog-content]", 900, { origin: "viewport" });
+  await trigger.click();
+  const painted = await boxes;
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toHaveCSS("transform", "none");
+  const rest = (await dialog.boundingBox())!;
+  expect(painted.length).toBeGreaterThan(1);
+  // Every frame stays between the 8px rise and the resting place, centered on it: no overshoot, no drift sideways.
+  for (const box of painted) {
+    const centerX = box.x + box.width / 2;
+    const centerY = box.y + box.height / 2;
+    expect(centerX).toBeCloseTo(rest.x + rest.width / 2, 0);
+    expect(centerY).toBeGreaterThanOrEqual(rest.y + rest.height / 2 - 0.5);
+    expect(centerY).toBeLessThanOrEqual(rest.y + rest.height / 2 + DIALOG_ENTER.translateY + 0.5);
+    expect(box.width).toBeLessThanOrEqual(rest.width + 0.5);
+  }
+  // The last painted frame is the resting place, so settling never snaps.
+  const last = painted.at(-1)!;
+  expect(last.x).toBeCloseTo(rest.x, 0);
+  expect(last.y).toBeCloseTo(rest.y, 0);
+  // The page behind keeps its layout while the dialog is open.
+  expect(await triggerNode.boundingBox()).toEqual(triggerBefore);
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  expect(await triggerNode.boundingBox()).toEqual(triggerBefore);
+});
 
+test("should keep a custom dialog shape whole while it enters", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/motion.html");
+  const radii = page.evaluate(
+    () =>
+      new Promise<string[]>((resolve) => {
+        const samples: string[] = [];
+        // The window opens once the panel exists, so a slow click never eats its entrance.
+        let start: number | null = null;
+        const tick = () => {
+          const content = document.querySelector("[data-slot=dialog-content]");
+          if (content) {
+            start ??= performance.now();
+            const style = getComputedStyle(content);
+            samples.push(`${style.clipPath}|${style.borderTopLeftRadius}|${style.borderTopRightRadius}`);
+          }
+          if (start === null || performance.now() - start < 900) requestAnimationFrame(tick);
+          else resolve(samples);
+        };
+        tick();
+      }),
+  );
+  await page.getByRole("button", { name: "Abrir ficha" }).click();
+  const samples = await radii;
+  expect(samples.length).toBeGreaterThan(1);
+  // Nothing clips the panel, and its square left and rounded right corners hold on every frame.
+  const [first] = samples;
+  const [clipPath, topLeft, topRight] = first!.split("|");
+  expect(clipPath).toBe("none");
+  expect(topLeft).not.toBe(topRight);
+  expect(new Set(samples)).toEqual(new Set([first]));
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("should open and close the dialog without motion when it is reduced", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/motion.html");
+  const playback = await recordDialogPlayback(page);
   try {
-    await page.getByRole("button", { name: "Abrir ficha" }).click();
-    const opening = await playback.at(0);
-    const unfolded = opening.clipPath.at(-1)!;
-    // Square left corners and rounded right ones must reach the clip as different radii.
-    const horizontalRadii = unfolded
-      .slice(unfolded.indexOf(" round ") + " round ".length, -1)
-      .split(" / ")[0]!
-      .match(/calc\([^)]*\)|\S+/g)!;
-    // Browsers serialize the shortest equivalent list, so expand it like the CSS shorthand.
-    const [topLeft, topRight = topLeft, bottomRight = topLeft, bottomLeft = topRight] = horizontalRadii;
-    expect(topLeft).toBe(bottomLeft);
-    expect(topRight).toBe(bottomRight);
-    expect(topLeft).not.toBe(topRight);
+    await page.getByRole("button", { name: "Abrir diálogo" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveCSS("opacity", "1");
+    await expect(dialog).toHaveCSS("transform", "none");
     await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Abrir diálogo" })).toBeFocused();
+    expect(await playback.all()).toEqual([]);
   } finally {
     await playback.stop();
   }
+});
+
+test("should reverse a dialog closed mid-entrance from where it is", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/motion.html");
+  const trigger = page.getByRole("button", { name: "Abrir diálogo" });
+  await trigger.click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  // A reopen right after still lands at rest.
+  await trigger.click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toHaveCSS("opacity", "1");
+  await expect(dialog).toHaveCSS("transform", "none");
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+});
+
+/** One painted frame of a dialog panel: its state, opacity, rotation in degrees and scale. */
+type PanelFrame = { state: string | null; opacity: number; rotation: number; scale: number };
+
+type PanelFrameWindow = Window & { __readPanelFrame: () => PanelFrame | null };
+
+/** Defines `__readPanelFrame` in the page: the painted state of the dialog panel, if mounted. */
+async function installPanelFrameReader(page: Page) {
+  await page.evaluate(() => {
+    Object.assign(window, {
+      __readPanelFrame: () => {
+        const content = document.querySelector("[data-slot=dialog-content]");
+        if (!content) return null;
+        const style = getComputedStyle(content);
+        const matrix = new DOMMatrixReadOnly(style.transform === "none" ? undefined : style.transform);
+        return {
+          state: content.getAttribute("data-state"),
+          opacity: Number(style.opacity),
+          rotation: (Math.atan2(matrix.b, matrix.a) * 180) / Math.PI,
+          scale: Math.hypot(matrix.a, matrix.b),
+        };
+      },
+    });
+  });
+}
+
+/** Rotation and opacity the fixture's "Nota" dialog rests at, set through its own `style`. */
+const TILTED_DIALOG_REST = { rotation: 2, opacity: 0.9 };
+
+test("should keep a caller's dialog transform and opacity through its entrance and exit", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/motion.html");
+  await installPanelFrameReader(page);
+  // Samples every painted frame from the click until the panel is removed after Escape.
+  const frames = page.evaluate(
+    () =>
+      new Promise<PanelFrame[]>((resolve) => {
+        const samples: PanelFrame[] = [];
+        const tick = () => {
+          const frame = (window as unknown as PanelFrameWindow).__readPanelFrame();
+          if (frame) samples.push(frame);
+          else if (samples.length) {
+            resolve(samples);
+            return;
+          }
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+  );
+  await page.getByRole("button", { name: "Abrir nota" }).click();
+  const dialog = page.getByRole("dialog", { name: "Nota" });
+  await expect(dialog).toHaveCSS("opacity", String(TILTED_DIALOG_REST.opacity));
+  await expect(dialog).not.toHaveAttribute("data-motion-entering");
+  await page.keyboard.press("Escape");
+  const samples = await frames;
+  await expect(dialog).toHaveCount(0);
+  const entrance = samples.filter((frame) => frame.state === "open");
+  const exit = samples.filter((frame) => frame.state === "closed");
+  expect(entrance.length).toBeGreaterThan(1);
+  expect(exit.length).toBeGreaterThan(0);
+  // The caller's tilt holds on every frame and its translucency is never exceeded, so nothing
+  // snaps when playback hands the styles back, on the way in or out.
+  for (const frame of samples) {
+    expect(frame.rotation).toBeCloseTo(TILTED_DIALOG_REST.rotation, 1);
+    expect(frame.opacity).toBeLessThanOrEqual(TILTED_DIALOG_REST.opacity + 0.001);
+  }
+  expect(entrance.at(-1)!.opacity).toBeCloseTo(TILTED_DIALOG_REST.opacity, 2);
+  // The exit leaves from the resting translucency instead of jumping to full opacity first.
+  expect(exit[0]!.opacity).toBeGreaterThan(TILTED_DIALOG_REST.opacity / 2);
+});
+
+test("should turn a dialog reopened mid-exit around from where it is", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/motion.html");
+  await installPanelFrameReader(page);
+  const trigger = page.getByRole("button", { name: "Abrir diálogo" });
+  // Held as a node: the open modal hides the page from the accessibility tree.
+  const triggerNode = (await trigger.elementHandle())!;
+  await trigger.click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toHaveCSS("opacity", "1");
+  await expect(dialog).not.toHaveAttribute("data-motion-entering");
+  // As soon as the exit is playing, reopens through the trigger and samples every following frame.
+  // A short timer polls for that moment: frames can be sparse on a busy runner, and the watcher is
+  // installed before Escape so the exit is never missed.
+  type ReopenWindow = PanelFrameWindow & {
+    __reopen: Promise<{ atReopen: PanelFrame; after: PanelFrame[] }>;
+  };
+  await page.evaluate(
+    ({ triggerElement, pollMs }) => {
+      const readFrame = (window as unknown as PanelFrameWindow).__readPanelFrame;
+      (window as unknown as ReopenWindow).__reopen = new Promise((resolve) => {
+        const after: PanelFrame[] = [];
+        const poll = () => {
+          const atReopen = readFrame();
+          const isExiting =
+            atReopen?.state === "closed" &&
+            document.querySelector("[data-slot=dialog-content]")!.getAnimations().length > 0;
+          if (!atReopen || !isExiting) {
+            window.setTimeout(poll, pollMs);
+            return;
+          }
+          const reopenedAt = performance.now();
+          (triggerElement as HTMLElement).click();
+          const tick = () => {
+            const frame = readFrame();
+            if (frame) after.push(frame);
+            if (performance.now() - reopenedAt > 800) resolve({ atReopen, after });
+            else requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        };
+        poll();
+      });
+    },
+    { triggerElement: triggerNode, pollMs: 4 },
+  );
+  await page.keyboard.press("Escape");
+  const { atReopen, after } = await page.evaluate(() => (window as unknown as ReopenWindow).__reopen);
+  // The reopen happened while the exit was playing, before the panel had faded out.
+  expect(atReopen.opacity).toBeGreaterThan(0.05);
+  expect(after.length).toBeGreaterThan(1);
+  // It turns around from that frame: it neither drops back to invisible nor to the full
+  // entrance pose, and settles at rest.
+  for (const frame of after) {
+    expect(frame.state).toBe("open");
+    expect(frame.opacity).toBeGreaterThanOrEqual(atReopen.opacity - 0.03);
+    expect(frame.scale).toBeGreaterThanOrEqual(atReopen.scale - 0.003);
+  }
+  await expect(dialog).toHaveCSS("opacity", "1");
+  await expect(dialog).toHaveCSS("transform", "none");
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
 });
 
 /** One painted frame of the dialog close button. */

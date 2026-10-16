@@ -2,8 +2,8 @@
 
 /**
  * Confirmation dialog on Arc's Dialog surface (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): the same
- * overlay, raised panel, title and description type as `Dialog`, so both read as one family. It keeps beez-ui's center
- * morph entrance, media slot and Arc `Button` actions.
+ * overlay, raised panel, title and description type and dialog transition as `Dialog`, so both read as one family. It
+ * keeps beez-ui's media slot and Arc `Button` actions.
  */
 import * as React from "react"
 import { AlertDialog as AlertDialogPrimitive } from "radix-ui"
@@ -73,7 +73,7 @@ function AlertDialogContent({
   return (
     <AlertDialogPortal forceMount><MotionPresence scope="alert-dialog" forceMount={props.forceMount}><React.Fragment>
       <MotionSlot kind="overlay"><AlertDialogOverlay forceMount /></MotionSlot>
-      <MotionSlot kind="center-morph"><AlertDialogPrimitive.Content forceMount
+      <MotionSlot kind="dialog"><AlertDialogPrimitive.Content forceMount
         data-slot="alert-dialog-content"
         data-size={size}
         className={cn(

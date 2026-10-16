@@ -36,6 +36,7 @@ import {
   MOTION_LIST_ITEM_DISTANCE,
   MOTION_TIMING,
   SPRING_LAYOUT,
+  SPRING_PANEL,
 } from "../motion/tokens.js";
 import { Link } from "./link.js";
 import { SidebarPanelContext, type SidebarPanelState } from "./sidebar-panel-context.js";
@@ -65,15 +66,10 @@ const PANEL_TRANSITION = {
 } as const;
 
 /**
- * The desktop rail settles at a hard zero-width boundary. Keep the spring critically damped so it
- * cannot overshoot, pause against that boundary, and then snap back during the final frame.
+ * The desktop rail settles at a hard zero-width boundary, and its width reports the panel state. Arc's smooth spring
+ * is critically damped, so it cannot overshoot, pause against that boundary and snap back during the final frame.
  */
-const SIDEBAR_MORPH_TRANSITION = {
-  type: "spring",
-  stiffness: 380,
-  damping: 35,
-  mass: 0.75,
-} as const;
+const SIDEBAR_MORPH_TRANSITION = SPRING_PANEL;
 
 const LABEL_ENTER_TRANSITION = {
   duration: MOTION_TIMING.message,

@@ -3,8 +3,9 @@
 /**
  * Arc's Dialog (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): a focused surface for decisions that need
  * attention, on Arc's overlay, raised panel, title and description type and bordered close button, with Arc's swap of
- * a title or description changed while open. It keeps beez-ui's composable parts, the center morph entrance and the
- * viewport close button placement instead of Arc's single `title`/`description` content and rise entrance.
+ * a title or description changed while open, and Arc's dialog transition: the panel rises and scales in on the smooth
+ * spring and leaves quickly. It keeps beez-ui's composable parts and the viewport close button placement instead of
+ * Arc's single `title`/`description` content.
  */
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
@@ -70,7 +71,7 @@ type DialogCloseButtonPlacement = "content" | "viewport"
 
 /**
  * Renders a close button pinned to the viewport corner. It stays hidden while the panel
- * unfolds, because the entrance clip would otherwise cut it with the panel, and
+ * enters, because the entrance transform would otherwise carry it along with the panel, and
  * fades in once the panel settles. It hides at once when the dialog starts closing.
  * While hidden it is also `visibility: hidden`, so the dialog's initial focus and the
  * keyboard can never land on a control that cannot be seen.
@@ -92,8 +93,8 @@ function DialogViewportCloseButton() {
 }
 
 /**
- * Renders compact dialog content with viewport-safe scrolling. The panel unfolds from its
- * exact center toward every edge and folds back the same way when it closes.
+ * Renders compact dialog content with viewport-safe scrolling. The panel rises 8px and scales
+ * from 0.96 on Arc's smooth spring while it fades in, and leaves with a short drop and fade.
  * @param props - Primitive properties and optional consumer overrides.
  * @param props.showCloseButton - Whether the dialog renders its own close button.
  * @param props.closeButtonPlacement - `viewport` pins the close button to the viewport corner
@@ -113,7 +114,7 @@ function DialogContent({
   return (
     <DialogPortal forceMount><MotionPresence scope="dialog" forceMount={props.forceMount}><React.Fragment>
       <MotionSlot kind="overlay"><DialogOverlay forceMount /></MotionSlot>
-      <MotionSlot kind="center-morph"><DialogPrimitive.Content forceMount
+      <MotionSlot kind="dialog"><DialogPrimitive.Content forceMount
         data-slot="dialog-content"
         data-close-button-placement={showCloseButton ? closeButtonPlacement : undefined}
         className={cn(
