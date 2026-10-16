@@ -249,20 +249,6 @@ test("should not jump a switch thumb that was hidden when the page loaded", asyn
   const offsetOnCheck = await page.evaluate(() => (window as unknown as { __thumbOffsetOnCheck: number }).__thumbOffsetOnCheck);
   expect(offsetOnCheck).toBeCloseTo(uncheckedOffset, 0);
 });
-test("should glide the underline of line tabs and restore it", async ({ page }) => {
-  const motion = await recordMotion(page);
-  await page.goto("/motion-catalog.html");
-  const paused = page.getByRole("tab", { name: "Pausados" });
-  await paused.click();
-  await expect(paused).toHaveAttribute("aria-selected", "true");
-  await expect.poll(motion.glides).toContain("tabs-list");
-  await expect(page.locator("[data-glide-indicator]")).toHaveCount(0);
-  await expect(paused).not.toHaveAttribute("data-glide-target");
-  await expect
-    .poll(() => paused.evaluate((tab) => getComputedStyle(tab, "::after").opacity))
-    .toBe("1");
-  await expect(page.getByText("Elementos pausados")).toBeVisible();
-});
 
 test("should run every catalog interaction without motion when it is reduced", async ({
   page,

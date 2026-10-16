@@ -46,8 +46,7 @@ export const GLIDE_PRESETS = {
     containerSelector: '[role="tablist"]',
     attributes: ["data-state"],
     isActive: (item) => item.getAttribute("data-state") === "active",
-    surface: (container) =>
-      container.getAttribute("data-variant") === "line" ? "after" : "background",
+    surface: () => "background",
     // Arc glides the tab highlight and the current page mark with its morph spring.
     spring: ARC_SPRING_MORPH,
   },

@@ -6,21 +6,11 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
   BeezUIProvider,
   Button,
   Dialog,
+  DialogClose,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
   Sheet,
   SheetContent,
@@ -67,29 +57,27 @@ function App() {
             <DialogTrigger asChild>
               <Button>Abrir edición</Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Editar evento</DialogTitle>
-                <DialogDescription>Los cambios se guardan al confirmar.</DialogDescription>
-              </DialogHeader>
+            <DialogContent title="Editar evento" description="Los cambios se guardan al confirmar.">
               <SaveWithRetry label="Reintentos del diálogo" />
             </DialogContent>
           </Dialog>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+          <Dialog alert>
+            <DialogTrigger asChild>
               <Button>Abrir confirmación</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Confirmar cambios</AlertDialogTitle>
-                <AlertDialogDescription>Los cambios se aplican a todo el evento.</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <SaveWithRetry label="Reintentos de la confirmación" />
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+            </DialogTrigger>
+            <DialogContent
+              title="Confirmar cambios"
+              description="Los cambios se aplican a todo el evento."
+              footer={
+                <>
+                  <DialogClose asChild>
+                    <Button variant="secondary">Cancelar</Button>
+                  </DialogClose>
+                  <SaveWithRetry label="Reintentos de la confirmación" />
+                </>
+              }
+            />
+          </Dialog>
           <Sheet>
             <SheetTrigger asChild>
               <Button>Abrir panel</Button>

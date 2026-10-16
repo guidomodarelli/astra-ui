@@ -29,9 +29,6 @@ import {
   FilterQueryBar,
   type FilterQualifierConfig,
   Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -42,7 +39,8 @@ import {
 } from "beez-ui";
 import "./styles.css";
 
-const PAGES = [1, 2, 3] as const;
+/** Pages of the results pagination. */
+const PAGE_COUNT = 3;
 const SLIDES = ["Primera", "Segunda", "Tercera"] as const;
 /** Fixed month, so navigation and its direction are deterministic across runs. */
 const INITIAL_MONTH = new Date(2026, 0, 1);
@@ -73,28 +71,17 @@ function StatefulFilter() {
   );
 }
 
-/** Pages through local state, as a client-side table would, keeping the list mounted. */
+/** Pages through the URL hash with links, as a router-backed table would, keeping the list mounted. */
 function StatefulPagination() {
   const [page, setPage] = useState<number>(1);
   return (
-    <Pagination aria-label="Páginas de resultados">
-      <PaginationContent>
-        {PAGES.map((pageNumber) => (
-          <PaginationItem key={pageNumber}>
-            <PaginationLink
-              href={`#pagina-${pageNumber}`}
-              isActive={page === pageNumber}
-              onClick={(event) => {
-                event.preventDefault();
-                setPage(pageNumber);
-              }}
-            >
-              {pageNumber}
-            </PaginationLink>
-          </PaginationItem>
-        ))}
-      </PaginationContent>
-    </Pagination>
+    <Pagination
+      label="Páginas de resultados"
+      page={page}
+      pageCount={PAGE_COUNT}
+      getHref={(pageNumber) => `#pagina-${pageNumber}`}
+      onPageChange={setPage}
+    />
   );
 }
 
