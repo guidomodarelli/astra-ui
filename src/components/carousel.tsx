@@ -223,6 +223,8 @@ function Carousel({
   const reportedIndexRef = React.useRef(startIndex)
   const settledIndexRef = React.useRef(startIndex)
   const isRotatingRef = React.useRef(false)
+  // A `defaultIndex` beyond the slides rendered at mount waits until Embla has enough of them, and is applied once.
+  const pendingDefaultIndexRef = React.useRef(controlledIndex === undefined && defaultIndex > startIndex ? defaultIndex : undefined)
 
   // `startIndex` is left out on purpose: Embla would re-apply it on every option change. The first slide is placed by
   // a jump once the engine exists, and later re-initializations keep the selected slide.
@@ -289,6 +291,16 @@ function Carousel({
     api.scrollTo(nextIndex, reduceMotion)
     // `selectedIndex` re-runs the sync after every selection, so a slide the parent rejected scrolls back to `index`.
   }, [api, controlledIndex, engineSlideCount, reduceMotion, selectedIndex])
+
+  React.useEffect(() => {
+    const pendingIndex = pendingDefaultIndexRef.current
+    if (!api || pendingIndex === undefined || api.slideNodes().length <= pendingIndex) return
+    pendingDefaultIndexRef.current = undefined
+    // Like the first slide placed at mount, the requested default is neither reported nor announced.
+    reportedIndexRef.current = pendingIndex
+    settledIndexRef.current = pendingIndex
+    api.scrollTo(pendingIndex, true)
+  }, [api, engineSlideCount])
 
   const rotation = useRotation({ api, count, interval, autoplay, reduceMotion, isHydrated, selectedIndex, loop, isRotatingRef })
   const visibleIndex = clampSlideIndex(selectedIndex, count)

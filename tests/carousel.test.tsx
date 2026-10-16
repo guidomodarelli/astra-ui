@@ -101,6 +101,37 @@ describe("Carousel", () => {
     expect(panels.map((panel) => panel.hasAttribute("inert"))).toEqual([true, true, false]);
   });
 
+  it.each([
+    { initialSlides: [] as string[], description: "no slides" },
+    { initialSlides: SLIDES.slice(0, 1), description: "a single slide" },
+  ])("should reach an uncontrolled default index once enough slides arrive after mounting with $description", async ({ initialSlides }) => {
+    // Arrange
+    const onIndexChange = vi.fn();
+    const { rerender } = render(
+      <Carousel label="Destacados" defaultIndex={2} onIndexChange={onIndexChange}>
+        {initialSlides.map((slide) => (
+          <p key={slide}>{slide}</p>
+        ))}
+      </Carousel>,
+    );
+
+    // Act
+    await act(async () => {
+      rerender(
+        <Carousel label="Destacados" defaultIndex={2} onIndexChange={onIndexChange}>
+          {SLIDES.map((slide) => (
+            <p key={slide}>{slide}</p>
+          ))}
+        </Carousel>,
+      );
+    });
+
+    // Assert
+    const panels = screen.getAllByRole("tabpanel", { hidden: true });
+    expect(panels.map((panel) => panel.hasAttribute("inert"))).toEqual([true, true, false]);
+    expect(onIndexChange).not.toHaveBeenCalled();
+  });
+
   it("should clamp an initial slide beyond the last one", () => {
     // Arrange & Act
     renderCarousel({ defaultIndex: 9 });
