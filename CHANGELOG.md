@@ -9,6 +9,7 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 - Los botones de un toast de `ThemedToaster` (acción, cancelar o cerrar) responden mientras hay un `Dialog`, `AlertDialog` o `Sheet` abierto, y presionarlos ya no cierra el `Dialog` o el `Sheet`.
 - Presionar Escape en un menú, select o diálogo abierto desde el `Sidebar` en mobile cierra solo esa capa y deja el sidebar abierto.
 - Abrir el `Sidebar` en mobile en una ventana de escritorio angosta ya no desplaza la página de costado cuando desaparece la barra de scroll.
+- El contenido de `PopoverContent` más alto que el espacio disponible en pantalla se desplaza dentro del panel en lugar de quedar cortado fuera del viewport.
 
 ## [2.6.0] - 2026-10-15
 
