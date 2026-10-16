@@ -1,19 +1,9 @@
 /** Mounts a Calendar with a long Today label and a looping Carousel, so their layout and indicator motion run in real engines. */
 import { createRoot } from "react-dom/client";
-import {
-  BeezUIProvider,
-  Calendar,
-  Carousel,
-  CarouselContent,
-  CarouselIndicators,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "beez-ui";
+import { BeezUIProvider, Calendar, Carousel } from "beez-ui";
 import "./styles.css";
 
-/** Today pinned in the month with the longest Spanish name, so the title competes with the controls for room. */
-const TODAY = new Date(2026, 8, 10);
+/** Five slides, so the loop boundary has dots in between that must stay resting dots. */
 const SLIDES = [1, 2, 3, 4, 5];
 
 function App() {
@@ -21,20 +11,14 @@ function App() {
     <BeezUIProvider>
       <main>
         <section>
-          <Calendar mode="single" showToday todayLabel="Volver a la fecha actual" today={TODAY} defaultMonth={TODAY} />
+          {/* Today comes from the clock the spec pins in the month with the longest Spanish name. */}
+          <Calendar showToday todayLabel="Volver a la fecha actual" />
         </section>
         <section className="arc-data-carousel">
-          <Carousel aria-label="Galería en bucle" opts={{ loop: true }}>
-            <CarouselContent>
-              {SLIDES.map((slide) => (
-                <CarouselItem key={slide}>
-                  <div className="arc-data-slide">{`Foto ${slide}`}</div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-            <CarouselIndicators />
+          <Carousel label="Galería en bucle" loop>
+            {SLIDES.map((slide) => (
+              <div key={slide} className="arc-data-slide">{`Foto ${slide}`}</div>
+            ))}
           </Carousel>
         </section>
       </main>

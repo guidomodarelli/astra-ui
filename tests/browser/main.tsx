@@ -12,6 +12,7 @@ const QUERY_CONFIG = [{ key: "", kind: "text" as const, label: "Nombre" }];
 /** Exercises the native orchestrator's shared theme and image behavior. */
 function BrowserExample() {
   const [date, setDate] = useState<Date>();
+  const [calendarMonth, setCalendarMonth] = useState(new Date(2026, 8, 1));
   const [selectedAction, setSelectedAction] = useState("");
   return <main>
     <h1>Componentes compartidos</h1>
@@ -30,7 +31,7 @@ function BrowserExample() {
     <section><DataTable columns={COLUMNS} data={ROWS} emptyMessage="Sin resultados" filterColumnId="name" queryFilterConfig={QUERY_CONFIG} queryFilterLabel="Filtrar filas" /></section>
     <section><InputGroup><InputGroupAddon>Buscar</InputGroupAddon><InputGroupInput aria-label="Búsqueda adicional" /></InputGroup></section>
     <section><RadioGroup defaultValue="weekly"><RadioGroupItem value="weekly" aria-label="Semanal" /><RadioGroupItem value="monthly" aria-label="Mensual" /></RadioGroup></section>
-    <section><Calendar mode="single" defaultMonth={new Date(2026, 8, 1)} selected={date} onSelect={setDate} /><output aria-label="Día seleccionado">{date?.getDate()}</output></section>
+    <section><Calendar month={calendarMonth} onMonthChange={setCalendarMonth} value={date} onChange={setDate} /><output aria-label="Día seleccionado">{date?.getDate()}</output></section>
     <section><TypingAnimation startOnView={false} duration={1} showCursor={false}>Texto animado</TypingAnimation><Highlighter color="var(--primary)">Contenido destacado</Highlighter></section>
     <Sheet><SheetTrigger asChild><Button>Abrir panel largo</Button></SheetTrigger><SheetContent><SheetTitle>Panel largo</SheetTitle><SheetDescription>Contenido desplazable</SheetDescription><div className="long-content"><p>Inicio</p><Button>Última acción</Button></div></SheetContent></Sheet>
     <ThemedToaster />

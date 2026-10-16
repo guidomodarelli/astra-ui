@@ -32,14 +32,8 @@
   height: 5rem;
 }
 .StoryCarousel {
-  width: min(70vw, 24rem);
+  width: min(90vw, 36rem);
   margin: 4rem auto;
-}
-.StoryCarousel__vertical {
-  height: 14rem;
-}
-.StorySlide {
-  padding: 1rem;
 }
 .StorySlide__content {
   display: grid;

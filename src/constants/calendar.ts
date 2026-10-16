@@ -25,3 +25,18 @@ export const CALENDAR_COPY = {
 
 /** Months in a year, to compare dates by calendar month. */
 export const CALENDAR_MONTHS_PER_YEAR = 12
+
+/** Locale of `Calendar` when the consumer does not pick one: Spanish as written in Argentina, weeks start on Monday. */
+export const CALENDAR_DEFAULT_LOCALE = "es-AR"
+
+/**
+ * Languages `Calendar` ships full translations for, including react-day-picker's accessible labels. Any other locale
+ * keeps English labels while month and weekday names come from `Intl`.
+ */
+export const CALENDAR_TRANSLATED_LANGUAGE = {
+  spanish: "es",
+  english: "en",
+} as const
+
+/** Separator between the language and the region of a BCP 47 locale such as `es-AR`. */
+export const CALENDAR_LOCALE_SEPARATOR = "-"

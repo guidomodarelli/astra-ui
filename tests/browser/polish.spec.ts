@@ -277,23 +277,6 @@ test("should draw unstyled borders with the theme border token instead of the te
   expect(borderColor).not.toBe(textColor);
 });
 
-test("should move a vertical carousel with the up and down arrow keys", async ({ page }) => {
-  await page.goto("/polish.html");
-  const carousel = page.getByRole("region", { name: "Novedades" });
-  const previous = carousel.getByRole("button", { name: "Previous slide" });
-  const next = carousel.getByRole("button", { name: "Next slide" });
-  await expect(previous).toBeDisabled();
-  await next.focus();
-  await page.keyboard.press("ArrowDown");
-  await expect(previous).toBeEnabled();
-  await page.keyboard.press("ArrowDown");
-  await expect(next).toBeDisabled();
-  await previous.focus();
-  await page.keyboard.press("ArrowUp");
-  await page.keyboard.press("ArrowUp");
-  await expect(previous).toBeDisabled();
-});
-
 test.describe("with reduced motion", () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
