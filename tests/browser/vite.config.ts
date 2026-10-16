@@ -10,6 +10,7 @@ export default defineConfig({
     { find: /^beez-ui$/, replacement: fileURLToPath(new URL("../../dist/index.js", import.meta.url)) },
     { find: "beez-ui/next", replacement: fileURLToPath(new URL("../../dist/next.js", import.meta.url)) },
     { find: "beez-ui/tanstack", replacement: fileURLToPath(new URL("../../dist/tanstack.js", import.meta.url)) },
+    { find: "beez-ui/sonner", replacement: fileURLToPath(new URL("../../dist/sonner.js", import.meta.url)) },
   ] },
   server: { host: "127.0.0.1", port: 3108, strictPort: true },
 });
