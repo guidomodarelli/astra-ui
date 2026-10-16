@@ -194,7 +194,7 @@ function DialogContent({
         </Header>
       ) : null}
       {children}
-      {footer === undefined || footer === null ? null : <Footer className={footerClassName}>{footer}</Footer>}
+      {footer === undefined || footer === null || footer === false ? null : <Footer className={footerClassName}>{footer}</Footer>}
     </Content>
   )
 }

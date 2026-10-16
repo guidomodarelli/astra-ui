@@ -127,6 +127,18 @@ describe("Dialog", () => {
     expect(footer).toContainElement(screen.getByRole("button", { name: "Guardar" }));
   });
 
+  it("should leave out the footer when a conditional footer evaluates to false", () => {
+    render(
+      <Dialog open>
+        <DialogContent title="Datos" footer={false}>
+          <p>Cuerpo</p>
+        </DialogContent>
+      </Dialog>,
+    );
+
+    expect(screen.getByRole("dialog").querySelector("[data-slot=dialog-footer]")).toBeNull();
+  });
+
   it("should close from the built-in close button, named in Spanish by default", async () => {
     // Arrange
     const user = userEvent.setup();
