@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { useForm } from "react-hook-form";
 import {
+  Alert,
+  AlertDescription,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -11,6 +13,7 @@ import {
   AlertDialogFooter,
   AlertDialogTitle,
   AlertDialogTrigger,
+  AlertTitle,
   BeezUIProvider,
   Button,
   DropdownMenu,
@@ -67,7 +70,7 @@ import "./styles.css";
 const SECTIONS = ["Inicio", "Reportes", "Ajustes"] as const;
 const MANY_COUNTRIES = Array.from({ length: 40 }, (_, index) => `País ${index + 1}`);
 
-/** Validates a required name so the form message and invalid shake appear on submit. */
+/** Validates a required name so the form message and the invalid state appear on submit. */
 function ProfileForm() {
   const form = useForm({ defaultValues: { name: "" } });
   return (
@@ -119,6 +122,7 @@ function MotionCatalog() {
   const [isCodeInvalid, setIsCodeInvalid] = useState(false);
   const [isNoteInvalid, setIsNoteInvalid] = useState(false);
   const [isSwitchShown, setIsSwitchShown] = useState(false);
+  const [isNoticeShown, setIsNoticeShown] = useState(false);
   const [lastAction, setLastAction] = useState("");
   return (
     <BeezUIProvider>
@@ -218,6 +222,16 @@ function MotionCatalog() {
 
         <section>
           <ProfileForm />
+        </section>
+
+        <section>
+          <Button onClick={() => setIsNoticeShown(true)}>Mostrar aviso</Button>
+          {isNoticeShown ? (
+            <Alert>
+              <AlertTitle>Cambios guardados</AlertTitle>
+              <AlertDescription>El perfil se actualizó.</AlertDescription>
+            </Alert>
+          ) : null}
         </section>
 
         <section className="controls">

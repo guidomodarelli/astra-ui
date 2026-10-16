@@ -228,7 +228,7 @@ test("should pop and draw the checkbox mark and blur it out when unchecked", asy
   await expect.poll(fillScale).toBe(1);
 });
 
-test("should spring the switch thumb, blur in tooltips and shake invalid fields", async ({
+test("should spring the switch thumb, enter tooltips without blur and keep invalid fields in place", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -272,12 +272,21 @@ test("should spring the switch thumb, blur in tooltips and shake invalid fields"
     .toEqual(expect.arrayContaining(["transform", "opacity"]));
   expect(await motion.properties({ slot: "tooltip-content" })).not.toContain("filter");
 
+  // Turning invalid recolors the field without moving it: every frame paints it where it was.
+  await waitForSettledLayout(page.getByRole("textbox", { name: "Correo" }));
+  const emailBoxes = samplePaintedBoxes(page, '[aria-label="Correo"]', 600, {
+    from: '[aria-label="Correo"][aria-invalid="true"]',
+  });
   await page.getByRole("button", { name: "Validar correo" }).click();
   const email = page.getByRole("textbox", { name: "Correo" });
   await expect(email).toHaveAttribute("aria-invalid", "true");
-  await expect
-    .poll(() => motion.properties({ slot: "input" }))
-    .toContain("transform");
+  const boxes = await emailBoxes;
+  expect(boxes.length).toBeGreaterThan(1);
+  for (const box of boxes) {
+    expect(box.x).toBeCloseTo(boxes[0]!.x, 1);
+    expect(box.y).toBeCloseTo(boxes[0]!.y, 1);
+  }
+  expect(await motion.properties({ slot: "input" })).not.toContain("transform");
   await expect(email).toHaveCSS("transform", "none");
 });
 
@@ -339,7 +348,7 @@ test("should respond when the system motion preference changes", async ({
   ).toBeVisible({ timeout: 2000 });
 });
 
-test("should turn the select chevron and stagger its options in", async ({ page }) => {
+test("should turn the select chevron and fade its options in without blur", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   const motion = await recordMotion(page);
   await page.goto("/motion.html");
@@ -355,7 +364,10 @@ test("should turn the select chevron and stagger its options in", async ({ page 
     .toContain("transform");
   await expect
     .poll(() => motion.properties({ slot: "select-item" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform", "filter"]));
+    .toEqual(expect.arrayContaining(["opacity", "transform"]));
+  expect(await motion.properties({ slot: "select-item" })).not.toContain("filter");
+  await expect(page.getByRole("option", { name: "Dólares" })).toHaveCSS("transform", "none");
+  await expect(page.getByRole("option", { name: "Dólares" })).toHaveCSS("opacity", "1");
   await page.getByRole("option", { name: "Dólares" }).click();
   await expect(page.locator("[data-slot=select-trigger]")).toHaveText("Dólares");
   await expect(chevron).toHaveCSS("rotate", "none");
@@ -397,7 +409,7 @@ test("should rotate the group chevron of the data table instead of swapping icon
   await expect(chevron).toHaveCSS("transform", "none");
 });
 
-test("should blur-swap the theme icon and pop in the dialog close button", async ({
+test("should swap the theme icon with a fade and scale and pop in the dialog close button", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -408,10 +420,12 @@ test("should blur-swap the theme icon and pop in the dialog close button", async
   await expect(page.locator("html")).toHaveClass(/dark/);
   await expect
     .poll(() => motion.properties({ buttonText: "Alternar tema" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform", "filter"]));
-  await expect(
-    page.getByRole("button", { name: "Alternar tema" }).locator("svg"),
-  ).toHaveCount(1);
+    .toEqual(expect.arrayContaining(["opacity", "transform"]));
+  expect(await motion.properties({ buttonText: "Alternar tema" })).not.toContain("filter");
+  const themeIcon = page.getByRole("button", { name: "Alternar tema" }).locator("svg");
+  await expect(themeIcon).toHaveCount(1);
+  await expect(themeIcon).toHaveCSS("transform", "none");
+  await expect(themeIcon).toHaveCSS("opacity", "1");
 
   await page.getByRole("button", { name: "Abrir diálogo" }).click();
   const close = page.locator("[data-slot=dialog-close]");

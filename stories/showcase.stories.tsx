@@ -172,7 +172,7 @@ const meta = {
     docs: {
       description: {
         story:
-          "Panel completo para evaluar el movimiento en contexto: pestañas y paginación con indicador deslizante, placeholders con brillo, validación con temblor, calendario con transición de mes y alerta con entrada suave.",
+          "Panel completo para evaluar el movimiento en contexto: pestañas y paginación con indicador deslizante, placeholders con brillo, validación con mensaje, calendario con transición de mes y alerta con entrada suave.",
       },
     },
   },

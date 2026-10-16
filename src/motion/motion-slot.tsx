@@ -33,12 +33,10 @@ import {
   MOTION_HOVER_SCALE,
   MOTION_THUMB_SQUISH_SCALE,
   MOTION_CONTENT_DISTANCE,
-  MOTION_INVALID_SHAKE_PX,
   MOTION_ITEM_CHECK_SCALE,
+  MOTION_ITEM_ENTER_SCALE,
   MOTION_ICON_SWAP_SCALE,
   MOTION_CLOSE_BUTTON_SCALE,
-  MOTION_LIST_ITEM_DISTANCE,
-  MOTION_LIST_STAGGER_LIMIT,
   MOTION_EASE_IN_OUT,
   MOTION_REVEAL_BLUR_PX,
   MOTION_REVEAL_SCALE,
@@ -47,6 +45,7 @@ import {
   MOTION_CARD_SHADOW_REST,
   SPRING_CHEVRON,
   SPRING_PANEL,
+  SPRING_POP,
   SPRING_PRESS,
   SPRING_THUMB,
   type MotionKind,
@@ -73,15 +72,11 @@ const FIELD_KINDS: readonly MotionKind[] = ["field", "toggle"];
 const ANIMATED_PROPERTIES = ["opacity", "transform", "boxShadow", "filter", "clipPath"] as const;
 type AnimatedProperty = (typeof ANIMATED_PROPERTIES)[number];
 
-/** Input groups draw the field frame; their controls are borderless. */
-const INPUT_GROUP_SLOT = "input-group";
-
 /** SVG attributes Motion writes to draw a stroke with `pathLength`. */
 const STROKE_DRAW_ATTRIBUTES = ["pathLength", "stroke-dasharray", "stroke-dashoffset"];
 /** Attributes whose changes re-announce a field's state with a subtle settle. */
 const FIELD_STATE_ATTRIBUTES = [
   "data-state",
-  "aria-invalid",
   "aria-selected",
   "aria-checked",
   "data-loading",
@@ -132,15 +127,6 @@ function translateXOf(transform: string): number {
 function rotationOf(transform: string): number {
   const { a, b } = matrixOf(transform);
   return (Math.atan2(b, a) * 180) / Math.PI;
-}
-
-/** Position of an item among its siblings of the same slot inside the closest list or menu. */
-function listIndexOf(element: Element): number {
-  const slot = element.getAttribute("data-slot");
-  const list = element.closest('[role="listbox"],[role="menu"],[role="list"]');
-  if (!slot || !list) return 0;
-  const items = Array.from(list.querySelectorAll(`[data-slot="${slot}"]`));
-  return Math.max(items.indexOf(element), 0);
 }
 
 /** Checked and indeterminate indicators are visible; only unchecked ones are hidden. */
@@ -350,14 +336,14 @@ export function MotionSlot({
       );
       cleanups.push(() => shimmer.cancel());
     } else if (kind === "icon-swap") {
-      // Keyed icons remount on change; the newcomer grows out of a blur in place of the old one.
+      // Keyed icons remount on change; the newcomer grows in place of the old one on Arc's snappy
+      // spring while it fades in, so the swap reads as one small change, without a blur.
       play(
         {
           opacity: [0, 1],
           transform: [`scale(${MOTION_ICON_SWAP_SCALE})`, "scale(1)"],
-          filter: ["blur(8px)", "blur(0px)"],
         },
-        { duration: MOTION_TIMING.iconSwap, ease: [...MOTION_EASE_IN_OUT] },
+        { ...SPRING_POP, opacity: tween(MOTION_TIMING.iconSwap) },
       );
     } else if (kind === "item-check") {
       play(
@@ -365,21 +351,14 @@ export function MotionSlot({
         { ...SPRING_PANEL, opacity: tween(MOTION_TIMING.fast) },
       );
     } else if (kind === "list-item") {
-      const index = listIndexOf(element);
-      const position = Math.min(index, MOTION_LIST_STAGGER_LIMIT);
-      // Long lists only fade the remaining items: dozens of blurred layers at once cost frames.
+      // Options arrive with their list in one short fade and settle, together: the list opening
+      // is the change, so they neither stagger nor blur.
       play(
-        index < MOTION_LIST_STAGGER_LIMIT
-          ? {
-              opacity: [0, 1],
-              transform: [`translateY(${-MOTION_LIST_ITEM_DISTANCE}px)`, "translateY(0px)"],
-              filter: ["blur(3px)", "blur(0px)"],
-            }
-          : { opacity: [0, 1] },
         {
-          ...tween(MOTION_TIMING.listItem),
-          delay: MOTION_TIMING.listDelay + position * MOTION_TIMING.listStagger,
+          opacity: [0, 1],
+          transform: [`scale(${MOTION_ITEM_ENTER_SCALE})`, "scale(1)"],
         },
+        tween(MOTION_TIMING.listItem),
       );
     } else if (kind === "delayed-pop" && typeof element.animate === "function") {
       // Runs on the independent `scale` property with native playback, so it composes with
@@ -408,11 +387,11 @@ export function MotionSlot({
         tween(MOTION_TIMING.enter),
       );
     } else if (kind === "message") {
+      // Inline messages appear where they are read, with a short fade and settle and no blur.
       play(
         {
           opacity: [0, 1],
-          transform: [`translateY(${-MOTION_CONTENT_DISTANCE}px)`, "translateY(0px)"],
-          filter: ["blur(4px)", "blur(0px)"],
+          transform: [`scale(${MOTION_ITEM_ENTER_SCALE})`, "scale(1)"],
         },
         tween(MOTION_TIMING.message),
       );
@@ -528,43 +507,10 @@ export function MotionSlot({
       };
       element.addEventListener("focusin", settleField);
       cleanups.push(() => element.removeEventListener("focusin", settleField));
-      // A control inside an input group lets the whole group shake, so frame and text move
-      // together; the group watches its controls instead of its own attribute.
-      const isGroup = element.getAttribute("data-slot") === INPUT_GROUP_SLOT;
-      const isGroupControl =
-        !isGroup && element.parentElement?.closest(`[data-slot="${INPUT_GROUP_SLOT}"]`) != null;
-      const readInvalid = () =>
-        isGroup
-          ? element.querySelector('[data-slot][aria-invalid="true"]') !== null
-          : element.getAttribute("aria-invalid") === "true";
-      let wasInvalid = readInvalid();
-      const observer = new MutationObserver((records) => {
-        const isInvalid = readInvalid();
-        const becameInvalid = isInvalid && !wasInvalid;
-        wasInvalid = isInvalid;
-        if (becameInvalid && !isGroupControl && !element.hasAttribute("hidden")) {
-          // A field turning invalid shakes horizontally, like a refused entry.
-          play(
-            {
-              transform: MOTION_INVALID_SHAKE_PX.map(
-                (offset) => `translateX(${offset}px)`,
-              ),
-            },
-            { duration: MOTION_TIMING.shake },
-          );
-        } else if (
-          records.some(
-            (record) => record.target === element && record.attributeName !== "aria-invalid",
-          )
-        ) {
-          settleField();
-        }
-      });
-      observer.observe(element, {
-        attributes: true,
-        attributeFilter: FIELD_STATE_ATTRIBUTES,
-        subtree: isGroup,
-      });
+      // Turning invalid does not move the field: its color and message already tell the error,
+      // so `aria-invalid` is not among the attributes that settle it.
+      const observer = new MutationObserver(settleField);
+      observer.observe(element, { attributes: true, attributeFilter: FIELD_STATE_ATTRIBUTES });
       cleanups.push(() => observer.disconnect());
     }
     if (kind === "check") {
