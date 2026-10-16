@@ -881,7 +881,7 @@ export function DataTable<TData, TValue>({
     <Badge
       aria-live="polite"
       className="inline-flex w-fit items-center gap-1.5"
-      variant="secondary"
+      tone="neutral"
     >
       <span>
         {`Ordenado por: ${activeSortingColumnLabel} ${activeSortingDirectionSymbol}`}
@@ -1272,7 +1272,7 @@ export function DataTable<TData, TValue>({
                       <Badge
                         aria-label={`Total de filas excluidas únicas: ${excludeFilterUniqueRowsCount}`}
                         className="inline-flex h-6 items-center gap-1.5 px-2.5"
-                        variant="destructive"
+                        tone="danger"
                       >
                         <span>{`${EXCLUDED_ROWS_SUMMARY_LABEL}:`}</span>
                         <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-destructive/20 px-1.5 text-[10px] leading-4 font-medium">
@@ -1296,7 +1296,7 @@ export function DataTable<TData, TValue>({
                       <Badge
                         className="inline-flex h-6 items-center gap-1.5 px-2.5"
                         key={excludeFilterValue}
-                        variant="destructive"
+                        tone="danger"
                       >
                         <span>{`− ${excludeFilterValue}`}</span>
                         {excludedRowsCount != null ? (

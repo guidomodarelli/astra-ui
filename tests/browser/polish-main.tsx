@@ -3,17 +3,11 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Avatar,
-  AvatarFallback,
   AvatarGroup,
-  AvatarImage,
   BeezUIProvider,
   Button,
   Calendar,
   Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
   Carousel,
   CarouselContent,
   CarouselItem,
@@ -103,22 +97,14 @@ function ReloadableAvatar() {
   const [version, setVersion] = useState(0);
   return (
     <div className="controls">
-      <Avatar size="lg">
-        <AvatarImage
-          src={version === 0 ? null : `/avatar.svg?version=${version}`}
-          alt="Foto de Ana"
-        />
-        <AvatarFallback>AN</AvatarFallback>
-      </Avatar>
+      <Avatar
+        name="Ana Núñez"
+        alt="Foto de Ana"
+        size="lg"
+        src={version === 0 ? null : `/avatar.svg?version=${version}`}
+      />
       <Button onClick={() => setVersion((current) => current + 1)}>Cargar foto</Button>
-      <AvatarGroup aria-label="Equipo">
-        <Avatar>
-          <AvatarFallback>LU</AvatarFallback>
-        </Avatar>
-        <Avatar>
-          <AvatarFallback>MA</AvatarFallback>
-        </Avatar>
-      </AvatarGroup>
+      <AvatarGroup label="Equipo" members={[{ name: "Lucía Uriarte" }, { name: "Martín Alonso" }]} />
     </div>
   );
 }
@@ -136,14 +122,13 @@ function PolishExamples() {
           <StatefulFilter />
         </section>
         <section>
-          <Card aria-label="Resumen del mes" className="summary-card">
-            <CardHeader>
-              <CardTitle>Resumen del mes</CardTitle>
-            </CardHeader>
-            <CardContent>Total: $ 184.200</CardContent>
-            <CardFooter>
-              <Button variant="secondary">Ver detalle</Button>
-            </CardFooter>
+          <Card
+            aria-label="Resumen del mes"
+            className="summary-card"
+            title="Resumen del mes"
+            footer={<Button variant="secondary">Ver detalle</Button>}
+          >
+            Total: $ 184.200
           </Card>
         </section>
         <section>
@@ -153,7 +138,7 @@ function PolishExamples() {
           <ReloadableAvatar />
         </section>
         <section>
-          <Skeleton aria-label="Cargando resumen" className="motion-skeleton" />
+          <Skeleton label="Cargando resumen" lines={1} className="motion-skeleton" />
           <TypingAnimation startOnView={false} duration={20} pauseDelay={60000} words={["Hola", "Chau"]} />
         </section>
         <section>

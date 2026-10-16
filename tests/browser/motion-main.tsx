@@ -205,7 +205,7 @@ function MotionExamples() {
         </section>
         <section>
           <Highlighter>Lectura destacada</Highlighter>
-          <Skeleton className="motion-skeleton" />
+          <Skeleton lines={1} className="motion-skeleton" />
         </section>
       </main>
     </BeezUIProvider>

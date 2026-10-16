@@ -4,22 +4,12 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CalendarDays, CheckCircle2, Settings } from "lucide-react";
 import {
   Alert,
-  AlertDescription,
-  AlertTitle,
   AnimatedThemeToggler,
-  Avatar,
-  AvatarFallback,
   AvatarGroup,
   Badge,
   Button,
   Calendar,
   Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
   Checkbox,
   Input,
   Label,
@@ -44,7 +34,7 @@ import {
 
 /** Time the activity tab shows its loading placeholder before the content arrives. */
 const ACTIVITY_LOADING_MS = 1600;
-const TEAM = ["AN", "LU", "MA", "JO"] as const;
+const TEAM = [{ name: "Ana Núñez" }, { name: "Lucía Uriarte" }, { name: "Martín Alonso" }, { name: "José Ortiz" }];
 const PAGE_COUNT = 4;
 const ACTIVITY = [
   "Ana aprobó el presupuesto de marzo",
@@ -60,13 +50,7 @@ function ActivityFeed() {
     return () => clearTimeout(timeout);
   }, []);
   if (isLoading) {
-    return (
-      <div className="StoryStack" role="status" aria-label="Cargando actividad">
-        {ACTIVITY.map((entry) => (
-          <Skeleton key={entry} className="StorySkeleton" />
-        ))}
-      </div>
-    );
+    return <Skeleton label="Cargando actividad" lines={ACTIVITY.length} />;
   }
   return (
     <ul className="StoryStack">
@@ -131,10 +115,8 @@ function PreferencesForm() {
         <Button type="submit">Guardar</Button>
       </div>
       {isSaved && (
-        <Alert>
-          <CheckCircle2 />
-          <AlertTitle>Preferencias guardadas</AlertTitle>
-          <AlertDescription>Vas a recibir los avisos en {email}.</AlertDescription>
+        <Alert tone="success" icon={<CheckCircle2 />} title="Preferencias guardadas">
+          {`Vas a recibir los avisos en ${email}.`}
         </Alert>
       )}
     </form>
@@ -177,28 +159,29 @@ const meta = {
     },
   },
   render: () => (
-    <Card className="StoryShowcase">
-      <CardHeader>
-        <CardTitle>
-          <TypingAnimation startOnView={false} duration={45}>
-            Gastos compartidos
-          </TypingAnimation>
-        </CardTitle>
-        <CardDescription>Casa · marzo 2026</CardDescription>
-        <CardAction>
-          <div className="StoryRow">
-            <AvatarGroup aria-label="Integrantes">
-              {TEAM.map((initials) => (
-                <Avatar key={initials}>
-                  <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
-              ))}
-            </AvatarGroup>
-            <AnimatedThemeToggler className="inline-flex size-8 items-center justify-center rounded-lg hover:bg-muted" />
-          </div>
-        </CardAction>
-      </CardHeader>
-      <CardContent>
+    <Card
+      className="StoryShowcase"
+      title={
+        <TypingAnimation startOnView={false} duration={45}>
+          Gastos compartidos
+        </TypingAnimation>
+      }
+      description="Casa · marzo 2026"
+      action={
+        <div className="StoryRow">
+          <AvatarGroup label="Integrantes" members={TEAM} size="sm" />
+          <AnimatedThemeToggler className="inline-flex size-8 items-center justify-center rounded-lg hover:bg-muted" />
+        </div>
+      }
+      footer={
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost">¿Cómo se reparte?</Button>
+          </TooltipTrigger>
+          <TooltipContent>En partes iguales, salvo excepciones</TooltipContent>
+        </Tooltip>
+      }
+    >
         <Tabs defaultValue="resumen">
           <TabsList aria-label="Secciones del panel">
             <TabsTrigger value="resumen">Resumen</TabsTrigger>
@@ -211,8 +194,8 @@ const meta = {
           <TabsContent value="resumen">
             <div className="StoryStack">
               <div className="StoryRow">
-                <Badge>Al día</Badge>
-                <Badge variant="secondary">12 movimientos</Badge>
+                <Badge tone="info">Al día</Badge>
+                <Badge>12 movimientos</Badge>
               </div>
               <p>Total del mes: $ 184.200, repartido entre cuatro personas.</p>
               <ReportPagination />
@@ -225,15 +208,6 @@ const meta = {
             <PreferencesForm />
           </TabsContent>
         </Tabs>
-      </CardContent>
-      <CardFooter>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost">¿Cómo se reparte?</Button>
-          </TooltipTrigger>
-          <TooltipContent>En partes iguales, salvo excepciones</TooltipContent>
-        </Tooltip>
-      </CardFooter>
     </Card>
   ),
 } satisfies Meta;

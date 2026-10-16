@@ -3,13 +3,13 @@ import { createMemoryHistory, createRootRoute, createRoute, createRouter, Outlet
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { Avatar, AvatarImage, Link } from "beez-ui";
+import { Avatar, Link } from "beez-ui";
 import { BeezUIProvider } from "beez-ui/tanstack";
 
 /** Builds consumer-owned routes without mocking routing internals. */
 function renderRouter(href = "/target?tab=summary#details", initialEntry = "/") {
   const root = createRootRoute({ component: () => <BeezUIProvider><Outlet /></BeezUIProvider> });
-  const index = createRoute({ getParentRoute: () => root, path: "/", component: () => <><Link href={href}>Abrir</Link><Avatar><AvatarImage src="/profile.png" alt="Perfil" /></Avatar></> });
+  const index = createRoute({ getParentRoute: () => root, path: "/", component: () => <><Link href={href}>Abrir</Link><Avatar name="Perfil" src="/profile.png" /></> });
   const target = createRoute({ getParentRoute: () => root, path: "/target", component: () => <h1>Destino</h1> });
   const router = createRouter({ routeTree: root.addChildren([index, target]), history: createMemoryHistory({ initialEntries: [initialEntry] }) });
   render(<RouterProvider router={router} />);
@@ -34,9 +34,11 @@ describe("TanStack adapter", () => {
 
   it("should retain native images without importing an image framework", async () => {
     renderRouter();
-    const image = await screen.findByAltText("Perfil");
+    const avatar = await screen.findByRole("img", { name: "Perfil" });
+    const image = avatar.querySelector("img")!;
     expect(image).not.toHaveAttribute("data-nimg");
+    expect(screen.getByText("P")).toBeInTheDocument();
     fireEvent.load(image);
-    expect(screen.getByRole("img", { name: "Perfil" })).toBeInTheDocument();
+    expect(screen.queryByText("P")).not.toBeInTheDocument();
   });
 });

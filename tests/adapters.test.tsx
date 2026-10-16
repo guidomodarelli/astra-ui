@@ -2,7 +2,7 @@
 import type { ComponentProps } from "react";
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { Avatar, AvatarImage, BeezUIProvider, PaginationNext } from "beez-ui";
+import { Avatar, BeezUIProvider, PaginationNext } from "beez-ui";
 
 /** Models a consumer-owned router without mocking a library implementation. */
 function ConsumerLink(props: ComponentProps<"a">) {
@@ -22,13 +22,13 @@ describe("BeezUIProvider", () => {
   });
 
   it("should apply the consumer adapters while preserving the image lifecycle", () => {
-    render(<BeezUIProvider components={{ Link: ConsumerLink, Image: ConsumerImage }}><PaginationNext href="/page/2" text="Siguiente" /><Avatar><AvatarImage src="/profile.png" alt="Perfil" /></Avatar></BeezUIProvider>);
+    render(<BeezUIProvider components={{ Link: ConsumerLink, Image: ConsumerImage }}><PaginationNext href="/page/2" text="Siguiente" /><Avatar name="Perfil" src="/profile.png" /></BeezUIProvider>);
     expect(screen.getByRole("link")).toHaveAttribute("data-router", "consumer");
-    const image = screen.getByAltText("Perfil");
+    const image = screen.getByRole("img", { name: "Perfil" }).querySelector("img")!;
     expect(image).toHaveAttribute("data-image-adapter", "consumer");
     fireEvent.load(image);
-    expect(screen.getByRole("img", { name: "Perfil" })).toBeInTheDocument();
+    expect(screen.queryByText("P")).not.toBeInTheDocument();
     fireEvent.error(image);
-    expect(screen.queryByRole("img", { name: "Perfil" })).not.toBeInTheDocument();
+    expect(screen.getByText("P")).toBeInTheDocument();
   });
 });

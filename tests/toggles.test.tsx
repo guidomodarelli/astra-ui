@@ -4,7 +4,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 
-import { Checkbox, RadioGroup, RadioGroupItem, Switch } from "beez-ui";
+import { Checkbox, RadioGroup, Switch } from "beez-ui";
 
 describe("Switch", () => {
   it("should name the switch with its inline label and toggle when the label is clicked", async () => {
@@ -154,25 +154,23 @@ describe("Checkbox", () => {
 });
 
 describe("RadioGroup", () => {
-  /** A billing choice laid out as Arc option rows. */
-  function BillingChoice({ onValueChange }: { onValueChange?: (value: string) => void }) {
-    return (
-      <RadioGroup aria-label="Facturación" defaultValue="monthly" onValueChange={onValueChange}>
-        <RadioGroupItem value="monthly" label="Mensual" description="Se renueva cada mes." />
-        <RadioGroupItem value="yearly" label="Anual" description="Dos meses sin cargo." />
-      </RadioGroup>
-    );
-  }
+  /** Billing options laid out as Arc option rows. */
+  const BILLING_OPTIONS = [
+    { value: "monthly", label: "Mensual", description: "Se renueva cada mes." },
+    { value: "yearly", label: "Anual", description: "Dos meses sin cargo." },
+  ];
 
-  it("should name each option row by its label and describe it by its helper copy", () => {
+  it("should name the group by its legend and each option row by its label and helper copy", () => {
     // Arrange
-    render(<BillingChoice />);
+    render(<RadioGroup label="Facturación" options={BILLING_OPTIONS} defaultValue="monthly" />);
 
     // Act
-    const yearly = screen.getByRole("radio", { name: "Anual" });
+    const group = screen.getByRole("radiogroup", { name: "Facturación" });
 
     // Assert
-    expect(yearly).toHaveAccessibleDescription("Dos meses sin cargo.");
+    expect(group.tagName).toBe("FIELDSET");
+    expect(screen.getByText("Facturación").tagName).toBe("LEGEND");
+    expect(screen.getByRole("radio", { name: "Anual" })).toHaveAccessibleDescription("Dos meses sin cargo.");
     expect(screen.getByRole("radio", { name: "Mensual" })).toBeChecked();
   });
 
@@ -180,7 +178,7 @@ describe("RadioGroup", () => {
     // Arrange
     const user = userEvent.setup();
     const onValueChange = vi.fn();
-    render(<BillingChoice onValueChange={onValueChange} />);
+    render(<RadioGroup label="Facturación" options={BILLING_OPTIONS} defaultValue="monthly" onValueChange={onValueChange} />);
 
     // Act
     await user.click(screen.getByText("Dos meses sin cargo."));
@@ -192,17 +190,22 @@ describe("RadioGroup", () => {
     expect(screen.getByRole("radio", { name: "Mensual" })).not.toBeChecked();
   });
 
-  it("should follow a controlled value with bare items labelled by the caller", async () => {
+  it("should follow a controlled value", async () => {
     // Arrange
     const user = userEvent.setup();
     function ControlledGroup() {
       const [frequency, setFrequency] = useState("weekly");
       return (
         <>
-          <RadioGroup aria-label="Frecuencia" value={frequency} onValueChange={setFrequency}>
-            <RadioGroupItem value="weekly" aria-label="Semanal" />
-            <RadioGroupItem value="monthly" aria-label="Mensual" />
-          </RadioGroup>
+          <RadioGroup
+            label="Frecuencia"
+            value={frequency}
+            onValueChange={setFrequency}
+            options={[
+              { value: "weekly", label: "Semanal" },
+              { value: "monthly", label: "Mensual" },
+            ]}
+          />
           <output aria-label="Elegida">{frequency}</output>
         </>
       );
@@ -217,38 +220,18 @@ describe("RadioGroup", () => {
     expect(screen.getByLabelText("Elegida")).toHaveTextContent("monthly");
   });
 
-  it("should render the consumer element as the group with asChild and keep its options selectable", async () => {
-    // Arrange
-    const user = userEvent.setup();
-    render(
-      <RadioGroup asChild defaultValue="monthly">
-        <fieldset>
-          <legend>Facturación</legend>
-          <RadioGroupItem value="monthly" label="Mensual" />
-          <RadioGroupItem value="yearly" label="Anual" />
-        </fieldset>
-      </RadioGroup>,
-    );
-    const group = screen.getByRole("radiogroup");
-
-    // Act
-    await user.click(screen.getByText("Anual"));
-
-    // Assert
-    expect(group.tagName).toBe("FIELDSET");
-    expect(group).toHaveAccessibleName("Facturación");
-    expect(screen.getByRole("radio", { name: "Anual" })).toBeChecked();
-    expect(screen.getByRole("radio", { name: "Mensual" })).not.toBeChecked();
-  });
-
   it("should not choose a disabled option", async () => {
     // Arrange
     const user = userEvent.setup();
     render(
-      <RadioGroup aria-label="Plan" defaultValue="free">
-        <RadioGroupItem value="free" label="Gratis" />
-        <RadioGroupItem value="pro" label="Pro" disabled />
-      </RadioGroup>,
+      <RadioGroup
+        label="Plan"
+        defaultValue="free"
+        options={[
+          { value: "free", label: "Gratis" },
+          { value: "pro", label: "Pro", disabled: true },
+        ]}
+      />,
     );
 
     // Act
@@ -257,6 +240,24 @@ describe("RadioGroup", () => {
     // Assert
     expect(screen.getByRole("radio", { name: "Pro" })).not.toBeChecked();
     expect(screen.getByRole("radio", { name: "Gratis" })).toBeChecked();
+  });
+
+  it("should submit the chosen value under its name and keep the consumer class on the group", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    render(
+      <form aria-label="Preferencias">
+        <RadioGroup label="Facturación" name="billing" options={BILLING_OPTIONS} defaultValue="monthly" className="billing-group" />
+      </form>,
+    );
+    const form = screen.getByRole("form", { name: "Preferencias" }) as HTMLFormElement;
+
+    // Act
+    await user.click(screen.getByRole("radio", { name: "Anual" }));
+
+    // Assert
+    expect(new FormData(form).get("billing")).toBe("yearly");
+    expect(screen.getByRole("radiogroup", { name: "Facturación" })).toHaveClass("billing-group");
   });
 });
 
@@ -268,10 +269,15 @@ describe("form reset", () => {
       <form aria-label="Preferencias">
         <Switch name="alerts" label="Avisos por correo" defaultChecked />
         <Checkbox name="terms" label="Aceptar condiciones" />
-        <RadioGroup name="billing" aria-label="Facturación" defaultValue="monthly">
-          <RadioGroupItem value="monthly" label="Mensual" />
-          <RadioGroupItem value="yearly" label="Anual" />
-        </RadioGroup>
+        <RadioGroup
+          name="billing"
+          label="Facturación"
+          defaultValue="monthly"
+          options={[
+            { value: "monthly", label: "Mensual" },
+            { value: "yearly", label: "Anual" },
+          ]}
+        />
         <button type="reset">Restablecer</button>
       </form>,
     );
@@ -312,10 +318,15 @@ describe("form reset", () => {
       >
         <Switch name="alerts" value="on" label="Avisos por correo" defaultChecked />
         <Checkbox name="terms" value="accepted" label="Aceptar condiciones" />
-        <RadioGroup name="billing" aria-label="Facturación" defaultValue="monthly">
-          <RadioGroupItem value="monthly" label="Mensual" />
-          <RadioGroupItem value="yearly" label="Anual" />
-        </RadioGroup>
+        <RadioGroup
+          name="billing"
+          label="Facturación"
+          defaultValue="monthly"
+          options={[
+            { value: "monthly", label: "Mensual" },
+            { value: "yearly", label: "Anual" },
+          ]}
+        />
         <button type="submit">Guardar</button>
       </form>,
     );

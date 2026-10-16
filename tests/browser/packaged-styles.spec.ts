@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "@playwright/test";
-import { Avatar, AvatarFallback, Button, PaginationEllipsis, SidebarProvider, SidebarTrigger } from "beez-ui";
+import { Avatar, Button, PaginationEllipsis, SidebarProvider, SidebarTrigger } from "beez-ui";
 import { ownedPath } from "../../scripts/owned-path.js";
 import { extractArchive } from "../../scripts/tarball.js";
 
@@ -25,7 +25,7 @@ test.beforeAll(async () => {
   extractArchive(join(directory, archive), directory);
   const content = renderToStaticMarkup(createElement("main", null,
     createElement(Button, null, "Guardar"),
-    createElement(Avatar, null, createElement(AvatarFallback, null, "GH")),
+    createElement(Avatar, { name: "Gonzalo Herrera" }),
     createElement(PaginationEllipsis),
     createElement(SidebarProvider, null, createElement(SidebarTrigger)),
   ));

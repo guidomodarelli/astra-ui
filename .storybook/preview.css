@@ -67,15 +67,6 @@
   margin-top: 1rem;
   color: var(--muted-foreground);
 }
-.StorySkeleton {
-  width: 16rem;
-  height: 1.25rem;
-}
-.StorySkeleton--avatar {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-}
 .StoryShowcase {
   width: min(100%, 30rem);
 }

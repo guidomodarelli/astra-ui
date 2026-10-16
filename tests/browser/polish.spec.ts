@@ -100,7 +100,7 @@ test.describe("with motion", () => {
     await page.goto("/polish.html");
     await expect(page.getByText("AN", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Cargar foto" }).click();
-    const image = page.getByRole("img", { name: "Foto de Ana" });
+    const image = page.getByRole("img", { name: "Foto de Ana" }).locator("img");
     await expect(image).toBeVisible();
     await expect.poll(() => motion.properties({ slot: "avatar-image" })).toEqual(
       expect.arrayContaining(["opacity", "transform", "filter"]),
@@ -110,7 +110,7 @@ test.describe("with motion", () => {
 
   test("should pulse the skeleton a finite number of times and rest fully opaque", async ({ page }) => {
     await page.goto("/polish.html");
-    const skeleton = page.getByLabel("Cargando resumen");
+    const skeleton = page.getByRole("status", { name: "Cargando resumen" }).locator('[data-slot="skeleton"]');
     // Arc's pulse dims the box itself on the compositor, then rests: it never loops forever.
     await expect
       .poll(() =>
@@ -252,13 +252,17 @@ test.describe("with motion", () => {
     expect(await card.evaluate((element) => getComputedStyle(element).boxShadow)).toBe(restingShadow);
   });
 
-  test("should lift the hovered avatar of a group on real hover pointers", async ({ page }) => {
+  test("should lift the hovered avatar of a group and name it on real hover pointers", async ({ page }) => {
     await page.goto("/polish.html");
     const canHover = await page.evaluate(() => window.matchMedia("(hover: hover) and (pointer: fine)").matches);
     test.skip(!canHover, "Touch viewports have no hover lift by design.");
-    const avatar = page.getByLabel("Equipo").locator('[data-slot="avatar"]').first();
+    const avatar = page.getByRole("group", { name: "Equipo" }).getByRole("img", { name: "Lucía Uriarte" });
+    const lift = avatar.locator("xpath=..");
     await avatar.hover();
-    await expect(avatar).toHaveCSS("translate", "0px -2px");
+    await expect
+      .poll(() => lift.evaluate((element) => new DOMMatrixReadOnly(getComputedStyle(element).transform).f))
+      .toBeCloseTo(-2, 1);
+    await expect(lift.getByText("Lucía Uriarte", { exact: true })).toHaveCSS("opacity", "1");
   });
 });
 

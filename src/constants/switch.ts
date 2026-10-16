@@ -1,22 +1,13 @@
 /** Tuning of Arc's Switch thumb, adapted from Arc (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md). */
 
-/** Sizes the switch accepts; `default` is Arc's 42 by 24 track and `sm` a compact one for dense rows. */
-export type SwitchSize = "default" | "sm"
-
 /**
- * Thumb geometry per size, in pixels: its resting width and how far it travels, which is the track's inner width
- * minus the thumb. Keep in sync with the track and thumb sizes in `switch.tsx`.
+ * Thumb geometry on Arc's 42 by 24 track, in pixels: its resting width and how far it travels, which is the track's
+ * inner width minus the thumb. Keep in sync with the track and thumb sizes in `switch.tsx`.
  */
-export const SWITCH_THUMB_GEOMETRY_PX = {
-  default: { size: 18, travel: 18 },
-  sm: { size: 14, travel: 14 },
-} as const satisfies Record<SwitchSize, { size: number; travel: number }>
+export const SWITCH_THUMB_GEOMETRY_PX = { size: 18, travel: 18 } as const satisfies { size: number; travel: number }
 
 /** How far, in pixels, the thumb widens toward the other side while it is held down. */
-export const SWITCH_PRESS_STRETCH_PX = {
-  default: 5,
-  sm: 4,
-} as const satisfies Record<SwitchSize, number>
+export const SWITCH_PRESS_STRETCH_PX = 5
 
 /** Critically damped glide: the thumb lands on its end without overshooting the state it reports. */
 export const SWITCH_THUMB_GLIDE_SPRING = { type: "spring", visualDuration: 0.3, bounce: 0 } as const

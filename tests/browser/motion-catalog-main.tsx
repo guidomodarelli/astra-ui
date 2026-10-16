@@ -38,7 +38,6 @@ import {
   PopoverContent,
   PopoverTrigger,
   RadioGroup,
-  RadioGroupItem,
   Select,
   SelectContent,
   SelectItem,
@@ -199,14 +198,14 @@ function MotionCatalog() {
         </section>
 
         <section className="controls">
-          <RadioGroup defaultValue="mensual" aria-label="Frecuencia">
-            <div className="controls">
-              <RadioGroupItem id="frecuencia-mensual" value="mensual" />
-              <Label htmlFor="frecuencia-mensual">Mensual</Label>
-              <RadioGroupItem id="frecuencia-anual" value="anual" />
-              <Label htmlFor="frecuencia-anual">Anual</Label>
-            </div>
-          </RadioGroup>
+          <RadioGroup
+            label="Frecuencia"
+            defaultValue="mensual"
+            options={[
+              { value: "mensual", label: "Mensual" },
+              { value: "anual", label: "Anual" },
+            ]}
+          />
           <InputGroup>
             <InputGroupAddon>#</InputGroupAddon>
             <InputGroupInput aria-label="Código" aria-invalid={isCodeInvalid || undefined} />
