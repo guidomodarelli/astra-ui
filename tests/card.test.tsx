@@ -123,4 +123,52 @@ describe("Card", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
+  it("should keep a single live copy of its children while the quick look is open", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    function DraftCounter() {
+      const [count, setCount] = useState(0);
+      return (
+        <button type="button" onClick={() => setCount((current) => current + 1)}>
+          Borradores: {count}
+        </button>
+      );
+    }
+    render(
+      <Card title="Tribu de lectura" details={<p>Reglamento y calendario.</p>}>
+        <label htmlFor="email">Correo</label>
+        <input id="email" />
+        <DraftCounter />
+      </Card>,
+    );
+    await user.click(screen.getByRole("button", { name: "Borradores: 0" }));
+
+    // Act
+    await user.click(screen.getByRole("button", { name: "Tribu de lectura" }));
+
+    // Assert
+    await screen.findByRole("dialog", { name: "Tribu de lectura" });
+    expect(document.querySelectorAll("#email")).toHaveLength(1);
+    expect(screen.getAllByText(/Borradores:/)).toHaveLength(1);
+    expect(screen.getByText("Borradores: 1")).toBeInTheDocument();
+  });
+
+  it("should hide the returning quick look from assistive technology and the tab order as soon as it closes", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    render(<Card title="Tribu de lectura" details={<p>Reglamento y calendario.</p>} />);
+    await user.click(screen.getByRole("button", { name: "Tribu de lectura" }));
+    await screen.findByRole("dialog", { name: "Tribu de lectura" });
+
+    // Act
+    await user.keyboard("{Escape}");
+
+    // Assert
+    const returningPanel = document.querySelector<HTMLElement>("[data-slot=card-quick-look][data-returning]");
+    expect(returningPanel).not.toBeNull();
+    expect(returningPanel).toHaveAttribute("inert");
+    expect(returningPanel).toHaveAttribute("aria-hidden", "true");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cerrar vista rápida" })).not.toBeInTheDocument();
+  });
 });

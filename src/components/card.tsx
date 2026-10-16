@@ -383,6 +383,10 @@ function Card({
                 <motion.div
                   data-slot="card-quick-look"
                   data-returning={isReturning || undefined}
+                  // While it flies back the dialog has already closed, so its panel leaves the tab order and the
+                  // accessibility tree at once.
+                  inert={isReturning || undefined}
+                  aria-hidden={isReturning || undefined}
                   className="group/quick-look fixed inset-0 z-50 m-auto h-fit max-h-[calc(100dvh-var(--space-8))] w-[min(calc(100vw-var(--space-8)),30rem)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-(--radius-surface) border border-border bg-surface-raised text-sm text-foreground shadow-(--shadow-floating) transition-[background-color,box-shadow] duration-(--duration-standard) ease-(--ease-standard) focus:outline-none data-returning:pointer-events-none data-returning:inset-auto data-returning:top-(--landing-top) data-returning:left-(--landing-left) data-returning:m-0 data-returning:h-(--landing-height) data-returning:max-h-none data-returning:w-(--landing-width) data-returning:overflow-hidden data-returning:bg-surface data-returning:shadow-none"
                   data-framer-portal-id={layoutGroupId}
                   layoutScroll
@@ -443,7 +447,8 @@ function Card({
                         </motion.p>
                       </DialogPrimitive.Description>
                     ) : null}
-                    {children}
+                    {/* The children stay mounted in the card alone: a second copy here would restart their state and
+                        duplicate their ids. */}
                     {byline("panel")}
                     {footerRow}
                     <motion.div
