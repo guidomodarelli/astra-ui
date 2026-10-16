@@ -64,7 +64,8 @@ function PopoverContent({
             sideOffset={sideOffset}
             collisionPadding={collisionPadding}
             className={cn(
-              "z-50 flex max-h-(--radix-popover-content-available-height) w-72 max-w-[calc(100vw-20px)] origin-(--radix-popover-content-transform-origin) flex-col gap-2.5 overflow-y-auto overscroll-contain *:shrink-0 rounded-(--radius-panel) border border-border bg-surface-raised p-(--space-4) text-sm leading-(--leading-body) text-foreground shadow-(--shadow-floating) outline-hidden",              className
+              "z-50 flex max-h-(--radix-popover-content-available-height) w-72 max-w-[calc(100vw-20px)] origin-(--radix-popover-content-transform-origin) flex-col gap-2.5 overflow-y-auto overscroll-contain *:shrink-0 rounded-(--radius-panel) border border-border bg-surface-raised p-(--space-4) text-sm leading-(--leading-body) text-foreground shadow-(--shadow-floating) outline-hidden",
+              className
             )}
             {...props}
           />
