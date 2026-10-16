@@ -204,3 +204,50 @@ describe("AvatarGroup", () => {
     expect(screen.getAllByRole("img", { name: "Ana" })).toHaveLength(2);
   });
 });
+
+describe("AvatarGroup total and root attributes", () => {
+  it("should count the overflow chip against total when only a preview of the members is loaded", () => {
+    // Arrange & Act
+    render(
+      <AvatarGroup
+        members={[{ name: "Ana Núñez" }, { name: "Lucía Paz" }, { name: "Tomás Gil" }]}
+        total={12}
+        label="Asistentes"
+      />,
+    );
+
+    // Assert
+    const group = screen.getByRole("group", { name: "Asistentes" });
+    expect(within(group).getAllByRole("img", { name: /^(Ana|Lucía|Tomás)/ })).toHaveLength(3);
+    expect(within(group).getByRole("img", { name: "9 asistentes más" })).toHaveTextContent("+9");
+  });
+
+  it("should ignore a total smaller than the members it receives", () => {
+    render(<AvatarGroup members={[{ name: "Ana Núñez" }, { name: "Lucía Paz" }]} total={1} max={1} />);
+
+    expect(screen.getByRole("img", { name: "1 integrantes más" })).toHaveTextContent("+1");
+  });
+
+  it("should forward native and aria attributes to the root", () => {
+    // Arrange & Act
+    const { container } = render(
+      <AvatarGroup
+        members={[{ name: "Ana Núñez" }]}
+        aria-hidden="true"
+        className="Attendance__avatars"
+        data-testid="attendance-avatars"
+        style={{ marginInlineStart: "4px" }}
+      />,
+    );
+
+    // Assert
+    const root = screen.getByTestId("attendance-avatars");
+    expect(root).toBe(container.firstElementChild);
+    expect(root).toHaveAttribute("aria-hidden", "true");
+    expect(root).toHaveClass("Attendance__avatars");
+    expect(root).toHaveAttribute("data-slot", "avatar-group");
+    expect(root.style.marginInlineStart).toBe("4px");
+    expect(root.style.getPropertyValue("--count")).toBe("1");
+    expect(screen.queryByRole("group")).not.toBeInTheDocument();
+  });
+});

@@ -81,8 +81,19 @@ function DropdownMenuContent({
   sideOffset = DROPDOWN_MENU_SIDE_OFFSET_PX,
   collisionPadding = DROPDOWN_MENU_COLLISION_PADDING_PX,
   loop = true,
+  onClick,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
+  /**
+   * The menu is portaled out of the DOM of its trigger, but React still bubbles its synthetic events through the
+   * component tree. A click on a row would otherwise reach whatever contains the menu, such as a clickable card, and
+   * act on it too. The click stops at the panel once the row and Radix have handled it, so selection, closing and
+   * link navigation are unchanged; native listeners never saw the panel inside the container anyway.
+   */
+  const stopClickAtPanel = (event: React.MouseEvent<HTMLDivElement>) => {
+    onClick?.(event)
+    event.stopPropagation()
+  }
   return (
     <DropdownMenuPrimitive.Portal forceMount><MotionPresence scope="dropdown-menu" forceMount={props.forceMount}>
       <MotionSlot kind="surface"><GlideSlot preset="menu"><DropdownMenuPrimitive.Content forceMount
@@ -97,6 +108,7 @@ function DropdownMenuContent({
           className
         )}
         {...props}
+        onClick={stopClickAtPanel}
       /></GlideSlot></MotionSlot>
     </MotionPresence></DropdownMenuPrimitive.Portal>
   )

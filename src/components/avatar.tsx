@@ -97,16 +97,24 @@ export type AvatarGroupMember = {
   key?: string
 }
 
-export type AvatarGroupProps = {
-  /** People in display order. Pass the whole list and let `max` collapse the rest. */
+export type AvatarGroupProps = Omit<ComponentProps<"div">, "children" | "role" | "aria-label"> & {
+  /**
+   * People in display order. Pass the whole list and let `max` collapse the rest, or a preview of it together with
+   * `total`.
+   */
   members: AvatarGroupMember[]
+  /**
+   * How many people the group has when `members` is only a preview of them. When it is larger than
+   * `members.length`, the +N chip counts the people left out against it. Defaults to `members.length`.
+   */
+  total?: number
   /** Avatars shown before the rest collapse into the overflow count. */
   max?: number
   /** Size of each avatar and of the overflow chip. */
   size?: AvatarGroupSize
   /** Accessible name of the group, also used in the overflow label; defaults to "Integrantes". */
   label?: string
-  /** Classes for the group. */
+  /** Classes for the group. Native attributes such as `aria-hidden`, `style` or `data-*` also go to the root. */
   className?: string
 }
 
@@ -194,20 +202,32 @@ function buildOverflowLabel(overflow: number, label: string): string {
 
 /**
  * An overlapping stack of avatars with a +N overflow chip.
- * @param props - Members, how many to show, size, accessible label and classes.
+ * @param props - Members, optional total, how many to show, size, accessible label, classes and native root attributes.
  * @returns The group.
  */
-function AvatarGroup({ members, max = AVATAR_GROUP_DEFAULT_MAX, size = "md", label = AVATAR_GROUP_DEFAULT_LABEL, className }: AvatarGroupProps) {
+function AvatarGroup({
+  members,
+  total,
+  max = AVATAR_GROUP_DEFAULT_MAX,
+  size = "md",
+  label = AVATAR_GROUP_DEFAULT_LABEL,
+  className,
+  style,
+  ...props
+}: AvatarGroupProps) {
   const reduceMotion = usePrefersReducedMotion()
   const visibleMembers = members.slice(0, Math.max(0, max))
-  const overflow = Math.max(0, members.length - visibleMembers.length)
+  // A total below the members received cannot hide anyone who is drawn, so the list itself is the floor.
+  const memberCount = Math.max(members.length, total ?? 0)
+  const overflow = Math.max(0, memberCount - visibleMembers.length)
   const slotTransition = reduceMotion ? { duration: 0 } : ARC_SPRING_MORPH
   const [shownCount, setShownCount] = useState({ overflow, direction: 1 })
   if (shownCount.overflow !== overflow) setShownCount({ overflow, direction: overflow < shownCount.overflow ? -1 : 1 })
-  const groupStyle: StackStyle = { "--count": visibleMembers.length + (overflow > 0 ? 1 : 0) }
+  const groupStyle: StackStyle = { ...style, "--count": visibleMembers.length + (overflow > 0 ? 1 : 0) }
 
   return (
     <div
+      {...props}
       role="group"
       aria-label={label}
       data-slot="avatar-group"

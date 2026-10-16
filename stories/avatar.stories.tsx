@@ -79,3 +79,19 @@ export const Group: Story = {
     />
   ),
 };
+
+/** A preview of the members with the real total: the +N chip counts everyone who is not drawn. */
+export const Preview: Story = {
+  render: ({ size }) => (
+    <AvatarGroup
+      label="Asistentes"
+      total={28}
+      size={size === "xl" ? "lg" : size}
+      members={[
+        { name: "Ana Núñez", src: "avatar.svg" },
+        { name: "Lucía Paz" },
+        { name: "Tomás Gil" },
+      ]}
+    />
+  ),
+};

@@ -77,14 +77,18 @@ export function DialogSurfaceCloseButton({
   kind,
   placement,
   label = DIALOG_DEFAULT_COPY.closeLabel,
+  buttonRef,
 }: {
   kind: DialogSurfaceKind
   placement: DialogCloseButtonPlacement
   label?: string
+  /** Ref of the close button element. */
+  buttonRef?: Ref<HTMLButtonElement>
 }) {
   const Close = kind === "alert" ? AlertDialogPrimitive.Cancel : DialogPrimitive.Close
   const button = (
     <ControlButton
+      ref={buttonRef}
       variant="ghost"
       size="icon-sm"
       className={cn(

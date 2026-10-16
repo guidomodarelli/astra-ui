@@ -32,8 +32,8 @@ export type SelectSize = "default" | "sm"
 export type SelectProps = Omit<ComponentProps<typeof SelectRoot>, "children"> & {
   /** Visible label, tied to the trigger with `htmlFor`. */
   label: string
-  /** Choices, in list order. */
-  options: SelectOption[]
+  /** Choices, in list order. Readonly arrays, such as lists declared `as const`, are accepted as they are. */
+  options: readonly SelectOption[]
   /** Shown while no option is chosen. Defaults to "Seleccioná una opción". */
   placeholder?: string
   /** Helper copy under the trigger, linked through `aria-describedby`. */
@@ -52,6 +52,11 @@ export type SelectProps = Omit<ComponentProps<typeof SelectRoot>, "children"> & 
   triggerClassName?: string
   /** Marks the trigger invalid without an error message. `error` sets it too. */
   "aria-invalid"?: AriaAttributes["aria-invalid"]
+  /**
+   * Ids of external elements that describe the trigger. They are combined with the ids of `description` and
+   * `error`, which follow them.
+   */
+  "aria-describedby"?: string
   /** The trigger button. */
   ref?: Ref<HTMLButtonElement>
 }
@@ -74,10 +79,17 @@ function Select({
   size,
   triggerClassName,
   "aria-invalid": ariaInvalid,
+  "aria-describedby": ariaDescribedBy,
   ref,
   ...rootProps
 }: SelectProps) {
-  const aria = useFieldAria({ id, description, error, "aria-invalid": ariaInvalid })
+  const aria = useFieldAria({
+    id,
+    description,
+    error,
+    "aria-invalid": ariaInvalid,
+    "aria-describedby": ariaDescribedBy,
+  })
   return (
     <Field
       label={label}

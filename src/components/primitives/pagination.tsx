@@ -166,7 +166,8 @@ type PaginationStepProps = {
   /** Renders a link to this address; without it the arrow is a button. */
   href?: string
   disabled?: boolean
-  onClick?: () => void
+  /** Called with the click, so the consumer can cancel a link's navigation. */
+  onClick?: (event: MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => void
 }
 
 /**

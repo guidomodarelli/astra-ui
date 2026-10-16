@@ -82,6 +82,13 @@ type CarouselProps = {
   showIndicators?: boolean
   /** beez-ui: class added to every slide panel. */
   slideClassName?: string
+  /**
+   * beez-ui: class of the clipped, focusable viewport around the slide track, for example to give a media viewer a
+   * definite height.
+   */
+  viewportClassName?: string
+  /** beez-ui: class of the slide track inside the viewport, which lays the slides out in a row. */
+  trackClassName?: string
 }
 
 /**
@@ -200,6 +207,8 @@ function Carousel({
   showControls = true,
   showIndicators = true,
   slideClassName,
+  viewportClassName,
+  trackClassName,
 }: CarouselProps) {
   const slides = React.Children.toArray(children)
   const count = slides.length
@@ -326,7 +335,10 @@ function Carousel({
       }}
       ref={rotation.rootRef}
     >
-      <CarouselContent className="select-none [&_img]:[-webkit-user-drag:none]">
+      <CarouselContent
+        viewportClassName={viewportClassName}
+        className={cn("select-none [&_img]:[-webkit-user-drag:none]", trackClassName)}
+      >
         {slides.map((slide, slideIndex) => (
           <CarouselItem
             key={React.isValidElement(slide) && slide.key != null ? slide.key : slideIndex}

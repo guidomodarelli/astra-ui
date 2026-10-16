@@ -73,3 +73,29 @@ type Story = StoryObj<typeof meta>;
 export const Playground: Story = {};
 /** Cursor paging: without a page count only the arrows render. */
 export const Cursor: Story = { args: { page: 1, cursor: true, hasNextPage: true } };
+/**
+ * Links that page in place: `onPageChange` receives the click and cancels the navigation of plain clicks, while
+ * clicks with a modifier still open the page's address in a new tab.
+ */
+export const InPlaceLinks: Story = {
+  args: { links: true },
+  render: function Render(args) {
+    const [, updateArgs] = useArgs<Args>();
+    return (
+      <LiveArgs args={args} names={["page"]} updateArgs={updateArgs}>
+        {({ page }, { page: setPage }) => (
+          <Pagination
+            page={page}
+            pageCount={args.pageCount}
+            getHref={(target) => `#pagina-${target}`}
+            onPageChange={(target, event) => {
+              if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+              event.preventDefault();
+              setPage(target);
+            }}
+          />
+        )}
+      </LiveArgs>
+    );
+  },
+};

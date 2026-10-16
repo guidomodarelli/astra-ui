@@ -19,6 +19,11 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 - `Carousel` suma `loop`, `duration`, `watchFocus`, `onSettle` (avisa cuando termina la animación), `previousLabel`, `nextLabel`, `showControls`, `showIndicators` y `slideClassName`, y se reinicializa solo cuando cambian sus diapositivas o su tamaño, esperando a que termine el scroll o el arrastre en curso.
 - `Carousel` acepta `interval` y `autoplay` con un control para pausar o iniciar la rotación, que también se pausa con hover, foco de teclado, arrastre, fuera de pantalla y en pestañas ocultas.
 - `Calendar` acepta `todayLabel`, y el hook `useToday` se exporta desde `beez-ui` y `beez-ui/hooks`.
+- `Pagination` pasa el evento del click como segundo argumento de `onPageChange(page, event)`, en botones, enlaces y flechas; con `getHref`, llamar `event.preventDefault()` evita que el enlace navegue, por ejemplo para paginar en el lugar con clicks simples y dejar que los clicks con modificadores abran otra pestaña.
+- `Carousel` acepta `viewportClassName` y `trackClassName` para dar estilo al viewport recortado y a la pista de diapositivas, por ejemplo una altura definida en un visor de medios, sin apuntar a `[data-slot="carousel-content"]`.
+- `AvatarGroup` acepta `total` para cuando `members` es solo una vista previa: si es mayor que la cantidad de integrantes recibidos, el chip +N cuenta contra el total. También reenvía atributos nativos y ARIA a la raíz (`aria-hidden`, `style`, `data-*`, `id`…).
+- `Select` acepta `aria-describedby` en el trigger, combinado con los ids de `description` y `error`, y `options` acepta arrays de solo lectura, así una lista declarada `as const` no necesita copia.
+- `DialogContent` suma `headerContent`, contenido extra del encabezado (por ejemplo etiquetas de tipo y estado) que se dibuja después del título y fuera de él, sin cambiar el nombre accesible del diálogo, y `closeButtonRef`, el ref del botón de cerrar; con `onOpenAutoFocus` permite abrir el diálogo con el foco en ese botón.
 - `beez-ui/motion-tokens` suma los presets de Arc que faltaban: `MOTION_TIMING.instant`, `MOTION_TIMING.standard`, `MOTION_TIMING.considered`, `MOTION_EASE_EXIT`, `MOTION_EASE_STANDARD`, `MOTION_EXIT_SCALE`, `MOTION_TOOLTIP_SCALE` y `MOTION_DIALOG_EXIT_DISTANCE`.
 
 ### Changed
@@ -74,6 +79,7 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ### Fixed
 
+- El click de un ítem de `DropdownMenu` (también en `AccountMenu`, `SplitButton`, `AnimatedThemeToggler` y el menú de columnas de `DataTable`) ya no llega, a través del portal, a los contenedores de React que envuelven el menú: una tarjeta clickeable que contiene el menú no se abre al elegir una opción. La selección, el cierre y la navegación de los ítems con enlace no cambian.
 - Las fotos de `Avatar` con `size="xl"` se piden y se dibujan a 88px, en lugar de 40px estirados, con el provider por defecto y con el de Next.
 - Cuando alguien sale de un `AvatarGroup` (cambian `members` o baja `max`), los lectores de pantalla dejan de anunciarlo apenas empieza a cerrarse su lugar.
 - En pantallas o contenedores angostos, la `action` de un `Alert` baja debajo del texto cuando no entra al lado, en lugar de desbordar el aviso y aplastar el texto.

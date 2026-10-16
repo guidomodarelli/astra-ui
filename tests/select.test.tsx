@@ -154,3 +154,42 @@ describe("Select", () => {
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 });
+
+describe("Select described by external copy", () => {
+  it("should combine an external aria-describedby with its own helper and error rows", () => {
+    // Arrange & Act
+    render(
+      <>
+        <p id="currency-hint">Podés cambiarla después.</p>
+        <CurrencySelect
+          aria-describedby="currency-hint"
+          description="Se usa para los cobros."
+          error="Elegí una moneda para continuar."
+        />
+      </>,
+    );
+
+    // Assert
+    expect(screen.getByRole("combobox", { name: "Moneda" })).toHaveAccessibleDescription(
+      "Podés cambiarla después. Se usa para los cobros. Elegí una moneda para continuar.",
+    );
+  });
+
+  it("should accept readonly options declared with as const", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    const plans = [
+      { value: "mensual", label: "Mensual" },
+      { value: "anual", label: "Anual" },
+    ] as const;
+    render(<Select label="Plan" options={plans} onValueChange={onValueChange} />);
+
+    // Act
+    await user.click(screen.getByRole("combobox", { name: "Plan" }));
+    await user.click(await screen.findByRole("option", { name: "Anual" }));
+
+    // Assert
+    expect(onValueChange).toHaveBeenCalledWith("anual");
+  });
+});

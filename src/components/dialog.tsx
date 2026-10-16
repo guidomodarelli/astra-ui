@@ -7,7 +7,7 @@
  * extends it with a footer slot, a hidden title, the viewport close button placement, Spanish copy and an `alert` mode
  * that replaces the former `AlertDialog`.
  */
-import { createContext, useContext, type ComponentProps, type ReactNode } from "react"
+import { createContext, useContext, type ComponentProps, type ReactNode, type Ref } from "react"
 import { AlertDialog as AlertDialogPrimitive, type Dialog as DialogRadix } from "radix-ui"
 
 import { cn } from "../lib/utils.js"
@@ -115,7 +115,17 @@ export type DialogContentProps = Omit<ComponentProps<typeof DialogRadix.Content>
   closeButtonPlacement?: DialogCloseButtonPlacement
   /** Accessible name of the close button. Defaults to "Cerrar diálogo". */
   closeLabel?: string
-  /** Classes of the block that holds the title and description. */
+  /**
+   * Ref of the built-in close button, while it is rendered. To open the dialog with the focus on it, call
+   * `event.preventDefault()` in `onOpenAutoFocus` and focus `closeButtonRef.current`.
+   */
+  closeButtonRef?: Ref<HTMLButtonElement>
+  /**
+   * Extra content of the header, rendered after the title and before the description but outside the title, such as
+   * type or status badges. The dialog keeps the title alone as its accessible name.
+   */
+  headerContent?: ReactNode
+  /** Classes of the block that holds the title, the header content and the description. */
   headerClassName?: string
   /** Classes of the title. */
   titleClassName?: string
@@ -140,7 +150,8 @@ function focusFirstCloseAction(event: Event) {
 
 /**
  * The portaled overlay and panel with a titled header, the body, an optional footer and the built-in close button.
- * @param props - Title, description, body, footer, close button options, part classes and Radix content props.
+ * @param props - Title, header content, description, body, footer, close button options and ref, part classes and
+ *   Radix content props.
  * @returns The dialog panel.
  */
 function DialogContent({
@@ -152,6 +163,8 @@ function DialogContent({
   showCloseButton,
   closeButtonPlacement = "content",
   closeLabel,
+  closeButtonRef,
+  headerContent,
   headerClassName,
   titleClassName,
   descriptionClassName,
@@ -166,6 +179,7 @@ function DialogContent({
   const Description = alert ? AlertDialogDescription : DialogDescriptionPrimitive
   const Footer = alert ? AlertDialogFooter : DialogFooterPrimitive
   const hasDescription = description !== undefined && description !== null && description !== false
+  const hasHeaderContent = headerContent !== undefined && headerContent !== null && headerContent !== false
   // Without a description, Radix would point `aria-describedby` at a missing element and warn about it.
   const describedBy = hasDescription || "aria-describedby" in props ? {} : { "aria-describedby": undefined }
 
@@ -181,15 +195,17 @@ function DialogContent({
       showCloseButton={showCloseButton ?? !alert}
       closeButtonPlacement={closeButtonPlacement}
       closeLabel={closeLabel}
+      closeButtonRef={closeButtonRef}
       onOpenAutoFocus={(event: Event) => {
         onOpenAutoFocus?.(event)
         if (alert) focusFirstCloseAction(event)
       }}
     >
       {hideTitle ? titleElement : null}
-      {!hideTitle || descriptionElement ? (
+      {!hideTitle || descriptionElement || hasHeaderContent ? (
         <Header className={headerClassName}>
           {hideTitle ? null : titleElement}
+          {hasHeaderContent ? headerContent : null}
           {descriptionElement}
         </Header>
       ) : null}

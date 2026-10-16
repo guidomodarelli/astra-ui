@@ -69,6 +69,7 @@ function AlertDialogOverlay({
  * @param props.closeButtonPlacement - `viewport` pins the close button to the viewport corner; `content` (default)
  * keeps it in the panel.
  * @param props.closeLabel - Accessible name of the close button.
+ * @param props.closeButtonRef - Ref of the close button, when it is rendered.
  * @returns The styled primitive with its original interaction contract.
  */
 function AlertDialogContent({
@@ -78,12 +79,14 @@ function AlertDialogContent({
   showCloseButton = false,
   closeButtonPlacement = "content",
   closeLabel,
+  closeButtonRef,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
   size?: "default" | "sm"
   showCloseButton?: boolean
   closeButtonPlacement?: DialogCloseButtonPlacement
   closeLabel?: string
+  closeButtonRef?: React.Ref<HTMLButtonElement>
 }) {
   return (
     <AlertDialogPortal forceMount><MotionPresence scope="alert-dialog" forceMount={props.forceMount}><React.Fragment>
@@ -106,7 +109,12 @@ function AlertDialogContent({
       >
         {children}
         {showCloseButton && (
-          <DialogSurfaceCloseButton kind="alert" placement={closeButtonPlacement} label={closeLabel} />
+          <DialogSurfaceCloseButton
+            kind="alert"
+            placement={closeButtonPlacement}
+            label={closeLabel}
+            buttonRef={closeButtonRef}
+          />
         )}
       </AlertDialogPrimitive.Content></MotionSlot>
     </React.Fragment></MotionPresence></AlertDialogPortal>

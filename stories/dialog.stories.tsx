@@ -1,6 +1,7 @@
 /** Demonstrates Dialog with Arc's API, including its `alert` mode for confirmations. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button, Dialog, DialogClose, DialogContent, DialogTrigger } from "beez-ui";
+import { useRef } from "react";
+import { Badge, Button, Dialog, DialogClose, DialogContent, DialogTrigger } from "beez-ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */
@@ -114,5 +115,38 @@ export const Alert: Story = {
     description: "Esta acción no se puede deshacer.",
     content: "Se avisará a quienes se anotaron.",
     showCloseButton: false,
+  },
+};
+/**
+ * Badges next to the title through `headerContent`, outside the accessible name, and the initial focus on the close
+ * button through `closeButtonRef` and `onOpenAutoFocus`.
+ */
+export const HeaderContent: Story = {
+  render: function Render() {
+    const closeButtonRef = useRef<HTMLButtonElement>(null);
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button>Ver ronda</Button>
+        </DialogTrigger>
+        <DialogContent
+          title="Ronda de preguntas"
+          description="Respondé antes del viernes."
+          headerContent={
+            <span className="StoryRow">
+              <Badge>Encuesta</Badge>
+              <Badge tone="success">Abierta</Badge>
+            </span>
+          }
+          closeButtonRef={closeButtonRef}
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            closeButtonRef.current?.focus();
+          }}
+        >
+          <p>Las respuestas se muestran cuando la ronda cierra.</p>
+        </DialogContent>
+      </Dialog>
+    );
   },
 };

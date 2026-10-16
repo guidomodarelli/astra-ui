@@ -290,3 +290,17 @@ describe("Carousel", () => {
     }
   });
 });
+
+describe("Carousel viewport and track classes", () => {
+  it("should add viewportClassName to the clipped viewport and trackClassName to the slide track", () => {
+    // Arrange & Act
+    renderCarousel({ viewportClassName: "Viewer__viewport", trackClassName: "Viewer__track" });
+
+    // Assert
+    const viewport = screen.getByRole("group", { name: "Diapositivas" });
+    expect(viewport).toHaveClass("Viewer__viewport");
+    const track = viewport.firstElementChild;
+    expect(track).toHaveClass("Viewer__track");
+    expect(track).toContainElement(screen.getAllByRole("tabpanel", { hidden: true })[0] ?? null);
+  });
+});

@@ -254,3 +254,28 @@ describe("DropdownMenu", () => {
     expect(screen.getByRole("button", { name: "Afuera" })).not.toHaveAttribute("aria-hidden");
   });
 });
+
+describe("DropdownMenu inside a clickable container", () => {
+  it("should run the chosen item without letting its click reach the container through the portal", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    const onOpenCard = vi.fn();
+    const onRename = vi.fn();
+    render(
+      // The message card opens on click; the menu is portaled, but React bubbles its events through the tree.
+      <div data-testid="message-card" onClick={onOpenCard}>
+        <DropdownMenu label="Acciones del mensaje" items={documentActions({ onRename })} />
+      </div>,
+    );
+
+    // Act
+    await user.click(screen.getByRole("button", { name: "Acciones del mensaje" }));
+    onOpenCard.mockClear();
+    await user.click(screen.getByRole("menuitem", { name: "Renombrar" }));
+
+    // Assert
+    expect(onRename).toHaveBeenCalledTimes(1);
+    expect(onOpenCard).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+  });
+});

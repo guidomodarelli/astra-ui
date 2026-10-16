@@ -76,6 +76,7 @@ function DialogOverlay({
  * @param props.closeButtonPlacement - `viewport` pins the close button to the viewport corner
  * and shows it only once the panel has settled; `content` (default) keeps it in the panel.
  * @param props.closeLabel - Accessible name of the close button.
+ * @param props.closeButtonRef - Ref of the close button, when it is rendered.
  * @returns The styled primitive with its original interaction contract.
  */
 function DialogContent({
@@ -84,11 +85,13 @@ function DialogContent({
   showCloseButton = true,
   closeButtonPlacement = "content",
   closeLabel,
+  closeButtonRef,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
   closeButtonPlacement?: DialogCloseButtonPlacement
   closeLabel?: string
+  closeButtonRef?: React.Ref<HTMLButtonElement>
 }) {
   return (
     <DialogPortal forceMount><MotionPresence scope="dialog" forceMount={props.forceMount}><React.Fragment>
@@ -111,7 +114,12 @@ function DialogContent({
       >
         {children}
         {showCloseButton && (
-          <DialogSurfaceCloseButton kind="dialog" placement={closeButtonPlacement} label={closeLabel} />
+          <DialogSurfaceCloseButton
+            kind="dialog"
+            placement={closeButtonPlacement}
+            label={closeLabel}
+            buttonRef={closeButtonRef}
+          />
         )}
       </DialogPrimitive.Content></MotionSlot>
     </React.Fragment></MotionPresence></DialogPortal>

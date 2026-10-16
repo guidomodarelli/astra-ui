@@ -1,5 +1,5 @@
 /** Exercises the Arc Dialog contract that jsdom can observe: names, swaps, slots, dismissal and the `alert` mode. */
-import { useState, type ReactNode } from "react";
+import { createRef, useState, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -322,5 +322,70 @@ describe("Dialog alert", () => {
     rerender(renderAlert("¿Eliminar la serie?"));
 
     expect(screen.getByRole("alertdialog", { name: "¿Eliminar la serie?" })).toBeInTheDocument();
+  });
+});
+
+describe("Dialog header content and close button ref", () => {
+  it("should render headerContent inside the header without changing the accessible name", () => {
+    // Arrange & Act
+    render(
+      <Dialog open>
+        <DialogContent
+          title="Ronda de preguntas"
+          description="Respondé antes del viernes."
+          headerContent={<span data-testid="round-tags">Encuesta · Abierta</span>}
+        >
+          <p>Cuerpo</p>
+        </DialogContent>
+      </Dialog>,
+    );
+
+    // Assert
+    const dialog = screen.getByRole("dialog", { name: "Ronda de preguntas" });
+    const header = dialog.querySelector("[data-slot=dialog-header]");
+    expect(header).toContainElement(screen.getByTestId("round-tags"));
+    expect(screen.getByRole("heading", { name: "Ronda de preguntas" })).not.toContainElement(
+      screen.getByTestId("round-tags"),
+    );
+    expect(dialog).toHaveAccessibleDescription("Respondé antes del viernes.");
+  });
+
+  it("should render the header for headerContent even when the title is hidden", () => {
+    render(
+      <Dialog open>
+        <DialogContent title="Ronda" hideTitle headerContent={<span data-testid="round-tags">Abierta</span>}>
+          <p>Cuerpo</p>
+        </DialogContent>
+      </Dialog>,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "Ronda" });
+    expect(dialog.querySelector("[data-slot=dialog-header]")).toContainElement(screen.getByTestId("round-tags"));
+  });
+
+  it("should expose the close button through closeButtonRef so it can take the initial focus", async () => {
+    // Arrange
+    const closeButtonRef = createRef<HTMLButtonElement>();
+
+    // Act
+    render(
+      <Dialog open>
+        <DialogContent
+          title="Detalle"
+          closeButtonRef={closeButtonRef}
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            closeButtonRef.current?.focus();
+          }}
+        >
+          <Button>Guardar</Button>
+        </DialogContent>
+      </Dialog>,
+    );
+
+    // Assert
+    const closeButton = screen.getByRole("button", { name: "Cerrar diálogo" });
+    expect(closeButtonRef.current).toBe(closeButton);
+    await waitFor(() => expect(closeButton).toHaveFocus());
   });
 });

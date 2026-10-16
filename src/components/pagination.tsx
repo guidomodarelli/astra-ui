@@ -6,6 +6,8 @@
  * `pageCount`, `onPageChange`, `label`), with beez-ui's extensions: links through the provider's `Link` adapter
  * (`getHref`), cursor paging without a page count (`hasNextPage`), arrow labels and Spanish copy.
  */
+import type { MouseEvent } from "react"
+
 import { PAGINATION_DEFAULT_COPY, PAGINATION_FIRST_PAGE, PAGINATION_WINDOW_SIZE } from "../constants/pagination.js"
 import {
   PaginationButton,
@@ -15,6 +17,16 @@ import {
   PaginationRoot,
   PaginationStep,
 } from "./primitives/pagination.js"
+
+/**
+ * Click that requested a page, from a page link or button or an arrow. Call `event.preventDefault()` on a link to keep
+ * the provider's `Link` from navigating, for example to page in place on plain clicks while modified clicks still
+ * open the address in a new tab.
+ */
+export type PaginationClickEvent = MouseEvent<HTMLAnchorElement | HTMLButtonElement>
+
+/** Called with the requested page and the click that requested it. */
+export type PaginationPageChangeHandler = (page: number, event: PaginationClickEvent) => void
 
 /** Props shared by every way of paging. */
 type PaginationBaseProps = {
@@ -41,13 +53,16 @@ type PaginationBaseProps = {
 export type PaginationProps = PaginationBaseProps &
   (
     | {
-        /** Called with the requested page. */
-        onPageChange: (page: number) => void
+        /** Called with the requested page and the click event. */
+        onPageChange: PaginationPageChangeHandler
         getHref?: undefined
       }
     | {
-        /** Called with the requested page when a link is clicked, before it navigates. */
-        onPageChange?: (page: number) => void
+        /**
+         * Called with the requested page and the click event when a link is clicked, before it navigates. Calling
+         * `event.preventDefault()` cancels the navigation of that link.
+         */
+        onPageChange?: PaginationPageChangeHandler
         /**
          * Builds the address of a page. Every control becomes a link rendered through the provider's `Link` adapter,
          * so pages live in the URL and render on the server.
@@ -109,7 +124,7 @@ function Pagination({
             label={previousLabel === PAGINATION_DEFAULT_COPY.previousText ? PAGINATION_DEFAULT_COPY.previousLabel : previousLabel}
             href={hrefOf(isFirst ? currentPage : currentPage - 1)}
             disabled={isFirst}
-            onClick={() => onPageChange?.(currentPage - 1)}
+            onClick={(event) => onPageChange?.(currentPage - 1, event)}
           />
         </PaginationItem>
         {isCursor
@@ -118,7 +133,7 @@ function Pagination({
               const controlProps = {
                 isActive: pageNumber === currentPage,
                 "aria-label": `${PAGINATION_DEFAULT_COPY.pageLabelPrefix} ${pageNumber}`,
-                onClick: () => onPageChange?.(pageNumber),
+                onClick: (event: PaginationClickEvent) => onPageChange?.(pageNumber, event),
                 children: pageNumber,
               }
               return (
@@ -138,7 +153,7 @@ function Pagination({
             label={nextLabel === PAGINATION_DEFAULT_COPY.nextText ? PAGINATION_DEFAULT_COPY.nextLabel : nextLabel}
             href={hrefOf(isLast ? currentPage : currentPage + 1)}
             disabled={isLast}
-            onClick={() => onPageChange?.(currentPage + 1)}
+            onClick={(event) => onPageChange?.(currentPage + 1, event)}
           />
         </PaginationItem>
       </PaginationContent>

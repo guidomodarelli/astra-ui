@@ -121,7 +121,7 @@ describe("Pagination", () => {
     expect(screen.getByRole("link", { name: "Ir a la página siguiente" })).toHaveAttribute("href", "/eventos?pagina=2");
     expect(screen.getByRole("link", { name: "Ir a la página anterior" })).toHaveAttribute("aria-disabled", "true");
     expect(onNavigate.mock.calls).toEqual([["/eventos?pagina=3"]]);
-    expect(onPageChange.mock.calls).toEqual([[3]]);
+    expect(onPageChange.mock.calls.map(([requestedPage]) => requestedPage)).toEqual([3]);
   });
 
   it("should page by cursor with only the arrows when there is no page count", async () => {
@@ -140,7 +140,7 @@ describe("Pagination", () => {
     // Assert
     expect(screen.queryByRole("button", { name: /^Página \d+$/ })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ir a la página siguiente" })).toHaveAttribute("aria-disabled", "true");
-    expect(onPageChange.mock.calls).toEqual([[2], [1]]);
+    expect(onPageChange.mock.calls.map(([requestedPage]) => requestedPage)).toEqual([2, 1]);
   });
 
   it("should use custom arrow labels as their visible text and accessible name", () => {
@@ -158,5 +158,75 @@ describe("Pagination", () => {
     expect(screen.getByRole("button", { name: "Más recientes" })).toHaveTextContent("Más recientes");
     expect(screen.getByRole("button", { name: "Más antiguos" })).toHaveTextContent("Más antiguos");
     expect(screen.getByRole("navigation")).toHaveClass("pagination-extra");
+  });
+});
+
+describe("Pagination click event", () => {
+  it("should hand the click event to onPageChange so a plain click on a link can stay in place", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    const onNavigate = vi.fn();
+    const requestedPages: number[] = [];
+    /** Router link that skips prevented clicks, as the Next.js and TanStack adapters do. */
+    function RouterLink({ href, onClick, ...props }: BeezLinkProps) {
+      return (
+        <a
+          {...props}
+          href={href}
+          onClick={(event) => {
+            onClick?.(event);
+            if (event.defaultPrevented) return;
+            event.preventDefault();
+            onNavigate(href);
+          }}
+        />
+      );
+    }
+    render(
+      <BeezUIProvider components={{ Link: RouterLink }}>
+        <Pagination
+          page={2}
+          pageCount={4}
+          getHref={(page) => `/ronda?pagina=${page}`}
+          onPageChange={(page, event) => {
+            // Plain clicks stay in place; the first page is left to the router.
+            if (page !== 1) event.preventDefault();
+            requestedPages.push(page);
+          }}
+        />
+      </BeezUIProvider>,
+    );
+
+    // Act
+    await user.click(screen.getByRole("link", { name: "Página 3" }));
+    await user.click(screen.getByRole("link", { name: "Ir a la página siguiente" }));
+    await user.click(screen.getByRole("link", { name: "Ir a la página anterior" }));
+
+    // Assert
+    expect(requestedPages).toEqual([3, 3, 1]);
+    expect(onNavigate.mock.calls).toEqual([["/ronda?pagina=1"]]);
+  });
+
+  it("should hand the click event to onPageChange from page and arrow buttons", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    const requests: Array<[number, string, string | undefined]> = [];
+    render(
+      <Pagination
+        page={2}
+        pageCount={4}
+        onPageChange={(page, event) => requests.push([page, event.type, event.currentTarget.getAttribute("aria-label") ?? undefined])}
+      />,
+    );
+
+    // Act
+    await user.click(screen.getByRole("button", { name: "Página 4" }));
+    await user.click(screen.getByRole("button", { name: "Ir a la página anterior" }));
+
+    // Assert
+    expect(requests).toEqual([
+      [4, "click", "Página 4"],
+      [1, "click", "Ir a la página anterior"],
+    ]);
   });
 });
