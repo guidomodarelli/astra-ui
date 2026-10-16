@@ -29,7 +29,10 @@ export type AvatarImageProps = Omit<ComponentProps<"img">, "src"> & {
 
 export type AvatarProps = AvatarPrimitive.Root.Props & {
   size?: AvatarSize
-  /** Shows Arc's presence dot in the bottom corner and adds the presence to the accessible text. */
+  /**
+   * Shows Arc's presence dot in the bottom corner, or the top corner when an `AvatarBadge` holds the bottom one, and
+   * adds the presence to the accessible text.
+   */
   status?: AvatarStatus
   /** Accessible presence text; defaults to "En línea" or "Desconectado". */
   statusLabel?: string
@@ -67,7 +70,7 @@ function Avatar({ className, size = "default", status, statusLabel, children, ..
               data-status={status}
               aria-hidden="true"
               className={cn(
-                "absolute right-0 bottom-0 z-10 size-2.5 rounded-(--radius-pill) data-[status=offline]:bg-text-muted data-[status=online]:bg-success group-data-[size=lg]/avatar:size-3 group-data-[size=sm]/avatar:size-2 group-data-[size=xl]/avatar:right-1 group-data-[size=xl]/avatar:bottom-1 group-data-[size=xl]/avatar:size-3.5",
+                "absolute right-0 bottom-0 z-10 size-2.5 rounded-(--radius-pill) data-[status=offline]:bg-text-muted data-[status=online]:bg-success group-data-[size=lg]/avatar:size-3 group-data-[size=sm]/avatar:size-2 group-data-[size=xl]/avatar:right-1 group-data-[size=xl]/avatar:bottom-1 group-data-[size=xl]/avatar:size-3.5 group-has-data-[slot=avatar-badge]/avatar:top-0 group-has-data-[slot=avatar-badge]/avatar:bottom-auto group-data-[size=xl]/avatar:group-has-data-[slot=avatar-badge]/avatar:top-1",
                 presenceRingClassName
               )}
               initial={{ opacity: 0, scale: AVATAR_STATUS_HIDDEN_SCALE }}

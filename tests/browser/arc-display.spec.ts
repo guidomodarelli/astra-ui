@@ -142,8 +142,32 @@ test("should keep the consumer overflow on a reveal before and after it moves", 
   const reveal = page.getByLabel("Resumen con desplazamiento");
   await expect(reveal).toHaveCSS("overflow-y", "auto");
 
-  await page.getByRole("button", { name: "Alternar carga" }).click();
+  await page.getByRole("button", { name: "Alternar carga", exact: true }).click();
 
   await expect(page.getByText("Resumen listo para revisar.")).toBeVisible();
   await expect(reveal).toHaveCSS("overflow-y", "auto", { timeout: SETTLE_TIMEOUT_MS });
+});
+
+test("should keep a custom avatar badge and the presence dot in separate corners", async ({ page }) => {
+  for (const size of ["sm", "default", "lg", "xl"]) {
+    const avatar = page.getByLabel(`Avatar con insignia ${size}`);
+    const [badgeBox, dotBox] = await Promise.all([
+      avatar.locator('[data-slot="avatar-badge"]').boundingBox(),
+      avatar.locator('[data-slot="avatar-status"]').boundingBox(),
+    ]);
+    const overlapsHorizontally = badgeBox!.x < dotBox!.x + dotBox!.width && dotBox!.x < badgeBox!.x + badgeBox!.width;
+    const overlapsVertically = badgeBox!.y < dotBox!.y + dotBox!.height && dotBox!.y < badgeBox!.y + badgeBox!.height;
+    expect(overlapsHorizontally && overlapsVertically, `${size} avatar`).toBe(false);
+  }
+});
+
+test("should keep a fixed reveal height from its class before and after loading", async ({ page }) => {
+  const reveal = page.getByLabel("Resumen de alto fijo");
+  await expect(reveal).toHaveCSS("height", "160px");
+
+  await page.getByRole("button", { name: "Alternar carga fija" }).click();
+
+  await expect(page.getByText("Resumen de alto fijo listo.")).toBeVisible();
+  await expect.poll(() => reveal.evaluate((element) => element.style.height), { timeout: SETTLE_TIMEOUT_MS }).toBe("");
+  await expect(reveal).toHaveCSS("height", "160px");
 });

@@ -8,8 +8,8 @@
  */
 import { useEffect, useLayoutEffect, useRef } from "react"
 import type { ComponentProps, CSSProperties, ReactNode, Ref, RefObject } from "react"
-import { AnimatePresence, animate, motion, useIsPresent, useMotionValue } from "motion/react"
-import type { AnimationPlaybackControls, HTMLMotionProps, MotionValue } from "motion/react"
+import { AnimatePresence, animate, motion, useIsPresent } from "motion/react"
+import type { AnimationPlaybackControls, HTMLMotionProps } from "motion/react"
 
 import {
   SKELETON_DEFAULT_LABEL,
@@ -47,19 +47,14 @@ export type SkeletonProps = ComponentProps<"div"> & {
 }
 
 /**
- * Follows the content height. After `busy` flips, the height springs from the old size to the new one and returns to
- * auto, so later reflows follow at once. It clips only while moving, so focus rings stay visible at rest.
- * @param contentRef - The measured content; its parent receives the height.
+ * Follows the content height. After `busy` flips, the frame springs from its old height to its new one, owning its
+ * inline height and overflow only while it moves and restoring the consumer's values afterwards, so a fixed height
+ * from `className` or `style` keeps applying at rest. It clips only while moving, so focus rings stay visible at rest.
+ * @param contentRef - The measured content; its parent is the frame that springs.
  * @param busy - Whether the placeholder is showing; a change opens the window in which resizes spring.
  * @param reduceMotion - Whether every resize should jump.
- * @returns The height to bind to the frame's `style.height`.
  */
-function useMorphHeight(
-  contentRef: RefObject<HTMLDivElement | null>,
-  busy: boolean,
-  reduceMotion: boolean
-): MotionValue<number | "auto"> {
-  const height = useMotionValue<number | "auto">("auto")
+function useMorphHeight(contentRef: RefObject<HTMLDivElement | null>, busy: boolean, reduceMotion: boolean): void {
   const changedAt = useRef(0)
   useLayoutEffect(() => {
     changedAt.current = performance.now()
@@ -68,37 +63,43 @@ function useMorphHeight(
     const content = contentRef.current
     const frame = content?.parentElement
     if (!content || !frame || typeof ResizeObserver === "undefined") return
-    let lastHeight: number | undefined
+    let lastFrameHeight: number | undefined
     let controls: AnimationPlaybackControls | undefined
-    // The consumer's inline overflow, saved only while the frame clips a move and restored afterwards.
-    let restingOverflow: string | undefined
+    // The consumer's inline height and overflow, saved only while the frame moves and restored afterwards.
+    let restingStyle: { height: string; overflow: string } | undefined
+    const readFrameHeight = () => frame.getBoundingClientRect().height
     const settle = () => {
-      height.jump("auto")
-      if (restingOverflow !== undefined) frame.style.overflow = restingOverflow
-      restingOverflow = undefined
+      if (restingStyle) Object.assign(frame.style, restingStyle)
+      restingStyle = undefined
     }
-    const observer = new ResizeObserver(([entry]) => {
-      if (!entry) return
-      const nextHeight = entry.borderBoxSize?.[0]?.blockSize ?? content.offsetHeight
-      const current = height.get()
-      const fromHeight = typeof current === "number" ? current : lastHeight
-      lastHeight = nextHeight
+    const observer = new ResizeObserver(() => {
       controls?.stop()
+      // A moving frame starts from where it is now; then its own height is restored to measure where it lands.
+      const fromHeight = restingStyle ? readFrameHeight() : lastFrameHeight
+      if (restingStyle) frame.style.height = restingStyle.height
+      const nextHeight = readFrameHeight()
+      lastFrameHeight = nextHeight
       const isOutsideWindow = performance.now() - changedAt.current > SKELETON_MORPH_WINDOW_MS
       if (reduceMotion || fromHeight === undefined || fromHeight === nextHeight || isOutsideWindow) return settle()
       // Pin the old height before this frame paints, then spring to the new one.
-      restingOverflow ??= frame.style.overflow
+      restingStyle ??= { height: frame.style.height, overflow: frame.style.overflow }
       frame.style.overflow = "hidden"
-      height.jump(fromHeight)
-      controls = animate(height, nextHeight, { ...ARC_SPRING_SMOOTH, onComplete: settle })
+      frame.style.height = `${fromHeight}px`
+      controls = animate(fromHeight, nextHeight, {
+        ...ARC_SPRING_SMOOTH,
+        onUpdate: (animatedHeight) => {
+          frame.style.height = `${animatedHeight}px`
+        },
+        onComplete: settle,
+      })
     })
     observer.observe(content)
     return () => {
       observer.disconnect()
       controls?.stop()
+      settle()
     }
-  }, [contentRef, height, reduceMotion])
-  return height
+  }, [contentRef, reduceMotion])
 }
 
 type SkeletonPlaceholderProps = ComponentProps<"div"> & {
@@ -167,7 +168,7 @@ type SkeletonRevealProps = ComponentProps<"div"> & {
 function SkeletonReveal({ loading, placeholder, children, className, style, ...props }: SkeletonRevealProps) {
   const reduceMotion = usePrefersReducedMotion()
   const contentRef = useRef<HTMLDivElement>(null)
-  const height = useMorphHeight(contentRef, loading, reduceMotion)
+  useMorphHeight(contentRef, loading, reduceMotion)
   const exitTransition = { duration: reduceMotion ? ARC_DURATION.instant : ARC_DURATION.fast }
   return (
     <motion.div
@@ -175,7 +176,7 @@ function SkeletonReveal({ loading, placeholder, children, className, style, ...p
       aria-busy={loading}
       className={className}
       {...(props as HTMLMotionProps<"div">)}
-      style={{ ...style, height }}
+      style={style}
     >
       <div ref={contentRef} className="relative flow-root">
         <AnimatePresence mode="popLayout" initial={false}>

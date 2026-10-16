@@ -7,6 +7,7 @@ import {
   AlertDescription,
   AlertTitle,
   Avatar,
+  AvatarBadge,
   AvatarFallback,
   AvatarGroup,
   AvatarGroupCount,
@@ -107,6 +108,33 @@ function ScrollingReveal() {
   );
 }
 
+/** Avatars of every size carrying both a custom badge and a presence dot, which must not cover each other. */
+function BadgedPresenceAvatars() {
+  return (
+    <div className="controls">
+      {(["sm", "default", "lg", "xl"] as const).map((size) => (
+        <Avatar key={size} aria-label={`Avatar con insignia ${size}`} size={size} status="online">
+          <AvatarFallback>AN</AvatarFallback>
+          <AvatarBadge />
+        </Avatar>
+      ))}
+    </div>
+  );
+}
+
+/** A reveal with a fixed height from its class, which must hold before and after it loads. */
+function FixedHeightReveal() {
+  const [isLoading, setIsLoading] = useState(true);
+  return (
+    <div className="narrow-field">
+      <Button variant="secondary" onClick={() => setIsLoading((current) => !current)}>Alternar carga fija</Button>
+      <Skeleton aria-label="Resumen de alto fijo" loading={isLoading} lines={2} className="fixed-reveal">
+        <p>Resumen de alto fijo listo.</p>
+      </Skeleton>
+    </div>
+  );
+}
+
 /** Renders one fixture per component. */
 function ArcDisplay() {
   return <BeezUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
@@ -130,6 +158,8 @@ function ArcDisplay() {
     <section><ActionableAlert /></section>
     <section><StyledAlert /></section>
     <section><ScrollingReveal /></section>
+    <section><BadgedPresenceAvatars /></section>
+    <section><FixedHeightReveal /></section>
   </main></BeezUIProvider>;
 }
 
