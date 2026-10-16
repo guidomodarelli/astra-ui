@@ -224,24 +224,27 @@ function AlertBox({
       {resolvedIcon ? (
         <AlertIcon icon={resolvedIcon} iconKey={icon ? "custom" : tone} tone={tone} reduceMotion={reduceMotion} />
       ) : null}
-      <div data-slot="alert-copy" className="grid min-w-0 flex-1 gap-(--space-1)">
-        <strong data-slot="alert-title" className="relative block text-sm font-medium">
-          <AlertText text={title} reduceMotion={reduceMotion} />
-        </strong>
-        {hasDetails ? (
-          <div
-            data-slot="alert-description"
-            className="relative text-xs leading-(--leading-body) text-pretty text-text-secondary [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover-fine:text-foreground [&_p:not(:last-child)]:mb-4"
-          >
-            {details === null ? children : <AlertText text={details} reduceMotion={reduceMotion} />}
+      {/* Copy and action share a wrapping row, so a long action drops under the text instead of overflowing the alert. */}
+      <div className="flex min-w-0 flex-1 flex-wrap items-start gap-(--space-3)">
+        <div data-slot="alert-copy" className="grid min-w-0 flex-[1_1_8rem] gap-(--space-1)">
+          <strong data-slot="alert-title" className="relative block text-sm font-medium">
+            <AlertText text={title} reduceMotion={reduceMotion} />
+          </strong>
+          {hasDetails ? (
+            <div
+              data-slot="alert-description"
+              className="relative text-xs leading-(--leading-body) text-pretty text-text-secondary [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover-fine:text-foreground [&_p:not(:last-child)]:mb-4"
+            >
+              {details === null ? children : <AlertText text={details} reduceMotion={reduceMotion} />}
+            </div>
+          ) : null}
+        </div>
+        {action ? (
+          <div data-slot="alert-action" className="flex flex-none flex-wrap items-center gap-(--space-2) self-start">
+            {action}
           </div>
         ) : null}
       </div>
-      {action ? (
-        <div data-slot="alert-action" className="flex flex-none flex-wrap items-center gap-(--space-2) self-start">
-          {action}
-        </div>
-      ) : null}
       {onDismiss ? (
         <button
           type="button"

@@ -56,6 +56,21 @@ function ActionableAlert() {
   );
 }
 
+/** An alert whose long action cannot sit beside its copy on a phone, so it has to move under the text. */
+function LongActionAlert() {
+  return (
+    <Alert
+      tone="warning"
+      title="Pago pendiente"
+      onDismiss={() => undefined}
+      dismissLabel="Descartar aviso de pago"
+      action={<Button size="sm" variant="secondary">Actualizar método de pago</Button>}
+    >
+      Revisá tu tarjeta para no perder el acceso a la tribu.
+    </Alert>
+  );
+}
+
 /** A group whose members join and leave, so the spec can watch the overflow chip follow `max`. */
 function GrowingAvatarGroup() {
   const [memberCount, setMemberCount] = useState(5);
@@ -164,6 +179,7 @@ function ArcDisplay() {
     </section>
     <section><DismissibleAlert /></section>
     <section><ActionableAlert /></section>
+    <section><LongActionAlert /></section>
     <section><StyledAlert /></section>
     <section><ScrollingReveal /></section>
     <section><BadgedPresenceAvatars /></section>

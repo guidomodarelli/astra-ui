@@ -180,6 +180,40 @@ test("should lay out an alert action beside the dismiss button without overlap",
   await dismiss.click({ trial: true });
 });
 
+/** Narrowest copy column, in pixels, that still reads as a sentence instead of a word per line. */
+const MIN_ALERT_COPY_WIDTH_PX = 160;
+
+for (const viewportWidth of [320, 390]) {
+  test(`should move a long alert action under the text at ${viewportWidth}px without overflowing`, async ({ page }) => {
+    await page.setViewportSize({ width: viewportWidth, height: 800 });
+    const alert = page.getByRole("status").filter({ hasText: "Pago pendiente" });
+    const action = page.getByRole("button", { name: "Actualizar método de pago" });
+    const dismiss = page.getByRole("button", { name: "Descartar aviso de pago" });
+    const description = page.getByText("Revisá tu tarjeta para no perder el acceso a la tribu.");
+    await expect(action).toBeVisible();
+
+    const overflow = await alert.evaluate((element) => ({
+      alert: element.scrollWidth - element.clientWidth,
+      page: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    }));
+    expect(overflow.alert).toBeLessThanOrEqual(0);
+    expect(overflow.page).toBeLessThanOrEqual(0);
+
+    const [alertBox, actionBox, dismissBox, descriptionBox] = await Promise.all([
+      alert.boundingBox(),
+      action.boundingBox(),
+      dismiss.boundingBox(),
+      description.boundingBox(),
+    ]);
+    expect(descriptionBox!.width).toBeGreaterThanOrEqual(MIN_ALERT_COPY_WIDTH_PX);
+    expect(actionBox!.y).toBeGreaterThanOrEqual(descriptionBox!.y + descriptionBox!.height);
+    expect(actionBox!.x + actionBox!.width).toBeLessThanOrEqual(alertBox!.x + alertBox!.width);
+    expect(dismissBox!.y + dismissBox!.height).toBeLessThanOrEqual(actionBox!.y);
+    await action.click({ trial: true });
+    await dismiss.click({ trial: true });
+  });
+}
+
 test("should size the group counter like its avatars and roll it up when someone joins", async ({ page }) => {
   const group = page.getByRole("group", { name: "Equipo destacado" });
   const avatar = group.locator('[data-slot="avatar"]').first();

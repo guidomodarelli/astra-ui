@@ -74,6 +74,7 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ### Fixed
 
+- En pantallas o contenedores angostos, la `action` de un `Alert` baja debajo del texto cuando no entra al lado, en lugar de desbordar el aviso y aplastar el texto.
 - Al moverse con el teclado mientras un `Select` o un `DropdownMenu` todavía se está abriendo, el resaltado se desliza hasta el tamaño y la posición finales de la opción y ya no salta al terminar.
 
 ## [2.6.2] - 2026-10-16
