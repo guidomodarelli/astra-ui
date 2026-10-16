@@ -15,9 +15,10 @@ import {
   CALENDAR_LOCALE_SEPARATOR,
   CALENDAR_TRANSLATED_LANGUAGE,
 } from "../constants/calendar.js";
+import { useToday } from "../hooks/use-today.js";
 import { Calendar as CalendarPrimitive } from "./primitives/calendar.js";
 
-export { useToday } from "../hooks/use-today.js";
+export { useToday };
 
 /** Returns `true` for a day that cannot be picked, such as a weekend. */
 type CalendarDateMatcher = (date: Date) => boolean;
@@ -97,6 +98,9 @@ function Calendar({
   showToday = false,
   todayLabel = CALENDAR_COPY.today,
 }: CalendarProps) {
+  // The live day moves the today dot and the Today button at the viewer's midnight. Before hydration it is
+  // `undefined`, so react-day-picker keeps its own today and the server and hydration renders stay the same.
+  const today = useToday();
   const { dayPickerLocale, formatters } = React.useMemo(() => resolveCalendarLocale(locale), [locale]);
   // An uncontrolled month opens on the selected date once; later selections never move it.
   const [initialMonth] = React.useState(() => value ?? undefined);
@@ -115,6 +119,7 @@ function Calendar({
       selected={value ?? undefined}
       // The picked day is the trigger date, so a click on the selected day reports it again instead of clearing it.
       onSelect={(_selected, triggerDate) => onChange?.(triggerDate)}
+      today={today}
       month={month}
       defaultMonth={initialMonth}
       onMonthChange={onMonthChange}

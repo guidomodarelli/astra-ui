@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, render, renderHook, screen } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 
@@ -260,6 +260,25 @@ describe("Calendar", () => {
     // Assert
     expect(screen.getByRole("button", { name: /jueves, 10 de septiembre/i })).toHaveAttribute("data-today", "true");
     expect(screen.getByRole("button", { name: /viernes, 11 de septiembre/i })).not.toHaveAttribute("data-today");
+  });
+
+  it("should move today and the Today button to the next day when the viewer's midnight passes", () => {
+    // Arrange
+    vi.useFakeTimers({ now: new Date(2026, 8, 10, 23, 59, 30) });
+    const onChange = vi.fn();
+    render(<ControlledCalendar initialMonth={TODAY} showToday onChange={onChange} />);
+    expect(screen.getByRole("button", { name: /jueves, 10 de septiembre/i })).toHaveAttribute("data-today", "true");
+
+    // Act
+    act(() => {
+      vi.advanceTimersByTime(31_000);
+    });
+    fireEvent.click(screen.getByRole("button", { name: TODAY_BUTTON_NAME }));
+
+    // Assert
+    expect(screen.getByRole("button", { name: /viernes, 11 de septiembre/i })).toHaveAttribute("data-today", "true");
+    expect(screen.getByRole("button", { name: /jueves, 10 de septiembre/i })).not.toHaveAttribute("data-today");
+    expect(onChange).toHaveBeenCalledWith(new Date(2026, 8, 11));
   });
 
   it("should let the gliding disc paint the selection", async () => {
