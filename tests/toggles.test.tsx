@@ -1,6 +1,6 @@
 /** Verifies Arc's Switch, Checkbox and RadioGroup through the public barrel, as a consumer would use them. */
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 
@@ -257,5 +257,82 @@ describe("RadioGroup", () => {
     // Assert
     expect(screen.getByRole("radio", { name: "Pro" })).not.toBeChecked();
     expect(screen.getByRole("radio", { name: "Gratis" })).toBeChecked();
+  });
+});
+
+describe("form reset", () => {
+  it("should restore each uncontrolled control to its default when its form is reset", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    render(
+      <form aria-label="Preferencias">
+        <Switch name="alerts" label="Avisos por correo" defaultChecked />
+        <Checkbox name="terms" label="Aceptar condiciones" />
+        <RadioGroup name="billing" aria-label="Facturación" defaultValue="monthly">
+          <RadioGroupItem value="monthly" label="Mensual" />
+          <RadioGroupItem value="yearly" label="Anual" />
+        </RadioGroup>
+        <button type="reset">Restablecer</button>
+      </form>,
+    );
+    const toggle = screen.getByRole("switch", { name: "Avisos por correo" });
+    const checkbox = screen.getByRole("checkbox", { name: "Aceptar condiciones" });
+    const monthly = screen.getByRole("radio", { name: "Mensual" });
+    const yearly = screen.getByRole("radio", { name: "Anual" });
+    await user.click(toggle);
+    await user.click(checkbox);
+    await user.click(yearly);
+    expect(toggle).toHaveAttribute("data-state", "unchecked");
+    expect(checkbox).toHaveAttribute("data-state", "checked");
+    expect(yearly).toHaveAttribute("data-state", "checked");
+
+    // Act
+    await user.click(screen.getByRole("button", { name: "Restablecer" }));
+
+    // Assert
+    expect(toggle).toHaveAttribute("data-state", "checked");
+    expect(toggle).toHaveAttribute("aria-checked", "true");
+    expect(checkbox).toHaveAttribute("data-state", "unchecked");
+    expect(checkbox).toHaveAttribute("aria-checked", "false");
+    expect(monthly).toHaveAttribute("data-state", "checked");
+    expect(monthly).toHaveAttribute("aria-checked", "true");
+    expect(yearly).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("should restore each uncontrolled control to its default after a successful React form action", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    const submittedValues: Array<Record<string, FormDataEntryValue>> = [];
+    render(
+      <form
+        aria-label="Preferencias"
+        action={async (formData: FormData) => {
+          submittedValues.push(Object.fromEntries(formData));
+        }}
+      >
+        <Switch name="alerts" value="on" label="Avisos por correo" defaultChecked />
+        <Checkbox name="terms" value="accepted" label="Aceptar condiciones" />
+        <RadioGroup name="billing" aria-label="Facturación" defaultValue="monthly">
+          <RadioGroupItem value="monthly" label="Mensual" />
+          <RadioGroupItem value="yearly" label="Anual" />
+        </RadioGroup>
+        <button type="submit">Guardar</button>
+      </form>,
+    );
+    const toggle = screen.getByRole("switch", { name: "Avisos por correo" });
+    const checkbox = screen.getByRole("checkbox", { name: "Aceptar condiciones" });
+    await user.click(toggle);
+    await user.click(checkbox);
+    await user.click(screen.getByRole("radio", { name: "Anual" }));
+
+    // Act
+    await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+    // Assert
+    await waitFor(() => expect(toggle).toHaveAttribute("data-state", "checked"));
+    expect(submittedValues).toEqual([{ terms: "accepted", billing: "yearly" }]);
+    expect(checkbox).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByRole("radio", { name: "Mensual" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: "Anual" })).toHaveAttribute("data-state", "unchecked");
   });
 });
