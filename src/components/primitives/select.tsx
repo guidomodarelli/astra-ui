@@ -3,17 +3,21 @@
 /**
  * Internal primitive of Arc's Select (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): Arc's trigger, whose
  * hover, press and open states answer in color only so the anchored list never shifts, and its raised list with
- * option rows and an end check, on Arc's tokens, with beez-ui's option entrance, check pop and chevron rotation.
+ * option rows and an end check, on Arc's tokens and Arc's motion: the list grows from the trigger edge, the check
+ * of the chosen option sharpens in, and the chevron turns on the CSS spring.
  * Internal: the Radix composition behind the public closed `Select`; the package does not export it.
  */
 import * as React from "react"
 import { Select as SelectPrimitive } from "radix-ui"
 
-import { SELECT_COLLISION_PADDING_PX } from "../../constants/select.js"
-import { GlideSlot } from "../../motion/glide-slot.js"
+import { SELECT_COLLISION_PADDING_PX, SELECT_MOTION } from "../../constants/select.js"
+import { ArcFloatingSlot } from "../../motion/arc-floating-slot.js"
 import { MotionSlot } from "../../motion/motion-slot.js"
 import { cn } from "../../lib/utils.js"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
+
+/** Arc's option list always enters and leaves the same way. */
+const resolveSelectMotion = () => SELECT_MOTION
 
 function Select({
   ...props
@@ -43,7 +47,7 @@ function SelectTrigger({
   size?: "sm" | "default"
 }) {
   return (
-    <MotionSlot kind="field"><SelectPrimitive.Trigger
+    <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
       className={cn(
@@ -54,9 +58,9 @@ function SelectTrigger({
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <MotionSlot kind="rotate"><ChevronDownIcon data-slot="select-icon" strokeWidth={1.75} className="pointer-events-none size-4 text-text-muted" /></MotionSlot>
+        <ChevronDownIcon data-slot="select-icon" strokeWidth={1.75} className="pointer-events-none size-4 text-text-muted transition-[rotate] duration-(--duration-spring) ease-(--ease-spring) motion-reduce:transition-none" />
       </SelectPrimitive.Icon>
-    </SelectPrimitive.Trigger></MotionSlot>
+    </SelectPrimitive.Trigger>
   )
 }
 
@@ -76,7 +80,7 @@ function SelectContent({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
   return (
-    <SelectPrimitive.Portal><MotionSlot kind="surface"><GlideSlot preset="menu">
+    <SelectPrimitive.Portal><ArcFloatingSlot motion={resolveSelectMotion}>
       <SelectPrimitive.Content
         data-slot="select-content"
         data-align-trigger={position === "item-aligned"}
@@ -100,7 +104,7 @@ function SelectContent({
         </SelectPrimitive.Viewport>
         <SelectScrollDownButton />
       </SelectPrimitive.Content>
-    </GlideSlot></MotionSlot></SelectPrimitive.Portal>
+    </ArcFloatingSlot></SelectPrimitive.Portal>
   )
 }
 
@@ -116,7 +120,7 @@ function SelectItem({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Item>) {
   return (
-    <MotionSlot kind="list-item"><SelectPrimitive.Item
+    <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
         "relative flex min-h-9 w-full cursor-default items-center gap-1.5 rounded-[calc(var(--radius-control)-4px)] py-1 pr-[34px] pl-[11px] text-sm text-foreground outline-hidden select-none transition-colors duration-(--duration-instant) ease-(--ease-standard) motion-reduce:transition-none data-highlighted:bg-surface-muted data-disabled:pointer-events-none data-disabled:opacity-45 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
@@ -130,7 +134,7 @@ function SelectItem({
         </SelectPrimitive.ItemIndicator></MotionSlot>
       </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-    </SelectPrimitive.Item></MotionSlot>
+    </SelectPrimitive.Item>
   )
 }
 

@@ -26,7 +26,6 @@ import {
   ARC_SWAP_EXIT_TRANSITION,
   ARC_SWAP_REST,
 } from "../motion/arc-swap.js"
-import { MotionSlot } from "../motion/motion-slot.js"
 import { useAttachedElement } from "../motion/use-attached-element.js"
 
 export type { AlertTone }
@@ -272,9 +271,7 @@ function AlertBox({
     )
   }
   return (
-    <MotionSlot kind="message">
-      <div {...rootProps}>{content}</div>
-    </MotionSlot>
+    <div {...rootProps}>{content}</div>
   )
 }
 

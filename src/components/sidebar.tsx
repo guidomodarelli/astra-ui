@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * Animated application sidebar adapted from beui.dev/components/motion/animated-sidebar: the rail
- * morphs its width with a spring, labels fade out of the icon rail, a shared pill follows the
- * hovered and active items, submenus unfold with a stagger, and small screens get a focus-trapped
- * sheet. Links route through the `BeezUIProvider` adapter and the open state keeps the
+ * Application sidebar on the motion of Arc's sidebar rail: the rail springs its width without
+ * overshoot, labels fade and drift out of the icon rail, the active item's highlight glides between
+ * items, hovered items only change color, submenus open their height on the smooth spring, and
+ * small screens get a focus-trapped sheet that slides in from its edge. Links route through the `BeezUIProvider` adapter and the open state keeps the
  * `sidebar_state` cookie contract read by server entrypoints.
  */
 import * as React from "react";
@@ -14,7 +14,6 @@ import {
   AnimatePresence,
   motion,
   type HTMLMotionProps,
-  type Variants,
 } from "motion/react";
 import { createPortal } from "react-dom";
 
@@ -28,13 +27,11 @@ import {
 } from "../hooks/use-sidebar-persistence.js";
 import { SIDEBAR_COOKIE_MAX_AGE, SIDEBAR_COOKIE_NAME } from "../constants/sidebar.js";
 import { cn } from "../lib/utils.js";
-import { MotionSlot } from "../motion/motion-slot.js";
-import { SharedLayoutBg } from "../motion/shared-layout-bg.js";
 import {
   MOTION_EASE,
-  MOTION_EASE_DRAWER,
-  MOTION_LIST_ITEM_DISTANCE,
+  MOTION_EASE_STANDARD,
   MOTION_TIMING,
+  SPRING_CHEVRON,
   SPRING_LAYOUT,
   SPRING_PANEL,
 } from "../motion/tokens.js";
@@ -53,16 +50,17 @@ const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 const EXTERNAL_LINK_TARGET = "_blank";
 const EXTERNAL_LINK_REL = "noreferrer noopener";
-/** Distance, in pixels, labels and chevrons drift while fading out of the icon rail. */
-const SIDEBAR_LABEL_DRIFT_PX = 4;
+/** Distance, in pixels, labels and chevrons drift while fading out of the icon rail (Arc). */
+const SIDEBAR_LABEL_DRIFT_PX = 6;
 /** Chevron rotation, in degrees, of an expanded group. */
 const SIDEBAR_CHEVRON_EXPANDED_DEGREES = 90;
-/** Blur, in pixels, submenu items shed as they unfold. */
-const SIDEBAR_SUBMENU_ITEM_BLUR_PX = 3;
+/** Arc's sidebar sheet slides in and out on the smooth spring. */
+const PANEL_TRANSITION = SPRING_PANEL;
 
-const PANEL_TRANSITION = {
-  duration: 0.36,
-  ease: MOTION_EASE_DRAWER,
+/** Arc's scrim fades on the standard duration. */
+const SCRIM_TRANSITION = {
+  duration: MOTION_TIMING.standard,
+  ease: MOTION_EASE,
 } as const;
 
 /**
@@ -71,15 +69,17 @@ const PANEL_TRANSITION = {
  */
 const SIDEBAR_MORPH_TRANSITION = SPRING_PANEL;
 
+/** Arc's labels come back once the rail has mostly opened. */
 const LABEL_ENTER_TRANSITION = {
-  duration: MOTION_TIMING.message,
-  delay: 0.08,
+  duration: MOTION_TIMING.standard,
+  delay: 0.1,
   ease: MOTION_EASE,
 } as const;
 
+/** Arc's labels leave quickly, before the rail finishes folding. */
 const LABEL_EXIT_TRANSITION = {
-  duration: MOTION_TIMING.exit,
-  ease: MOTION_EASE,
+  duration: 0.14,
+  ease: MOTION_EASE_STANDARD,
 } as const;
 
 const REDUCED_TRANSITION = {
@@ -89,42 +89,17 @@ const REDUCED_TRANSITION = {
 
 const INSTANT_TRANSITION = { duration: 0 } as const;
 
-const SUBMENU_VARIANTS: Variants = {
-  closed: {
-    opacity: 0,
-    clipPath: "inset(0 0 100% 0 round 8px)",
-    transition: {
-      duration: MOTION_TIMING.fast,
-      ease: MOTION_EASE,
-      staggerChildren: 0.025,
-      staggerDirection: -1,
-    },
-  },
-  open: {
-    opacity: 1,
-    clipPath: "inset(0 0 0% 0 round 8px)",
-    transition: {
-      duration: MOTION_TIMING.message,
-      delayChildren: MOTION_TIMING.listStagger,
-      ease: MOTION_EASE,
-      staggerChildren: 0.045,
-    },
-  },
-};
+/** Arc's submenu opens its height on the smooth spring while its items fade in just behind it. */
+const SUBMENU_OPEN_TRANSITION = {
+  height: SPRING_PANEL,
+  opacity: { duration: MOTION_TIMING.standard, delay: 0.06, ease: MOTION_EASE },
+} as const;
 
-const SUBMENU_ITEM_VARIANTS: Variants = {
-  closed: {
-    opacity: 0,
-    y: -MOTION_LIST_ITEM_DISTANCE,
-    filter: `blur(${SIDEBAR_SUBMENU_ITEM_BLUR_PX}px)`,
-  },
-  open: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { duration: MOTION_TIMING.enter, ease: MOTION_EASE },
-  },
-};
+/** Arc's submenu folds on the same spring and fades out faster than it came in. */
+const SUBMENU_CLOSE_TRANSITION = {
+  height: SPRING_PANEL,
+  opacity: { duration: 0.14, ease: MOTION_EASE_STANDARD },
+} as const;
 
 const FOCUSABLE_SELECTOR = [
   "a[href]",
@@ -444,7 +419,7 @@ function MobileSidebar({ ariaLabel, children, className, side }: MobileSidebarPr
         tabIndex={openMobile ? 0 : -1}
         initial={false}
         animate={{ opacity: openMobile ? 1 : 0 }}
-        transition={transition}
+        transition={reduce ? REDUCED_TRANSITION : SCRIM_TRANSITION}
         onClick={() => setOpenMobile(false)}
         className={cn(
           "fixed inset-0 bg-black/40",
@@ -875,14 +850,11 @@ function SidebarGroupContent({ className, ...props }: React.ComponentProps<"div"
   );
 }
 
-/** Menu list whose items share a hover pill that glides between them. */
+/** Menu list; hovered items answer in color, as in Arc's sidebar rail. */
 function SidebarMenu({ className, ...props }: React.ComponentProps<"ul">) {
   return (
-    <SharedLayoutBg
+    <ul
       {...props}
-      inset={0}
-      pillClassName="rounded-xl bg-sidebar-accent/70"
-      pillContainerClassName="inset-y-auto top-0 h-9"
       data-slot="sidebar-menu"
       className={cn("flex w-full min-w-0 list-none flex-col gap-0.5", className)}
     />
@@ -893,8 +865,6 @@ function SidebarMenuItem({ className, ...props }: HTMLMotionProps<"li">) {
   return (
     <motion.li
       {...props}
-      layout="position"
-      transition={SPRING_LAYOUT}
       data-slot="sidebar-menu-item"
       className={cn("relative", className)}
     />
@@ -908,7 +878,7 @@ export type SidebarMenuSubProps = Omit<HTMLMotionProps<"ul">, "children"> & {
 };
 
 /**
- * Nested list that unfolds with a clip and staggered items.
+ * Nested list that opens its height on Arc's smooth spring.
  * @param props - Open state and motion-enabled list attributes.
  * @returns The submenu while open and the sidebar is expanded.
  */
@@ -917,24 +887,27 @@ function SidebarMenuSub({ open, children, className, ...props }: SidebarMenuSubP
   const panel = useSidebarPanel();
 
   return (
-    <AnimatePresence initial={false} mode="popLayout">
+    <AnimatePresence initial={false}>
       {open && !panel.collapsed ? (
-        <motion.ul
-          {...props}
+        <motion.div
           key="sidebar-submenu"
-          variants={context.reduce ? undefined : SUBMENU_VARIANTS}
-          initial={context.reduce ? false : "closed"}
-          animate={context.reduce ? { opacity: 1 } : "open"}
-          exit={context.reduce ? { opacity: 0 } : "closed"}
+          initial={context.reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+          animate={context.reduce ? { opacity: 1 } : { height: "auto", opacity: 1, transition: SUBMENU_OPEN_TRANSITION }}
+          exit={context.reduce ? { opacity: 0 } : { height: 0, opacity: 0, transition: SUBMENU_CLOSE_TRANSITION }}
           transition={context.reduce ? { duration: MOTION_TIMING.exit } : undefined}
-          data-slot="sidebar-menu-sub"
-          className={cn(
-            "relative mt-1 ml-5 flex min-w-0 flex-col gap-0.5 border-l border-sidebar-border pl-3",
-            className,
-          )}
+          className="overflow-hidden"
         >
-          {children}
-        </motion.ul>
+          <motion.ul
+            {...props}
+            data-slot="sidebar-menu-sub"
+            className={cn(
+              "relative mt-1 ml-5 flex min-w-0 flex-col gap-0.5 border-l border-sidebar-border pl-3",
+              className,
+            )}
+          >
+            {children}
+          </motion.ul>
+        </motion.div>
       ) : null}
     </AnimatePresence>
   );
@@ -944,7 +917,6 @@ function SidebarMenuSubItem({ className, ...props }: HTMLMotionProps<"li">) {
   return (
     <motion.li
       {...props}
-      variants={SUBMENU_ITEM_VARIANTS}
       data-slot="sidebar-menu-sub-item"
       className={cn("relative min-w-0", className)}
     />
@@ -1016,7 +988,7 @@ function SidebarPressable({
       {children}
     </button>
   );
-  return disabled ? element : <MotionSlot kind="subtle-press">{element}</MotionSlot>;
+  return element;
 }
 
 export type SidebarMenuSubButtonProps = SidebarActionProps & {
@@ -1143,7 +1115,7 @@ function SidebarMenuButton({
       onClick={select}
       className={cn(
         "relative flex min-h-9 w-full min-w-0 items-center gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-medium outline-none",
-        "text-sidebar-foreground/70 transition-colors hover:text-sidebar-accent-foreground",
+        "text-sidebar-foreground/70 transition-colors hover:text-sidebar-accent-foreground hover-fine:bg-sidebar-accent/70",
         "focus-visible:bg-sidebar-accent/70 focus-visible:ring-2 focus-visible:ring-sidebar-ring",
         isActive && "text-sidebar-accent-foreground",
         disabled && "cursor-not-allowed opacity-40",
@@ -1201,7 +1173,7 @@ function SidebarMenuButton({
             rotate: ariaExpanded ? SIDEBAR_CHEVRON_EXPANDED_DEGREES : 0,
             x: panel.collapsed ? SIDEBAR_LABEL_DRIFT_PX : 0,
           }}
-          transition={context.reduce ? INSTANT_TRANSITION : SPRING_LAYOUT}
+          transition={context.reduce ? INSTANT_TRANSITION : SPRING_CHEVRON}
           className="relative z-10 grid size-4 shrink-0 place-items-center text-sidebar-foreground/70"
         >
           <ChevronRight className="size-3.5" />

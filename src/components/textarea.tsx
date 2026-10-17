@@ -7,7 +7,6 @@
  */
 import type { ComponentProps } from "react"
 
-import { MotionSlot } from "../motion/motion-slot.js"
 import { cn } from "../lib/utils.js"
 import { Field, usesFieldCopy, useFieldAria } from "./field.js"
 import type { FieldCopyProps } from "./field.js"
@@ -29,7 +28,6 @@ function Textarea(textareaProps: TextareaProps) {
   const aria = useFieldAria({ id, description, error, ...props })
   const isField = usesFieldCopy(textareaProps)
   const control = (
-    <MotionSlot kind="field">
       <textarea
         data-slot="textarea"
         className={cn(textareaClassName, className)}
@@ -38,7 +36,6 @@ function Textarea(textareaProps: TextareaProps) {
         aria-describedby={aria["aria-describedby"]}
         aria-invalid={aria["aria-invalid"]}
       />
-    </MotionSlot>
   )
   if (!isField) return control
   return (

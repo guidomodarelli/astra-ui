@@ -9,7 +9,6 @@
 import type { ComponentProps } from "react"
 import { Input as InputPrimitive } from "@base-ui/react/input"
 
-import { MotionSlot } from "../motion/motion-slot.js"
 import { cn } from "../lib/utils.js"
 import { Field, usesFieldCopy, useFieldAria } from "./field.js"
 import type { FieldCopyProps } from "./field.js"
@@ -34,7 +33,6 @@ function Input(inputProps: InputProps) {
   const aria = useFieldAria({ id, description, error, ...props })
   const isField = usesFieldCopy(inputProps)
   const control = (
-    <MotionSlot kind="field">
       <InputPrimitive
         type={type}
         data-slot="input"
@@ -44,7 +42,6 @@ function Input(inputProps: InputProps) {
         aria-describedby={aria["aria-describedby"]}
         aria-invalid={aria["aria-invalid"]}
       />
-    </MotionSlot>
   )
   if (!isField) return control
   return (

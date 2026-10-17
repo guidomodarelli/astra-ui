@@ -110,64 +110,62 @@ keyframes CSS para estas animaciones.
 
 `MotionSlot` anima el nodo original del primitive mediante refs compuestos,
 sin agregar wrappers al DOM ni reemplazar sus handlers. Los tokens exportados en
-`beez-ui/motion-tokens` toman los valores de los presets de Arc
+`beez-ui/motion-tokens` son únicamente los presets de Arc
 (`components/arc/lib/motion-tokens.ts`):
 
 - Springs: `snappy` (0.26 s, rebote 0.12) para presiones, indicadores chicos y cambios de
-  ícono (`SPRING_PRESS`, `SPRING_POP`, `SPRING_CHEVRON`, `SPRING_HIGHLIGHT`, `SPRING_TOOLTIP`);
-  `smooth` (0.4 s, sin rebote) para paneles y todo lo que informa un estado
-  (`SPRING_PANEL`, `SPRING_THUMB`); `morph` (0.42 s, rebote 0.16) para resaltados compartidos
-  (`SPRING_LAYOUT`, `SPRING_TABS`).
+  ícono (`SPRING_PRESS`, `SPRING_POP`, `SPRING_CHEVRON`); `smooth` (0.4 s, sin rebote) para
+  paneles, alturas y todo lo que informa un estado (`SPRING_PANEL`); `morph` (0.42 s, rebote
+  0.16) para resaltados compartidos (`SPRING_LAYOUT`).
 - Duraciones: `instant` 0.12 s, `fast` 0.16 s, `exit` 0.18 s, `enter`/`standard` 0.24 s y
   `considered` 0.48 s. Las salidas son más cortas que las entradas.
 - Curvas: `MOTION_EASE` (entrada), `MOTION_EASE_EXIT`, `MOTION_EASE_STANDARD` y
   `MOTION_EASE_IN_OUT`.
 
-Los nombres de los tokens se mantienen entre versiones; los del despliegue desde el centro
-y del temblor de campos inválidos quedan deprecados y conservan su valor.
+Ningún componente agrega movimiento que Arc no tenga: no hay entradas al montar en cards,
+badges, separadores, filas de tabla ni alertas estáticas; no hay hovers con escala,
+rotación u opacidad en enlaces e íconos; los campos no reaccionan al foco con movimiento y
+no tiemblan al pasar a `aria-invalid="true"`.
 
-- `Button` usa la presión de Arc: se comprime a 0.97 con el spring `snappy` (un poco más en
-  botones de solo ícono y menos en los anchos), sin escalar los disparadores de menús; su
-  texto cambia de ancho con un spring. Los ítems de `Sidebar` y `Tabs` se comprimen a 0.98.
-- `Checkbox` y `RadioGroup` se comprimen a 0.92. La marca del checkbox aparece
-  con pop y trazo (`pathLength`); el punto del radio aparece con spring.
-- El thumb de `Switch` viaja con el spring `smooth`, sin rebote, y se aplasta mientras se presiona.
-- `Input`, `Textarea`, `InputGroup` y el trigger de `Select` no se mueven al pasar a
-  `aria-invalid="true"`: el error se indica con el color y el mensaje. `FormMessage` y
-  `Alert` aparecen con un fundido y una escala breves (desde 0.98), sin desenfoque.
-- `Tooltip` sube 3 px desde 0.97 mientras aparece y sale en el lugar, sin desenfoque.
-  `Popover` y `HoverCard` se acercan desde su trigger con escala y fundido; `DropdownMenu`
-  y `Select` escalan desde 0.96 y se revelan con un clip desde la esquina más cercana al trigger.
+- `Button`, `ControlButton` y los pasos de `Pagination` usan la presión de Arc: se comprimen
+  a 0.97 (un poco más los de solo ícono y menos los anchos) y vuelven con `snappy`; los
+  disparadores de menús, popovers y diálogos responden solo con color.
+- `Checkbox`, `RadioGroup`, `Switch`, `Tabs`, `Calendar`, `Carousel`, `Card`, `Avatar`,
+  `AvatarGroup`, `Badge`, `Alert`, `ActionButton` y `SplitButton` usan el movimiento de sus
+  componentes de Arc.
+- Una `Card` interactiva se eleva 2 px con el borde fuerte y la sombra `--shadow-raised` de
+  Arc al pasar un puntero fino.
+- `Tooltip`, `Popover` y `HoverCard` se acercan desde su trigger con escala y fundido.
+  `DropdownMenu` crece 5 px desde su trigger y desde 0.97 con el spring de Arc y sale en
+  130 ms; sus ítems entran escalonados. `Select` crece 6 px desde 0.97 en 0.24 s; sus
+  opciones no se animan por separado y el check de la opción elegida aparece desde 0.6 con
+  un desenfoque breve, igual que el de los ítems con check de `DropdownMenu`.
 - `Dialog`, también en su modo `alert`, entra como el diálogo de Arc: el fondo se oscurece en 0.24 s y el
   panel sube 8 px y crece desde 0.96 con el spring `smooth` mientras aparece en 0.16 s; al
   cerrar baja 4 px hasta 0.98 y se desvanece en 0.16 s, y una reapertura parte de donde
-  está. `Sheet` entra desde su borde con spring y sale con la curva de cajón (0.24 s), sin
-  demorar la siguiente interacción.
-- `GlideSlot` desliza el indicador activo entre ítems como un `layoutId` compartido:
-  la pestaña activa de `Tabs`, la
-  página actual de `Pagination`, y al navegar con teclado el ítem resaltado de
-  `DropdownMenu` y `Select` y la sugerencia activa de `FilterQueryBar`. Con el puntero,
-  esos resaltados lo siguen al instante: el propio puntero ya marca la posición.
-- Las superficies que se revelan con clip dejan 24 px libres fuera de la
-  caja, así su borde (`ring`) y su sombra se ven desde el primer frame. Una copia
-  transitoria viaja entre ítems y se elimina al llegar, devolviendo el estilo al ítem.
-- El chevron del trigger de `Select` gira 180° al abrir y los chevrons de `DataTable`
-  (grupos y columnas) giran en lugar de cambiar de ícono; CSS define el ángulo final.
-- Las opciones del `Select` entran todas juntas con un fundido y una escala breves, sin
-  escalonarse ni desenfocarse, y los checks de ítems de `Select` y `DropdownMenu` aparecen con pop.
-- El ancho de `Sidebar` cambia con el spring `smooth` entre el panel y el riel de íconos, las
-  etiquetas se desvanecen al colapsar, una píldora compartida sigue al ítem activo y al
-  hovereado, los submenús se despliegan escalonados y en pantallas chicas se abre como hoja
-  con foco atrapado.
-- El ícono de `AnimatedThemeToggler` crece desde 0.6 con el spring `snappy` mientras aparece,
-  sin desenfoque; el botón de cierre de `Dialog` aparece con un pop demorado.
-- El contenido de `Tabs` entra con un desplazamiento de 4 px.
-  Cards y enlaces responden al hover; el avatar bajo el puntero de un `AvatarGroup` se
-  eleva. Un brillo recorre el `Skeleton` desde su `::after` con reproducción nativa,
-  sin trabajo por frame en JavaScript.
-- `Calendar` desliza el mes entrante desde el lado de la navegación (invertido en RTL).
-- La foto de `Avatar` se revela con blur y un zoom de 1.06 al terminar de cargar; las imágenes
-  ya cargadas al montar no se animan.
+  está. `Sheet` entra desde su borde con `smooth` y sale en 0.24 s con la curva estándar,
+  desvaneciéndose al final como el drawer de Arc. Los botones de cierre no tienen animación
+  de entrada.
+- `GlideSlot` desliza el indicador activo entre ítems como un `layoutId` compartido: la
+  pestaña activa de `Tabs`, la página actual de `Pagination` y el resaltado de `DropdownMenu`,
+  que se desliza con el puntero y salta al instante con el teclado. `Select` y las
+  sugerencias de `FilterQueryBar` no tienen resaltado deslizante.
+- El chevron del trigger de `Select` gira 180° con el spring CSS de Arc y los chevrons de
+  `DataTable` (grupos y columnas) giran con `snappy`; CSS define el ángulo final.
+- `FormMessage` sube un tercio de línea desde un desenfoque al aparecer, como las filas de
+  ayuda y error de Arc.
+- El ancho de `Sidebar` cambia con `smooth` entre el panel y el riel de íconos, las
+  etiquetas se desvanecen y se desplazan 6 px al colapsar, el resaltado del ítem activo se
+  desliza con `morph`, el hover solo cambia el color, los submenús abren su altura con
+  `smooth` y en pantallas chicas se abre como hoja con foco atrapado.
+- El ícono de `AnimatedThemeToggler` crece desde 0.7 desde un desenfoque con `snappy`; el
+  botón no gira ni se desvanece al cambiar el tema.
+- La foto de `Avatar` aparece desde un desenfoque de 4 px al terminar de cargar; las
+  imágenes ya cargadas al montar no se animan.
+- `ReactionButton` le da al ícono el impulso de las reacciones de Arc al activarse.
+- `AnimatedCollapse` abre y cierra su altura con `smooth`; `PresenceSwap` usa el swap de
+  Arc (sube 0.3 em desde un desenfoque y la versión anterior sale hacia arriba);
+  `AnimatedListItem` entra 4 px desde un desenfoque leve y se reordena con `smooth`.
 - El cursor de `TypingAnimation` queda fijo mientras escribe y parpadea en reposo. Las animaciones especializadas
   existentes de Embla, Sonner y rough-notation se conservan.
 

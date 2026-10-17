@@ -4,6 +4,26 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+### Changed
+
+- El movimiento de todos los componentes queda alineado únicamente con Arc: se quitan las entradas al montar de `Card`, `Badge`, `Separator`, las filas de `Table`, `Alert` estático y la raíz de `Avatar`; el hover de `Link` y del ícono de WhatsApp; la reacción al foco de `Input`, `Textarea`, `InputGroup`, `Label` y el trigger de `Select`; el pop demorado de los botones de cierre de `Dialog` y `Sheet`; el pop de los íconos de las toasts; la presión de los ítems de `Sidebar` y del avatar de `AccountMenu`; y el giro del botón de `AnimatedThemeToggler`.
+- `DropdownMenu` y `Select` entran y salen como en Arc (escala y desplazamiento desde el trigger) en lugar de revelarse con un clip; las opciones de `Select` ya no se animan por separado y su check, igual que el de los ítems con check de `DropdownMenu`, aparece desde 0.6 con un desenfoque breve.
+- El resaltado de `DropdownMenu` se desliza con el puntero y salta al instante con el teclado, como en Arc; `Select` y las sugerencias de `FilterQueryBar` ya no tienen resaltado deslizante.
+- `Sidebar` sigue al sidebar rail de Arc: el hover solo cambia el color (sin la píldora compartida con desenfoque), los submenús abren su altura con el spring `smooth` sin escalonar ítems, las etiquetas se desplazan 6 px y la hoja móvil se desliza con `smooth`.
+- `Sheet` sale con la curva estándar y se desvanece al final, como el drawer de Arc; `Card` interactiva suma el borde fuerte y la sombra `--shadow-raised` de Arc a su elevación de hover en lugar de la sombra animada anterior.
+- `FormMessage` aparece subiendo desde un desenfoque; la foto de `Avatar` aparece desde un desenfoque de 4 px sin zoom; el ícono de `AnimatedThemeToggler` crece desde 0.7 con un desenfoque breve; `ReactionButton` usa el impulso de las reacciones de Arc.
+- `AnimatedCollapse` abre y cierra su altura con el spring `smooth`, `PresenceSwap` usa el swap de Arc (sube 0.3 em desde un desenfoque) y `AnimatedListItem` entra 4 px desde un desenfoque leve sin escala y se reordena con `smooth`.
+- `MOTION_TIMING.checkDraw` pasa a 0.24 s y `MOTION_LIST_STAGGER_LIMIT` a 4, los valores de Arc.
+
+### Deprecated
+
+- La prop `duration` de `AnimatedThemeToggler` se ignora: el botón ya no gira al cambiar el tema.
+
+### Removed
+
+- Se quitan los tokens de movimiento que no son de Arc: `MOTION_EASE_DRAWER`, `MOTION_EASE_UNFOLD`, `SPRING_HIGHLIGHT`, `SPRING_TABS`, `SPRING_TOOLTIP`, `SPRING_THUMB`, `MOTION_SUBTLE_PRESS_SCALE`, `MOTION_TOGGLE_PRESS_SCALE`, `MOTION_HOVER_SCALE`, `MOTION_THUMB_SQUISH_SCALE`, `MOTION_ITEM_CHECK_SCALE`, `MOTION_ICON_SWAP_SCALE`, `MOTION_CLOSE_BUTTON_SCALE`, `MOTION_LIST_ITEM_DISTANCE`, `MOTION_ITEM_ENTER_SCALE`, `MOTION_REVEAL_SCALE`, `MOTION_REVEAL_BLUR_PX`, `MOTION_SHIMMER_TRANSLATE`, `MOTION_CARD_SHADOW_LIFT`, `MOTION_CARD_SHADOW_REST`, `MOTION_SURFACE_CLIP_PERCENT`, `MOTION_SURFACE_CLIP_BLEED_PX`, `MOTION_TOOLTIP_DISTANCE`, `MOTION_TOOLTIP_SCALE`, `MOTION_CENTER_MORPH_FOLDED_PERCENT`, `MOTION_CONTENT_DISTANCE` y `MOTION_INVALID_SHAKE_PX`.
+- `MOTION_TIMING` pierde `message`, `surfaceClip`, `shake`, `checkDrawDelay`, `iconSwap`, `listItem`, `listDelay`, `closeEnter`, `closeDelay`, `centerMorph`, `centerMorphFold`, `reveal`, `pop`, `collapse`, `monthSwap` y `skeleton`, y `MotionKind` queda con los tipos que usa la biblioteca (`rotate`, `item-check`, `icon-swap`, `message`, `reveal`, `dialog`, `sheet` y `overlay`).
+
 ## [3.0.1] - 2026-10-16
 
 ### Fixed

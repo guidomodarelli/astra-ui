@@ -149,7 +149,7 @@ test("should glide the tab indicator and hand the highlight back to the active t
   await expect(page.getByRole("tabpanel")).toHaveCSS("transform", "none");
 });
 
-test("should glide the menu highlight between items with the keyboard", async ({
+test("should jump the menu highlight with the keyboard and grow the menu without a clip", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -160,12 +160,14 @@ test("should glide the menu highlight between items with the keyboard", async ({
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("ArrowDown");
   await expect(page.getByRole("menuitem", { name: "Duplicar" })).toBeFocused();
-  await expect.poll(motion.glides).toContain("dropdown-menu-content");
+  // Arc's menu highlight jumps for the keyboard, so a held arrow key never trails behind the focus.
+  expect(await motion.glides()).not.toContain("dropdown-menu-content");
   await page.keyboard.press("Enter");
   await expect(page.getByLabel("Acción")).toHaveText("Copia seleccionada");
   await expect
     .poll(() => motion.properties({ role: "menu" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform", "clipPath"]));
+    .toEqual(expect.arrayContaining(["opacity", "transform"]));
+  expect(await motion.properties({ role: "menu" })).not.toContain("clipPath");
 });
 
 test("should pop and draw the checkbox mark and blur it out when unchecked", async ({
@@ -317,11 +319,20 @@ test("should honor reduced motion and show readable text immediately", async ({
       .evaluate((element) => element.getAnimations().length),
   ).toBe(0);
   await page.getByRole("button", { name: "Abrir menú" }).click();
+  // Arc keeps only an instant fade with reduced motion: the menu never travels or scales.
   expect(
     await page
       .getByRole("menu")
-      .evaluate((element) => element.getAnimations().length),
-  ).toBe(0);
+      .evaluate((element) =>
+        element
+          .getAnimations()
+          .flatMap((animation) =>
+            animation.effect instanceof KeyframeEffect
+              ? animation.effect.getKeyframes().flatMap((frame) => Object.keys(frame))
+              : [],
+          ),
+      ),
+  ).not.toContain("transform");
   await page.getByRole("menuitem", { name: "Editar" }).click();
   await expect(page.getByLabel("Acción")).toHaveText("Edición seleccionada");
   await page.getByRole("button", { name: "Actualizar texto" }).click();
@@ -348,7 +359,7 @@ test("should respond when the system motion preference changes", async ({
   ).toBeVisible({ timeout: 2000 });
 });
 
-test("should turn the select chevron and fade its options in without blur", async ({ page }) => {
+test("should turn the select chevron on the CSS spring and show its options without per-option motion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   const motion = await recordMotion(page);
   await page.goto("/motion.html");
@@ -356,96 +367,25 @@ test("should turn the select chevron and fade its options in without blur", asyn
   // An open Select hides everything outside its listbox from the accessibility tree.
   const chevron = page.locator("[data-slot=select-icon]");
   await expect(chevron).toHaveCSS("rotate", "none");
+  await expect(chevron).toHaveCSS("transition-property", /rotate/);
   await trigger.click();
   await expect(page.getByRole("listbox")).toBeVisible();
   await expect(chevron).toHaveCSS("rotate", "180deg");
+  // Arc's list grows from the trigger as a whole; its options neither fade nor stagger in.
   await expect
-    .poll(() => motion.properties({ slot: "select-icon" }))
-    .toContain("transform");
-  await expect
-    .poll(() => motion.properties({ slot: "select-item" }))
+    .poll(() => motion.properties({ slot: "select-content" }))
     .toEqual(expect.arrayContaining(["opacity", "transform"]));
-  expect(await motion.properties({ slot: "select-item" })).not.toContain("filter");
+  expect(await motion.properties({ slot: "select-item" })).toEqual([]);
+  await page.keyboard.press("ArrowDown");
+  expect(await motion.glides()).toEqual([]);
   await expect(page.getByRole("option", { name: "Dólares" })).toHaveCSS("transform", "none");
   await expect(page.getByRole("option", { name: "Dólares" })).toHaveCSS("opacity", "1");
   await page.getByRole("option", { name: "Dólares" }).click();
   await expect(page.locator("[data-slot=select-trigger]")).toHaveText("Dólares");
   await expect(chevron).toHaveCSS("rotate", "none");
-  await expect(chevron).toHaveCSS("transform", "none");
 });
 
-/** Painted boxes of the travelling select highlight and its target option in the glide's last frame. */
-type EnteringGlide = {
-  targetTransformAtStart: string;
-  indicator: { left: number; top: number; width: number; height: number };
-  target: { left: number; top: number; width: number; height: number };
-};
-
-test("should land the select highlight on an option still entering, without a snap", async ({
-  page,
-}) => {
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.goto("/motion.html");
-  const trigger = page.getByRole("combobox", { name: "Moneda" });
-  await waitForSettledLayout(trigger);
-  // Moves the highlight on the first frame the list shows one, while the options still settle
-  // from their entrance scale, and samples the travelling copy until it hands the highlight back.
-  const glide = page.evaluate(
-    () =>
-      new Promise<EnteringGlide>((resolve, reject) => {
-        const toBox = (rect: DOMRect) => ({
-          left: rect.left,
-          top: rect.top,
-          width: rect.width,
-          height: rect.height,
-        });
-        let movedAt: number | null = null;
-        let targetTransformAtStart: string | null = null;
-        let last: Omit<EnteringGlide, "targetTransformAtStart"> | null = null;
-        const tick = () => {
-          const highlighted = document.querySelector<HTMLElement>("[role=option][data-highlighted]");
-          if (movedAt === null && highlighted) {
-            movedAt = performance.now();
-            highlighted.dispatchEvent(
-              new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true }),
-            );
-          }
-          const indicator = document.querySelector("[data-glide-indicator]");
-          const target = document.querySelector("[data-glide-target]");
-          if (indicator && target) {
-            targetTransformAtStart ??= getComputedStyle(target).transform;
-            last = {
-              indicator: toBox(indicator.getBoundingClientRect()),
-              target: toBox(target.getBoundingClientRect()),
-            };
-          } else if (last && targetTransformAtStart !== null) {
-            resolve({ targetTransformAtStart, ...last });
-            return;
-          }
-          if (movedAt !== null && performance.now() - movedAt > 2000) {
-            reject(new Error("motion.spec:select glide never handed the highlight back"));
-            return;
-          }
-          requestAnimationFrame(tick);
-        };
-        requestAnimationFrame(tick);
-      }),
-  );
-  await trigger.focus();
-  await page.keyboard.press("Enter");
-  const { targetTransformAtStart, indicator, target } = await glide;
-  await expect(page.getByRole("option", { name: "Dólares" })).toBeFocused();
-  // The glide started while the option was still scaling in, which is the case under test.
-  expect(targetTransformAtStart).not.toBe("none");
-  // The copy lands exactly on the option it hands the highlight to, so removing it never snaps.
-  expect(Math.abs(indicator.left - target.left)).toBeLessThan(1);
-  expect(Math.abs(indicator.top - target.top)).toBeLessThan(1);
-  expect(Math.abs(indicator.width - target.width)).toBeLessThan(1);
-  expect(Math.abs(indicator.height - target.height)).toBeLessThan(1);
-  await page.keyboard.press("Escape");
-});
-
-test("should pop the check of a menu checkbox item", async ({ page }) => {
+test("should sharpen the check of a menu checkbox item in", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   const motion = await recordMotion(page);
   await page.goto("/motion.html");
@@ -457,7 +397,7 @@ test("should pop the check of a menu checkbox item", async ({ page }) => {
     .poll(() =>
       motion.properties({ parentSlot: "dropdown-menu-checkbox-item-indicator" }),
     )
-    .toEqual(expect.arrayContaining(["opacity", "transform"]));
+    .toEqual(expect.arrayContaining(["opacity", "transform", "filter"]));
 });
 
 test("should rotate the group chevron of the data table instead of swapping icons", async ({
@@ -480,7 +420,7 @@ test("should rotate the group chevron of the data table instead of swapping icon
   await expect(chevron).toHaveCSS("transform", "none");
 });
 
-test("should swap the theme icon with a fade and scale and pop in the dialog close button", async ({
+test("should swap the theme icon out of a blur without turning its trigger, and keep the dialog close button still", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -491,18 +431,21 @@ test("should swap the theme icon with a fade and scale and pop in the dialog clo
   await expect(page.locator("html")).toHaveClass(/dark/);
   await expect
     .poll(() => motion.properties({ buttonText: "Alternar tema" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform"]));
-  expect(await motion.properties({ buttonText: "Alternar tema" })).not.toContain("filter");
-  const themeIcon = page.getByRole("button", { name: "Alternar tema" }).locator("svg");
+    .toEqual(expect.arrayContaining(["opacity", "transform", "filter"]));
+  const themeButton = page.getByRole("button", { name: "Alternar tema" });
+  // Arc's theme switch only swaps its icon: the trigger itself never turns or fades.
+  await expect(themeButton).toHaveCSS("transform", "none");
+  await expect(themeButton).toHaveCSS("opacity", "1");
+  const themeIcon = themeButton.locator("svg");
   await expect(themeIcon).toHaveCount(1);
   await expect(themeIcon).toHaveCSS("transform", "none");
   await expect(themeIcon).toHaveCSS("opacity", "1");
+  await expect(themeIcon).toHaveCSS("filter", "none");
 
   await page.getByRole("button", { name: "Abrir diálogo" }).click();
   const close = page.getByRole("button", { name: "Cerrar diálogo" });
-  await expect
-    .poll(() => motion.properties({ buttonText: "Cerrar diálogo" }))
-    .toEqual(expect.arrayContaining(["opacity", "scale"]));
+  await expect(close).toBeVisible();
+  expect(await motion.properties({ buttonText: "Cerrar diálogo" })).not.toContain("scale");
   await expect(close).toHaveCSS("opacity", "1");
   await expect(close).toHaveCSS("transform", "none");
   await close.click();

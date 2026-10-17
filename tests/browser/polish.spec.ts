@@ -62,7 +62,7 @@ test.describe("with motion", () => {
     await expect(page).toHaveURL(/#pagina-3$/);
   });
 
-  test("should glide the filter suggestion highlight as the keyboard moves through it", async ({ page }) => {
+  test("should move the filter suggestion highlight with the keyboard without a travelling copy", async ({ page }) => {
     const motion = await recordMotion(page);
     await page.goto("/polish.html");
     const input = page.getByRole("combobox", { name: "Filtrar movimientos" });
@@ -71,9 +71,9 @@ test.describe("with motion", () => {
     await expect(options.first()).toHaveAttribute("aria-selected", "true");
     await input.press("ArrowDown");
     await expect(options.nth(1)).toHaveAttribute("aria-selected", "true");
-    await expect.poll(motion.glides).toContain("filter-query-bar-suggestions");
+    // Arc's combobox has no sliding highlight: the option answers in color only.
+    expect(await motion.glides()).not.toContain("filter-query-bar-suggestions");
     await expect(page.locator("[data-glide-indicator]")).toHaveCount(0);
-    await expect(options.nth(1)).not.toHaveAttribute("data-glide-target");
     await expect(input).toBeFocused();
     await expect(input).toHaveAttribute("aria-activedescendant", (await options.nth(1).getAttribute("id"))!);
     await input.press("Enter");
@@ -95,7 +95,7 @@ test.describe("with motion", () => {
     await expectSettled(month);
   });
 
-  test("should develop a freshly loaded avatar image in place", async ({ page }) => {
+  test("should sharpen a freshly loaded avatar image out of a blur, without a zoom", async ({ page }) => {
     const motion = await recordMotion(page);
     await page.goto("/polish.html");
     await expect(page.getByText("AN", { exact: true })).toBeVisible();
@@ -103,8 +103,9 @@ test.describe("with motion", () => {
     const image = page.getByRole("img", { name: "Foto de Ana" }).locator("img");
     await expect(image).toBeVisible();
     await expect.poll(() => motion.properties({ slot: "avatar-image" })).toEqual(
-      expect.arrayContaining(["opacity", "transform", "filter"]),
+      expect.arrayContaining(["opacity", "filter"]),
     );
+    expect(await motion.properties({ slot: "avatar-image" })).not.toContain("transform");
     await expectSettled(image);
   });
 
@@ -163,22 +164,22 @@ test.describe("with motion", () => {
     expect(lowest).toBeLessThan(0.1);
   });
 
-  test("should close the sheet with the drawer curve and pop its close button in", async ({ page }) => {
+  test("should close the sheet on Arc's drawer tween without popping its close button in", async ({ page }) => {
     const timings = await recordTimings(page);
     const motion = await recordMotion(page);
     await page.goto("/polish.html");
     await page.getByRole("button", { name: "Abrir ajustes" }).click();
     const sheet = page.getByRole("dialog", { name: "Ajustes" });
     await expect(sheet).toBeVisible();
-    await expect.poll(() => motion.properties({ buttonText: "Close" })).toContain("scale");
     await expectSettled(sheet);
+    expect(await motion.properties({ buttonText: "Close" })).not.toContain("scale");
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).toHaveCount(0);
     // Motion creates the exit on its next frame; the entrance is the first record.
     await expect.poll(async () => (await timings("sheet-content")).length).toBeGreaterThan(1);
     const exit = (await timings("sheet-content")).at(-1);
     expect(exit).toMatchObject({ duration: 240 });
-    expect(String(exit?.easing).replaceAll(" ", "")).toBe("cubic-bezier(0.32,0.72,0,1)");
+    expect(String(exit?.easing).replaceAll(" ", "")).not.toBe("cubic-bezier(0.32,0.72,0,1)");
     await expect(page.getByRole("button", { name: "Abrir ajustes" })).toBeFocused();
   });
 
@@ -195,37 +196,35 @@ test.describe("with motion", () => {
       Object.assign(window, { __clips: clips });
     });
     await page.getByRole("button", { name: "Más acciones" }).click();
-    const menu = page.getByRole("menu");
-    await expect(menu).toBeVisible();
+    await expect(page.getByRole("menu")).toBeVisible();
     await expect.poll(() => page.evaluate(() => (window as unknown as { __clips: string[] }).__clips.length)).toBeGreaterThanOrEqual(60);
+    // Arc's menu grows from the trigger with a scale and a fade, never with a clip.
     const clips = await page.evaluate(() => (window as unknown as { __clips: string[] }).__clips);
-    const insetClips = clips.filter((clip) => clip.startsWith("inset("));
-    expect(insetClips.length).toBeGreaterThan(0);
-    // Every clip frame leaves room past the box: the ring and shadow are box-shadows outside it.
-    for (const clip of insetClips) expect(clip).toContain("-24px");
-    expect(clips.at(-1)).not.toBe("inset(0%)");
+    expect(new Set(clips)).toEqual(new Set(["none"]));
   });
 
-  test("should move the menu highlight straight to the pointer and glide it with the keyboard", async ({ page }) => {
+  test("should glide the menu highlight for the pointer and jump it for the keyboard", async ({ page }) => {
     const motion = await recordMotion(page);
     await page.goto("/polish.html");
     await page.getByRole("button", { name: "Más acciones" }).click();
     const rename = page.getByRole("menuitem", { name: "Renombrar" });
     const duplicate = page.getByRole("menuitem", { name: "Duplicar" });
     const archive = page.getByRole("menuitem", { name: "Archivar" });
-    await rename.hover();
-    await duplicate.hover();
-    await archive.hover();
+    await rename.focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(duplicate).toHaveAttribute("data-highlighted", "");
+    await page.keyboard.press("ArrowDown");
     await expect(archive).toHaveAttribute("data-highlighted", "");
     expect(await motion.glides()).not.toContain("dropdown-menu-content");
     await expect(page.locator("[data-glide-indicator]")).toHaveCount(0);
-    await page.keyboard.press("ArrowUp");
+    await rename.hover();
+    await duplicate.hover();
     await expect(duplicate).toHaveAttribute("data-highlighted", "");
     await expect.poll(motion.glides).toContain("dropdown-menu-content");
     await expect(page.locator("[data-glide-indicator]")).toHaveCount(0);
   });
 
-  test("should keep the interactive card outline while its hover shadow lifts it", async ({ page }) => {
+  test("should lift an interactive card with Arc's raised shadow and keep its outline", async ({ page }) => {
     await page.goto("/polish.html");
     const canHover = await page.evaluate(() => window.matchMedia("(hover: hover) and (pointer: fine)").matches);
     test.skip(!canHover, "Touch viewports have no hover lift by design.");
@@ -234,11 +233,14 @@ test.describe("with motion", () => {
     expect(restingShadow).toContain("0px 0px 0px 1px");
     await card.hover();
     await expect
+      .poll(() => card.evaluate((element) => getComputedStyle(element).translate))
+      .toBe("0px -2px");
+    await expect
       .poll(() => card.evaluate((element) => getComputedStyle(element).boxShadow))
-      .toMatch(/0px 0px 0px 1px.*0px 4px 16px 0px/);
+      .toMatch(/0px 0px 0px 1px.*0px 6px 18px/);
+    expect(await card.evaluate((element) => element.style.boxShadow)).toBe("");
     await page.mouse.move(0, 0);
-    await expect.poll(() => card.evaluate((element) => element.style.boxShadow)).toBe("");
-    expect(await card.evaluate((element) => getComputedStyle(element).boxShadow)).toBe(restingShadow);
+    await expect.poll(() => card.evaluate((element) => getComputedStyle(element).boxShadow)).toBe(restingShadow);
   });
 
   test("should lift the hovered avatar of a group and name it on real hover pointers", async ({ page }) => {

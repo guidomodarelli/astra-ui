@@ -43,7 +43,6 @@ const presenceRingClassName =
 function AvatarRoot({ className, size = "md", status, children, ...props }: AvatarRootProps) {
   const reduceMotion = usePrefersReducedMotion()
   return (
-    <MotionSlot kind="fade">
       <AvatarPrimitive.Root
         data-slot="avatar"
         data-size={size}
@@ -77,7 +76,6 @@ function AvatarRoot({ className, size = "md", status, children, ...props }: Avat
           ) : null}
         </AnimatePresence>
       </AvatarPrimitive.Root>
-    </MotionSlot>
   )
 }
 

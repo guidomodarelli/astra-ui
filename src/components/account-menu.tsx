@@ -167,7 +167,7 @@ export function AccountMenu({
       aria-label={resolvedLabels.trigger}
       type="button"
       className={cn(
-        "inline-flex items-center rounded-full outline-none [-webkit-tap-highlight-color:transparent] transition-[box-shadow,opacity,transform] hover:opacity-90 active:scale-[0.96] focus-visible:shadow-[0_0_0_2px_var(--background),0_0_0_4px_var(--ring)] data-[state=open]:shadow-[0_0_0_2px_var(--background),0_0_0_4px_var(--ring)]",
+        "inline-flex items-center rounded-full outline-none [-webkit-tap-highlight-color:transparent] transition-[box-shadow,opacity] hover:opacity-90 focus-visible:shadow-[0_0_0_2px_var(--background),0_0_0_4px_var(--ring)] data-[state=open]:shadow-[0_0_0_2px_var(--background),0_0_0_4px_var(--ring)]",
         triggerVariant === "sidebar" && "w-full min-w-0 gap-2.5 rounded-lg p-1.5 text-left",
         triggerVariant === "sidebar" && !showsSidebarIdentity && "justify-center gap-0",
         classNames?.trigger,

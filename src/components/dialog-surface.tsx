@@ -15,7 +15,6 @@ import { DIALOG_DEFAULT_COPY, DIALOG_TEXT_SWAP_OFFSET_EM } from "../constants/di
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
 import { cn } from "../lib/utils.js"
 import { ARC_BLUR, ARC_DURATION, ARC_EASE } from "../motion/arc-tokens.js"
-import { MotionSlot } from "../motion/motion-slot.js"
 import { ControlButton } from "./control-button.js"
 
 /** Arc's overlay: a near-black scrim at 46% with a 7px backdrop blur where the engine supports it. */
@@ -102,7 +101,7 @@ export function DialogSurfaceCloseButton({
   )
   return (
     <Close data-slot="dialog-close" asChild>
-      {placement === "viewport" ? button : <MotionSlot kind="delayed-pop">{button}</MotionSlot>}
+      {button}
     </Close>
   )
 }

@@ -2,8 +2,8 @@
 
 /**
  * Internal primitive of Arc's Dropdown menu (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): Arc's raised
- * panel, item rows, danger tone, separators, placement defaults and staggered item entrance on its tokens, with
- * beez-ui's reveal from the trigger edge and the highlight that glides between items with the keyboard. Internal: the
+ * panel, item rows, danger tone, separators, placement defaults and Arc's motion: the panel grows from the trigger
+ * edge, items rise in staggered, and the highlight glides for the pointer and jumps for the keyboard. Internal: the
  * Radix composition behind the public closed `DropdownMenu` and beez-ui's composite components; the package does not
  * export it.
  */
@@ -12,13 +12,18 @@ import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
 
 import {
   DROPDOWN_MENU_COLLISION_PADDING_PX,
+  DROPDOWN_MENU_MOTION,
   DROPDOWN_MENU_SIDE_OFFSET_PX,
 } from "../../constants/dropdown-menu.js"
 import { GlideSlot } from "../../motion/glide-slot.js"
+import { ArcFloatingSlot } from "../../motion/arc-floating-slot.js"
 import { MotionSlot } from "../../motion/motion-slot.js"
 import { MotionPresence, MotionOpenProvider, useMotionOpenState } from "../../motion/presence.js"
 import { cn } from "../../lib/utils.js"
 import { CheckIcon } from "lucide-react"
+
+/** Arc's menu always enters and leaves the same way. */
+const resolveDropdownMenuMotion = () => DROPDOWN_MENU_MOTION
 
 /**
  * Arc's menu panel on its tokens. It also sets the direction its items rise in from (`--menu-item-offset-*`, toward
@@ -96,7 +101,7 @@ function DropdownMenuContent({
   }
   return (
     <DropdownMenuPrimitive.Portal forceMount><MotionPresence scope="dropdown-menu" forceMount={props.forceMount}>
-      <MotionSlot kind="surface"><GlideSlot preset="menu"><DropdownMenuPrimitive.Content forceMount
+      <ArcFloatingSlot motion={resolveDropdownMenuMotion}><GlideSlot preset="menu"><DropdownMenuPrimitive.Content forceMount
         data-slot="dropdown-menu-content"
         sideOffset={sideOffset}
         align={align}
@@ -109,7 +114,7 @@ function DropdownMenuContent({
         )}
         {...props}
         onClick={stopClickAtPanel}
-      /></GlideSlot></MotionSlot>
+      /></GlideSlot></ArcFloatingSlot>
     </MotionPresence></DropdownMenuPrimitive.Portal>
   )
 }
