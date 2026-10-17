@@ -11,7 +11,7 @@ import type { ComponentProps } from "react"
 import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar"
 import { AnimatePresence, motion } from "motion/react"
 
-import { AVATAR_STATUS_HIDDEN_SCALE } from "../../constants/avatar.js"
+import { AVATAR_IMAGE_REFERRER_POLICY, AVATAR_STATUS_HIDDEN_SCALE } from "../../constants/avatar.js"
 import type { AvatarSize, AvatarStatus } from "../../constants/avatar.js"
 import { usePrefersReducedMotion } from "../../hooks/use-prefers-reduced-motion.js"
 import { cn } from "../../lib/utils.js"
@@ -103,6 +103,7 @@ function AvatarImage({ alt = "", className, src, ...props }: AvatarImageProps) {
         src={src ?? undefined}
         loading="lazy"
         decoding="async"
+        referrerPolicy={AVATAR_IMAGE_REFERRER_POLICY}
         {...props}
       />
     </MotionSlot>

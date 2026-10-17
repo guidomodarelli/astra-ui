@@ -4,6 +4,10 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+### Fixed
+
+- Las fotos de `Avatar`, `AvatarGroup` y `AccountMenu` se piden sin `Referer` (`referrerPolicy="no-referrer"`), así cargan las fotos de perfil de Google que antes se rechazaban y quedaban las iniciales.
+
 ## [3.0.0] - 2026-10-16
 
 ### Added
