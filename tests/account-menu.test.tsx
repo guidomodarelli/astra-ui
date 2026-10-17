@@ -77,6 +77,12 @@ describe("AccountMenu", () => {
     expect(screen.getAllByText("AL", { ignore: "[aria-hidden=true]" })).toHaveLength(1);
   });
 
+  it("requests the account photo without a referrer", () => {
+    const { container } = render(<AccountMenu {...ACCOUNT} image="/profile.png" status="authenticated" onSignOut={vi.fn()} />);
+
+    expect(container.querySelector("img")).toHaveAttribute("referrerpolicy", "no-referrer");
+  });
+
   it("applies the class names of every trigger and menu part", async () => {
     const user = userEvent.setup();
     render(

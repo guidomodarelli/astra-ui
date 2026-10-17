@@ -1,4 +1,5 @@
 /** Copy and options of Arc's Avatar and Avatar group. */
+import type { HTMLAttributeReferrerPolicy } from "react"
 
 /** Presence an avatar can show with Arc's status dot. */
 export type AvatarStatus = "online" | "offline"
@@ -8,6 +9,13 @@ export type AvatarSize = "sm" | "md" | "lg" | "xl"
 
 /** Sizes an avatar group accepts for its avatars and overflow chip. */
 export type AvatarGroupSize = "sm" | "md" | "lg"
+
+/**
+ * Referrer policy of avatar photos. They are usually hosted by an identity provider (Google, GitHub), and Google rejects
+ * some photos requested with a cross-site `Referer`, which left the avatar on its initials. Omitting the referrer also
+ * keeps the consumer's page private. A consumer can still pass its own `referrerPolicy`.
+ */
+export const AVATAR_IMAGE_REFERRER_POLICY = "no-referrer" satisfies HTMLAttributeReferrerPolicy
 
 /** Default Spanish labels read by assistive technology for each presence. */
 export const AVATAR_STATUS_LABEL = {

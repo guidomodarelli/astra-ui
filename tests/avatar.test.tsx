@@ -85,6 +85,25 @@ describe("Avatar", () => {
     expect(nextImage).toHaveAttribute("height", "88");
   });
 
+  it("should request the photo without a referrer through the native, default and Next image adapters", () => {
+    // Arrange
+    const sources = [
+      <Avatar key="native" name="Perfil" src="/profile.png" />,
+      <BeezUIProvider key="default"><Avatar name="Perfil" src="https://images.unsplash.com/photo-example" /></BeezUIProvider>,
+      <NextBeezUIProvider key="next"><Avatar name="Perfil" src="/profile.png" /></NextBeezUIProvider>,
+    ];
+
+    for (const avatar of sources) {
+      // Act
+      const { unmount } = render(avatar);
+      const image = screen.getByRole("img", { name: "Perfil" }).querySelector("img")!;
+
+      // Assert: identity providers such as Google reject some photos requested with a cross-site Referer.
+      expect(image).toHaveAttribute("referrerpolicy", "no-referrer");
+      unmount();
+    }
+  });
+
   it("should draw a custom fallback and corner badge and forward native span attributes", () => {
     // Arrange
     render(
