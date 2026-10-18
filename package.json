@@ -356,6 +356,7 @@
     "check": "pnpm build && pnpm lint && pnpm typecheck:src && pnpm typecheck:tests && pnpm typecheck:stories && pnpm exec vitest run",
     "lint": "oxlint",
     "test:browser": "pnpm build && playwright test",
+    "test:browser:cleanup": "node scripts/playwright-orphan-cleanup.js",
     "build": "node scripts/build.js",
     "prepack": "pnpm build",
     "prepublishOnly": "beez-rp guard-publish",
