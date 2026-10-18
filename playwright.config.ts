@@ -11,9 +11,9 @@ export default defineConfig({
   testMatch: "**/*.spec.ts",
   use: { baseURL: `http://127.0.0.1:${VITE_PORT}` },
   timeout: 60000,
-  // Closes WebKit helpers that killed runs leave behind on Windows; see scripts/playwright-orphan-cleanup.js.
-  globalSetup: "./scripts/playwright-orphan-cleanup.js",
-  globalTeardown: "./scripts/playwright-orphan-cleanup.js",
+  // Closes WebKit helpers that killed runs leave behind on Windows (see @astra-kit/cleaner).
+  globalSetup: "@astra-kit/cleaner/playwright/global-setup",
+  globalTeardown: "@astra-kit/cleaner/playwright/global-teardown",
   webServer: [
     { command: `node node_modules/vite/bin/vite.js --config tests/browser/vite.config.ts --port ${VITE_PORT} --strictPort`, port: VITE_PORT, reuseExistingServer: false },
     { command: `node node_modules/next/dist/bin/next dev tests/next-app --port ${NEXT_PORT}`, port: NEXT_PORT, reuseExistingServer: false, timeout: 120000 },
