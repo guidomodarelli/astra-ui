@@ -19,6 +19,7 @@ const OPEN_CONTEXTS = {
   popover: createContext(true),
   "hover-card": createContext(true),
   tooltip: createContext(true),
+  select: createContext(true),
 };
 type MotionScope = keyof typeof OPEN_CONTEXTS;
 
@@ -34,6 +35,16 @@ export function MotionOpenProvider({
 }) {
   const Context = OPEN_CONTEXTS[scope];
   return <Context.Provider value={open}>{children}</Context.Provider>;
+}
+
+/**
+ * Reads the owning primitive's visibility, for content that Radix keeps mounted while closed and so cannot be
+ * retained by `MotionPresence`.
+ * @param scope - The primitive whose visibility is read.
+ * @returns Whether that primitive is open.
+ */
+export function useMotionOpen(scope: MotionScope): boolean {
+  return useContext(OPEN_CONTEXTS[scope]);
 }
 
 /** Preserves the primitive's controlled/uncontrolled open contract. */

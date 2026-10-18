@@ -33,7 +33,7 @@ const RICH_LINK_EDITOR_CLASS_NAMES = {
   editorLink:
     "cursor-pointer rounded-[0.2rem] font-medium text-primary underline decoration-[0.08em] underline-offset-[0.18em] transition-colors hover:text-[color-mix(in_oklab,var(--primary)_72%,var(--foreground))] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
   popover: "gap-3",
-  editForm: "grid gap-3 animate-in fade-in slide-in-from-bottom-1 duration-200",
+  editForm: "grid gap-3 animate-in fade-in slide-in-from-bottom-1 duration-(--duration-standard) ease-(--ease-enter)",
   actions: "flex flex-wrap items-center gap-2",
   label: "grid gap-[0.35rem] text-[0.85rem] font-medium text-muted-foreground",
   input:

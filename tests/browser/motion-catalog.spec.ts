@@ -99,7 +99,7 @@ test("should reveal popovers and hover cards from their trigger", async ({ page 
   await expectSettled(page.locator("[data-slot=hover-card-content]"));
 });
 
-test("should open the menu with motion and glide between its items", async ({ page }) => {
+test("should open the menu with motion and glide its highlight with the pointer", async ({ page }) => {
   const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
   await page.getByRole("button", { name: "Más opciones" }).click();
@@ -107,7 +107,8 @@ test("should open the menu with motion and glide between its items", async ({ pa
   await expect(menu).toBeVisible();
   await page.getByRole("menuitem", { name: "Mover a archivo" }).hover();
   await expect(page.getByRole("menuitem", { name: "Mover a archivo" })).toBeFocused();
-  await page.keyboard.press("ArrowDown");
+  // Arc's highlight glides between items for the pointer.
+  await page.getByRole("menuitem", { name: "Mover a papelera" }).hover();
   await expect(page.getByRole("menuitem", { name: "Mover a papelera" })).toBeFocused();
   await expect.poll(motion.glides).toContain("dropdown-menu-content");
   await expectSettled(menu);
@@ -199,7 +200,7 @@ test("should keep the input group and textarea in place when they turn invalid",
   await expectSettled(page.getByRole("textbox", { name: "Nota" }));
 });
 
-test("should fade the form message in without blur and keep the invalid control in place", async ({ page }) => {
+test("should rise the form message out of a blur and keep the invalid control in place", async ({ page }) => {
   const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
   await waitForSettledLayout(page.locator("[data-slot=form-control]"));
@@ -211,8 +212,7 @@ test("should fade the form message in without blur and keep the invalid control 
   await expect(message).toBeVisible();
   await expect
     .poll(() => motion.properties({ slot: "form-message" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform"]));
-  expect(await motion.properties({ slot: "form-message" })).not.toContain("filter");
+    .toEqual(expect.arrayContaining(["opacity", "transform", "filter"]));
   await expect(page.getByRole("textbox", { name: "Nombre" })).toHaveAttribute("aria-invalid", "true");
   expectStill(await controlBoxes);
   expect(await motion.properties({ slot: "form-control" })).not.toContain("transform");
@@ -220,33 +220,25 @@ test("should fade the form message in without blur and keep the invalid control 
   await expectSettled(page.getByRole("textbox", { name: "Nombre" }));
 });
 
-test("should fade an inline alert in without blur and settle it", async ({ page }) => {
+test("should show an inline alert without an entrance, as Arc does outside its presence", async ({ page }) => {
   const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
   await page.getByRole("button", { name: "Mostrar aviso" }).click();
   const notice = page.locator("[data-slot=alert]");
   await expect(notice).toContainText("Cambios guardados");
-  await expect
-    .poll(() => motion.properties({ slot: "alert" }))
-    .toEqual(expect.arrayContaining(["opacity", "transform"]));
-  expect(await motion.properties({ slot: "alert" })).not.toContain("filter");
+  expect(await motion.properties({ slot: "alert" })).toEqual([]);
   await expectSettled(notice);
 });
 
-test("should fade every option of a long select in together, without blur", async ({ page }) => {
+test("should show every option of a long select at once, without per-option motion", async ({ page }) => {
   const motion = await recordMotion(page);
   await page.goto("/motion-catalog.html");
   await page.getByRole("combobox", { name: "País" }).click();
   await expect(page.getByRole("option", { name: "País 1", exact: true })).toBeVisible();
   await expect
-    .poll(async () => (await motion.properties({ slot: "select-item" })).length)
-    .toBeGreaterThan(0);
-  expect(await motion.properties({ slot: "select-item" })).not.toContain("filter");
-  // Options arrive with the list: none waits behind a stagger delay.
-  const delays = await page.locator("[data-slot=select-item]").evaluateAll((items) =>
-    items.flatMap((item) => item.getAnimations().map((animation) => Number(animation.effect?.getTiming().delay ?? 0))),
-  );
-  expect(delays.every((delay) => delay === 0)).toBe(true);
+    .poll(() => motion.properties({ slot: "select-content" }))
+    .toEqual(expect.arrayContaining(["opacity", "transform"]));
+  expect(await motion.properties({ slot: "select-item" })).toEqual([]);
   const firstOption = page.getByRole("option", { name: "País 1", exact: true });
   await expectSettled(firstOption);
   await page.keyboard.press("ArrowDown");
@@ -314,7 +306,9 @@ test("should run every catalog interaction without motion when it is reduced", a
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(await motion.glides()).toEqual([]);
-  expect(await motion.properties({})).toEqual([]);
+  // Arc keeps an instant fade for floating lists with reduced motion; nothing travels, scales or blurs.
+  const properties = await motion.properties({});
+  expect(properties.filter((property) => property !== "opacity")).toEqual([]);
 });
 
 test("should continue an interrupted thumb glide from where it is", async ({ page }) => {

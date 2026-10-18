@@ -23,7 +23,6 @@ import {
   PopoverAnchor,
   PopoverContent,
 } from "./primitives/popover.js";
-import { GlideSlot } from "../motion/glide-slot.js";
 import { cn } from "../lib/utils.js";
 
 import {
@@ -905,7 +904,7 @@ export function FilterQueryBar({
           }}
           onOpenAutoFocus={(event) => event.preventDefault()}
         >
-          <GlideSlot preset="suggestions"><ul
+          <ul
             aria-label={
               suggestions.some((suggestion) => suggestion.group === "value")
                 ? VALUE_GROUP_LABEL
@@ -956,7 +955,7 @@ export function FilterQueryBar({
                 </React.Fragment>
               );
             })}
-          </ul></GlideSlot>
+          </ul>
         </PopoverContent>
       </Popover>
       <span aria-live="polite" className="sr-only">

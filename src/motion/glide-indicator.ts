@@ -4,13 +4,8 @@
  * previous item and is removed once it lands, leaving the item's own styles in charge again.
  */
 import { animate, type AnimationPlaybackControlsWithThen } from "motion/react";
-import {
-  GLIDE_CONTINUITY_MS,
-  SPRING_HIGHLIGHT,
-  SPRING_LAYOUT,
-  SPRING_TABS,
-} from "./tokens.js";
-import { ARC_SPRING_MORPH } from "./arc-tokens.js";
+import { GLIDE_CONTINUITY_MS } from "./tokens.js";
+import { ARC_SPRING_MORPH, ARC_SPRING_SNAPPY } from "./arc-tokens.js";
 
 /** Which part of the active item carries the highlight that must travel. */
 type GlideSurface = "background" | "after";
@@ -27,17 +22,12 @@ export interface GlidePreset {
   attributes: string[];
   isActive: (item: Element) => boolean;
   surface: (container: HTMLElement) => GlideSurface;
-  spring:
-    | typeof SPRING_LAYOUT
-    | typeof SPRING_TABS
-    | typeof SPRING_HIGHLIGHT
-    | typeof ARC_SPRING_MORPH;
+  spring: typeof ARC_SPRING_MORPH | typeof ARC_SPRING_SNAPPY;
   /**
-   * Highlights that follow the pointer (menus, listboxes) jump straight to the hovered item:
-   * the pointer already marks the position, so a travelling copy would only trail behind it.
-   * The glide is kept for keyboard navigation.
+   * Arc's menu highlight glides between items for the pointer and jumps instantly for the
+   * keyboard, so a held arrow key never trails behind the focus.
    */
-  instantOnPointer?: boolean;
+  instantOnKeyboard?: boolean;
 }
 
 export const GLIDE_PRESETS = {
@@ -58,23 +48,14 @@ export const GLIDE_PRESETS = {
     surface: () => "background",
     spring: ARC_SPRING_MORPH,
   },
-  suggestions: {
-    itemSelector: '[role="option"]',
-    containerSelector: '[role="listbox"]',
-    attributes: ["aria-selected"],
-    isActive: (item) => item.getAttribute("aria-selected") === "true",
-    surface: () => "background",
-    spring: SPRING_HIGHLIGHT,
-    instantOnPointer: true,
-  },
   menu: {
-    itemSelector: '[role="menuitem"],[role="menuitemcheckbox"],[role="menuitemradio"],[role="option"]',
-    containerSelector: '[role="menu"],[role="listbox"]',
+    itemSelector: '[role="menuitem"],[role="menuitemcheckbox"],[role="menuitemradio"]',
+    containerSelector: '[role="menu"]',
     attributes: ["data-highlighted"],
     isActive: (item) => item.hasAttribute("data-highlighted"),
     surface: () => "background",
-    spring: SPRING_HIGHLIGHT,
-    instantOnPointer: true,
+    spring: ARC_SPRING_SNAPPY,
+    instantOnKeyboard: true,
   },
 } satisfies Record<string, GlidePreset>;
 
@@ -244,7 +225,7 @@ export function attachGlideIndicator(
   const onKeyDown = () => {
     isPointerDriven = false;
   };
-  if (preset.instantOnPointer) {
+  if (preset.instantOnKeyboard) {
     container.addEventListener("pointermove", onPointerMove);
     container.ownerDocument.addEventListener("keydown", onKeyDown, true);
   }
@@ -368,7 +349,7 @@ export function attachGlideIndicator(
         now - lastActiveSeenAt <= GLIDE_CONTINUITY_MS);
     lastActive = active;
     lastActiveSeenAt = Number.NEGATIVE_INFINITY;
-    if (isContinuous && !(preset.instantOnPointer && isPointerDriven)) glide(previous, active);
+    if (isContinuous && !(preset.instantOnKeyboard && !isPointerDriven)) glide(previous, active);
     else settle();
   });
   observer.observe(container, {

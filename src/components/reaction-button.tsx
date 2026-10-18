@@ -1,29 +1,27 @@
 "use client";
 
 /**
- * Toggle for likes and similar reactions: the icon pops when the viewer reacts and the counter
- * rolls in the direction of the change. The (optimistic) reaction state is owned by the caller.
+ * Toggle for likes and similar reactions: the icon gets Arc's kick (https://uiarc.dev, MIT License, see
+ * THIRD_PARTY_NOTICES.md) when the viewer reacts and the counter rolls in the direction of the change. The (optimistic) reaction state is owned by the caller.
  */
-import type { ComponentType, CSSProperties, MouseEvent, SVGProps } from "react";
+import { useEffect, useRef, type ComponentType, type CSSProperties, type MouseEvent, type SVGProps } from "react";
 import { HeartIcon } from "lucide-react";
-import { motion, type Variants } from "motion/react";
+import { animate, motion, useMotionValue, type AnimationPlaybackControls } from "motion/react";
 
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js";
 import { cn } from "../lib/utils.js";
-import { MOTION_EASE, MOTION_TIMING } from "../motion/tokens.js";
 import { AnimatedCount } from "./animated-count.js";
 import { ControlButton } from "./control-button.js";
 
-/** Peak scale the icon reaches while popping into the active state. */
-const REACTION_ICON_POP_SCALE = 1.28;
-
-const REACTION_ICON_VARIANTS: Variants = {
-  idle: { scale: 1 },
-  active: {
-    scale: [1, REACTION_ICON_POP_SCALE, 1],
-    transition: { duration: MOTION_TIMING.pop, ease: MOTION_EASE },
-  },
-};
+/**
+ * Arc's kick: an impulse rather than a keyframe. The icon starts at rest with velocity, overshoots and settles, and a
+ * quick second reaction adds to the running motion instead of restarting it.
+ */
+const REACTION_KICK = { type: "spring", stiffness: 420, damping: 17 } as const;
+/** Scale velocity, per second, the kick gives the icon. */
+const REACTION_KICK_SCALE_VELOCITY = 11;
+/** Rotation velocity, in degrees per second, the kick gives the icon. */
+const REACTION_KICK_ROTATE_VELOCITY = -420;
 
 /** Exposes the active color to the icon classes. */
 type ReactionButtonStyle = CSSProperties & { "--beez-reaction-active-color"?: string };
@@ -48,9 +46,8 @@ export interface ReactionButtonProps {
 }
 
 /**
- * Renders an outline toggle button exposing its state with `aria-pressed`. The icon starts at
- * rest (`initial={false}`), so server-rendered and already-active reactions never pop on load;
- * only a change to active does, and not at all with reduced motion.
+ * Renders an outline toggle button exposing its state with `aria-pressed`. Server-rendered and already-active
+ * reactions never kick on load; only a change to active does, and not at all with reduced motion.
  * @param props - Accessible name, state, count, click handler and optional icon.
  * @returns The reaction button.
  */
@@ -66,6 +63,28 @@ export function ReactionButton({
   className,
 }: ReactionButtonProps) {
   const shouldReduceMotion = usePrefersReducedMotion();
+  const scale = useMotionValue(1);
+  const rotate = useMotionValue(0);
+  const wasActive = useRef(isActive);
+  const kickControls = useRef<AnimationPlaybackControls[]>([]);
+  useEffect(() => {
+    const becameActive = isActive && !wasActive.current;
+    wasActive.current = isActive;
+    if (shouldReduceMotion) {
+      // Turning reduced motion on mid-kick stops it and puts the icon straight back at rest.
+      kickControls.current.forEach((controls) => controls.stop());
+      kickControls.current = [];
+      scale.jump(1);
+      rotate.jump(0);
+      return;
+    }
+    if (!becameActive) return;
+    // The kick is not stopped when the reaction is undone: the icon always settles back at rest.
+    kickControls.current = [
+      animate(scale, 1, { ...REACTION_KICK, velocity: scale.getVelocity() + REACTION_KICK_SCALE_VELOCITY }),
+      animate(rotate, 0, { ...REACTION_KICK, velocity: rotate.getVelocity() + REACTION_KICK_ROTATE_VELOCITY }),
+    ];
+  }, [isActive, rotate, scale, shouldReduceMotion]);
   const activeColorStyle: ReactionButtonStyle | undefined = activeColor ? { "--beez-reaction-active-color": activeColor } : undefined;
 
   return (
@@ -82,11 +101,9 @@ export function ReactionButton({
       variant="outline"
     >
       <motion.span
-        animate={isActive && !shouldReduceMotion ? "active" : "idle"}
         aria-hidden
         className="inline-flex origin-center items-center justify-center"
-        initial={false}
-        variants={REACTION_ICON_VARIANTS}
+        style={{ scale, rotate }}
       >
         <Icon className="size-4 transition-[fill,color] group-data-active/reaction:fill-current group-data-active/reaction:text-[var(--beez-reaction-active-color,var(--destructive))]" />
       </motion.span>

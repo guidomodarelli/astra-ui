@@ -1,6 +1,5 @@
 "use client"
 
-import { MotionSlot } from "../motion/motion-slot.js"
 import { cn } from "../lib/utils.js"
 import { Toaster } from "./toaster.js"
 import type { ToasterProps } from "sonner"
@@ -21,16 +20,16 @@ const ThemedToaster = ({ theme, className, ...props }: ToasterProps) => {
       className={cn("toaster group", className)}
       icons={{
         success: (
-          <MotionSlot kind="selection"><CircleCheck className="size-4" /></MotionSlot>
+          <CircleCheck className="size-4" />
         ),
         info: (
-          <MotionSlot kind="selection"><Info className="size-4" /></MotionSlot>
+          <Info className="size-4" />
         ),
         warning: (
-          <MotionSlot kind="selection"><TriangleAlert className="size-4" /></MotionSlot>
+          <TriangleAlert className="size-4" />
         ),
         error: (
-          <MotionSlot kind="selection"><OctagonAlert className="size-4" /></MotionSlot>
+          <OctagonAlert className="size-4" />
         ),
         loading: (
           <Loader className="size-4 animate-spin" />

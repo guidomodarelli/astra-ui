@@ -24,7 +24,6 @@ import {
   ARC_SWAP_EXIT_TRANSITION,
   ARC_SWAP_REST,
 } from "../motion/arc-swap.js"
-import { MotionSlot } from "../motion/motion-slot.js"
 import { useMorphWidth } from "../motion/use-morph-width.js"
 
 /** Arc's semantic tones. */
@@ -181,7 +180,6 @@ function Badge({ className, tone = "neutral", size = "md", icon, children, ...pr
     )
 
   return (
-    <MotionSlot kind="fade">
       <span
         data-slot="badge"
         data-tone={tone}
@@ -191,7 +189,6 @@ function Badge({ className, tone = "neutral", size = "md", icon, children, ...pr
       >
         {content}
       </span>
-    </MotionSlot>
   )
 }
 

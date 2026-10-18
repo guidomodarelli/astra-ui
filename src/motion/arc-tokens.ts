@@ -29,6 +29,9 @@ export const ARC_SPRING_SMOOTH = { type: "spring", visualDuration: 0.4, bounce: 
 /** Shape morphs and width changes that follow new content. */
 export const ARC_SPRING_MORPH = { type: "spring", visualDuration: 0.42, bounce: 0.16 } as const;
 
+/** Arc's CSS spring (`--ease-spring` over `--duration-spring`) as a Motion spring: a gentle overshoot that settles. */
+export const ARC_SPRING_CSS = { type: "spring", visualDuration: 0.34, bounce: 0.15 } as const;
+
 /** Stagger steps in seconds; keep a whole staggered entrance under roughly 0.4s. */
 export const ARC_STAGGER = {
   char: 0.016,

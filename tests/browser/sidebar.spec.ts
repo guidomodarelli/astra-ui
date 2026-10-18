@@ -23,11 +23,12 @@ const RAIL_MORPH_MAX_DURATION_MS = 900;
 /** Fewest in-between frames a real morph paints; a jump paints none. */
 const RAIL_MORPH_MIN_INTERMEDIATE_FRAMES = 5;
 /**
- * Fastest the rail width may change between two painted frames, in pixels per millisecond: about three times the
- * spring's peak speed of roughly 1 px/ms, measured against the time between frames so a late frame or WebKit's
- * uneven frame timestamps are not mistaken for a jump, while a snap across the rail in one frame still is.
+ * Fastest the rail width may change across the two frame intervals that end at a sample, in pixels per millisecond.
+ * The spring peaks at about 0.95 px/ms, and steps measured over that window stay below about 0.65 px/ms; the bound
+ * leaves room above both while allowing at most about 42 px for a one-frame jump at 60 Hz, a fraction of the 188 px
+ * morph.
  */
-const RAIL_MAX_SPEED_PX_PER_MS = 3;
+const RAIL_MAX_SPEED_PX_PER_MS = 1.25;
 /** Width the rail crosses halfway through a morph, where an interrupted toggle reverses it. */
 const RAIL_MIDPOINT_WIDTH_PX = (EXPANDED_WIDTH_PX + COLLAPSED_WIDTH_PX) / 2;
 
@@ -38,7 +39,11 @@ type HorizontalBox = { left: number; right: number; width: number };
 
 /** Layout of the desktop rail and what it holds or pushes, captured on one painted frame. */
 type RailFrame = {
-  /** Frame timestamp, in milliseconds. */
+  /**
+   * When the frame was sampled, in milliseconds on `performance.now()`: the clock Motion samples its springs on. The
+   * animation frame timestamp is not used because WebKit can run frame callbacks well after it, so it drifts from the
+   * time the spring was actually sampled at.
+   */
   time: number;
   rail: HorizontalBox;
   panel: HorizontalBox;
@@ -69,7 +74,8 @@ function sampleRailFrames(page: Page, reverseBelowWidthPx?: number): Promise<Rai
         const frames: RailFrame[] = [];
         let hasReversed = false;
         let start: number | null = null;
-        const tick = (time: number) => {
+        const tick = () => {
+          const time = performance.now();
           start ??= time;
           const frame = {
             time,
@@ -111,12 +117,20 @@ function expectUnclippedRail(frames: RailFrame[]) {
 
 /**
  * Asserts that the rail width never jumps between two painted frames.
+ *
+ * Motion updates the width in its own animation frame callback, which can run before or after the sampler's in the
+ * same frame, so the width read on a frame was produced somewhere between the previous sample and this one. The
+ * spring may therefore have advanced for up to the two frame intervals that end at this sample, and the step is
+ * bounded against that span. The first step has no earlier interval, because the spring can start a frame before the
+ * first sample, so its own interval stands in for the missing one.
  * @param frames - Sampled rail frames.
  */
 function expectContinuousRail(frames: RailFrame[]) {
   for (let index = 1; index < frames.length; index++) {
     const step = Math.abs(frames[index].rail.width - frames[index - 1].rail.width);
-    const elapsedMs = frames[index].time - frames[index - 1].time;
+    const intervalMs = frames[index].time - frames[index - 1].time;
+    const previousIntervalMs = index > 1 ? frames[index - 1].time - frames[index - 2].time : intervalMs;
+    const elapsedMs = intervalMs + previousIntervalMs;
     expect(step).toBeLessThanOrEqual(RAIL_MAX_SPEED_PX_PER_MS * elapsedMs + LAYOUT_TOLERANCE_PX);
   }
 }
@@ -283,6 +297,26 @@ test.describe("desktop", () => {
     await expect(settings.locator('[data-slot="sidebar-menu-active-indicator"]')).toHaveCount(1);
     await expect(page.getByRole("button", { name: "Inicio" })).not.toHaveAttribute("aria-current");
   });
+
+  for (const reducedMotion of ["no-preference", "reduce"] as const) {
+    test(`should stop clipping an open submenu once it settles so its focus ring shows (${reducedMotion})`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion });
+      await page.goto("/sidebar.html");
+      const projects = page.getByRole("button", { name: "Proyectos" });
+      await projects.click();
+      const submenuRegion = page.locator('[data-slot="sidebar-menu-sub"]').locator("..");
+      await expect(submenuRegion).toHaveCSS("opacity", "1");
+      await expect(submenuRegion).toHaveCSS("overflow", "visible");
+
+      await projects.focus();
+      await page.keyboard.press("Tab");
+      await expect(page.locator('[data-slot="sidebar-menu-sub"]').getByRole("button", { name: "Beez" })).toBeFocused();
+      await expect(submenuRegion).toHaveCSS("overflow", "visible");
+
+      await projects.click();
+      await expect(page.locator('[data-slot="sidebar-menu-sub"]')).toHaveCount(0);
+    });
+  }
 
   test("should open the rail when a group is selected from the icon rail", async ({ page }) => {
     await page.goto("/sidebar.html");

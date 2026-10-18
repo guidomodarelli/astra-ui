@@ -6,11 +6,17 @@ import { AnimatePresence, motion, useIsPresent } from "motion/react";
 
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js";
 import { cn } from "../lib/utils.js";
-import { MOTION_EASE, MOTION_EASE_IN_OUT, MOTION_TIMING } from "../motion/tokens.js";
+import { MOTION_EASE, MOTION_EASE_STANDARD, MOTION_TIMING, SPRING_PANEL } from "../motion/tokens.js";
 
+/** Arc's accordion: the height springs without overshoot while the content fades in. */
 const COLLAPSE_TRANSITION = {
-  height: { duration: MOTION_TIMING.collapse, ease: MOTION_EASE_IN_OUT },
+  height: SPRING_PANEL,
   opacity: { duration: MOTION_TIMING.panel, ease: MOTION_EASE },
+} as const;
+/** Arc's accordion closes on the same spring and fades out faster than it came in. */
+const COLLAPSE_EXIT_TRANSITION = {
+  height: SPRING_PANEL,
+  opacity: { duration: MOTION_TIMING.fast, ease: MOTION_EASE_STANDARD },
 } as const;
 /** Reduced motion applies the height at once but keeps the short fade, so exits always settle. */
 const REDUCED_MOTION_COLLAPSE_TRANSITION = {
@@ -56,7 +62,11 @@ function AnimatedCollapseRegion({ children, className, id, isEntering }: Animate
       className={cn(isSettled ? "overflow-visible" : "overflow-hidden", className)}
       initial={{ height: 0, opacity: 0 }}
       animate={{ height: "auto", opacity: 1 }}
-      exit={{ height: 0, opacity: 0 }}
+      exit={{
+        height: 0,
+        opacity: 0,
+        transition: shouldReduceMotion ? REDUCED_MOTION_COLLAPSE_TRANSITION : COLLAPSE_EXIT_TRANSITION,
+      }}
       transition={shouldReduceMotion ? REDUCED_MOTION_COLLAPSE_TRANSITION : COLLAPSE_TRANSITION}
       onAnimationStart={() => setIsSettled(false)}
       onAnimationComplete={() => setIsSettled(true)}

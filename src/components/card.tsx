@@ -30,7 +30,6 @@ import type { CardHeadingLevel } from "../constants/card.js"
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
 import { cn } from "../lib/utils.js"
 import { ARC_BLUR, ARC_DURATION, ARC_EASE, ARC_SPRING_SMOOTH, ARC_SPRING_SNAPPY } from "../motion/arc-tokens.js"
-import { MotionSlot } from "../motion/motion-slot.js"
 import { useAttachedElement } from "../motion/use-attached-element.js"
 
 export type { CardHeadingLevel }
@@ -109,10 +108,11 @@ const MOTION_HEADING = {
 /** Splits a status into words and the spaces between them, so each word can rise on its own. */
 const STATUS_WORD_SEPARATOR = /(\s+)/
 
-/** Card surface. The outline is a 1px ring in the border token, so the hover shadow can stack on it, and isolation
- * keeps the rounded clip on media while the card lifts (Safari drops it otherwise). */
+/** Card surface. The outline is a 1px ring in the border token, so Arc's hover shadow (`--shadow-raised`, arriving
+ * with the 2px lift and the strong border) stacks on it, and isolation keeps the rounded clip on media while the card
+ * lifts (Safari drops it otherwise). */
 const cardClassName =
-  "group/card relative isolate flex min-w-0 flex-col overflow-hidden rounded-(--radius-panel) bg-surface text-sm text-foreground ring-1 ring-border has-[[data-slot=card-trigger]:focus-visible]:ring-border-strong motion-safe:transition-[translate] motion-safe:duration-(--duration-spring) motion-safe:ease-(--ease-spring) hover-fine:has-[a,button]:motion-safe:-translate-y-0.5"
+  "group/card relative isolate flex min-w-0 flex-col overflow-hidden rounded-(--radius-panel) bg-surface text-sm text-foreground ring-1 ring-border has-[[data-slot=card-trigger]:focus-visible]:ring-border-strong transition-[box-shadow] duration-(--duration-standard) ease-(--ease-standard) motion-safe:transition-[translate,box-shadow] motion-safe:duration-(--duration-spring) motion-safe:ease-(--ease-spring) hover-fine:has-[a,button]:ring-border-strong hover-fine:has-[a,button]:shadow-(--shadow-raised) hover-fine:has-[a,button]:motion-safe:-translate-y-0.5"
 
 const titleClassName =
   "m-0 w-fit max-w-full font-sans text-lg leading-[1.3] font-medium tracking-(--tracking-body) text-balance"
@@ -319,7 +319,6 @@ function Card({
   ) : null
 
   const card = (
-    <MotionSlot kind="card">
       <motion.article
         {...(props as HTMLMotionProps<"article">)}
         ref={attachCard}
@@ -377,7 +376,6 @@ function Card({
           {footerRow}
         </div>
       </motion.article>
-    </MotionSlot>
   )
 
   if (!hasQuickLook) return card
