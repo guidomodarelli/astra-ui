@@ -2,12 +2,15 @@
  * @module playwright-orphan-cleanup Closes Playwright WebKit helpers left behind by runs that were killed on Windows.
  *
  * When a Playwright run dies abruptly (TerminateProcess, a closed session, an agent timeout), Windows does not kill
- * its children and `globalTeardown` never runs: `WebKitNetworkProcess.exe` and `WebKitWebProcess.exe` stay alive
- * without a parent and keep the repository folder locked as their working directory. Wired as `globalSetup` and
- * `globalTeardown` of the Playwright configurations, and runnable by hand with `pnpm test:browser:cleanup`.
+ * its children and `globalTeardown` never runs: WebKit's `Playwright.exe` and its `WebKitGPUProcess.exe`,
+ * `WebKitNetworkProcess.exe` and `WebKitWebProcess.exe` helpers stay alive without a parent and keep the repository
+ * folder locked as their working directory. Wired as `globalSetup` and `globalTeardown` of the Playwright
+ * configurations, and runnable by hand with `pnpm test:browser:cleanup`.
  *
  * It only closes helpers that match both conditions: the executable lives inside an `ms-playwright` folder and its
- * parent process no longer exists. A helper whose parent is alive belongs to a running browser and is never touched.
+ * parent process no longer exists (or is itself being closed as an orphan). Windows reuses process identifiers, so a
+ * live process that started after the helper cannot be its parent. A helper whose parent is alive belongs to a running
+ * browser and is never touched; when either start time is unknown, the parent is assumed alive.
  */
 import { execFile } from "node:child_process";
 import { resolve } from "node:path";
@@ -28,13 +31,15 @@ const execFileAsync = promisify(execFile);
  * @property {number} processId - Process identifier.
  * @property {number} parentProcessId - Identifier of the process that started it, which may no longer exist.
  * @property {string | null} executablePath - Full executable path, or `null` when Windows does not expose it.
+ * @property {number | null} startedAtMs - Start time in Unix milliseconds, or `null` when Windows does not expose it.
  */
 
 /**
  * @typedef {object} OrphanCleanupDependencies
  * @property {string} [platform] - Platform name, as `process.platform` reports it.
  * @property {() => Promise<WebKitProcess[]>} [listWebKitProcesses] - Lists the running WebKit helpers.
- * @property {() => Promise<Set<number>>} [listLiveProcessIds] - Lists every running process identifier.
+ * @property {() => Promise<Map<number, number | null>>} [listLiveProcesses] - Lists every running process: its start
+ * time in Unix milliseconds (or `null` when unknown), by identifier.
  * @property {(processId: number) => void} [terminateProcess] - Closes one process; throws when it cannot.
  * @property {(message: string) => void} [warn] - Reports a failure without stopping the run.
  */
@@ -52,16 +57,68 @@ function isInsidePlaywrightBrowsersFolder(executablePath) {
 }
 
 /**
- * Picks the WebKit helpers that a run may close: Playwright's own executables whose parent no longer exists.
+ * Tells whether the process that started a WebKit helper is still running. A live process that started after the
+ * helper reused its parent's identifier, so it is not the parent. When either start time is unknown, the parent is
+ * assumed alive and the helper is kept.
+ * @param {WebKitProcess} webKitProcess - Running WebKit helper.
+ * @param {Map<number, number | null>} liveProcesses - Start time of every running process, by identifier.
+ * @returns {boolean} `true` when its parent is running.
+ */
+function isParentAlive(webKitProcess, liveProcesses) {
+  if (!liveProcesses.has(webKitProcess.parentProcessId)) return false;
+  const parentStartedAtMs = liveProcesses.get(webKitProcess.parentProcessId);
+  if (parentStartedAtMs == null || webKitProcess.startedAtMs == null) return true;
+  return parentStartedAtMs <= webKitProcess.startedAtMs;
+}
+
+/**
+ * Picks the WebKit helpers that a run may close: Playwright's own executables whose parent no longer exists, plus
+ * the Playwright helpers started by one of those orphans, whose parent is about to be closed too.
  * @param {WebKitProcess[]} processes - Running WebKit helpers.
- * @param {Set<number>} liveProcessIds - Identifiers of every running process.
+ * @param {Map<number, number | null>} liveProcesses - Start time of every running process, by identifier.
  * @returns {number[]} Identifiers of the orphaned Playwright helpers, in input order.
  */
-export function selectOrphanedPlaywrightProcessIds(processes, liveProcessIds) {
-  return processes
-    .filter((webKitProcess) => isInsidePlaywrightBrowsersFolder(webKitProcess.executablePath))
-    .filter((webKitProcess) => !liveProcessIds.has(webKitProcess.parentProcessId))
-    .map((webKitProcess) => webKitProcess.processId);
+export function selectOrphanedPlaywrightProcessIds(processes, liveProcesses) {
+  const playwrightProcesses = processes.filter((webKitProcess) =>
+    isInsidePlaywrightBrowsersFolder(webKitProcess.executablePath),
+  );
+  const orphanedProcessIds = new Set();
+  let foundNewOrphan = true;
+  while (foundNewOrphan) {
+    foundNewOrphan = false;
+    for (const playwrightProcess of playwrightProcesses) {
+      if (orphanedProcessIds.has(playwrightProcess.processId)) continue;
+      if (
+        orphanedProcessIds.has(playwrightProcess.parentProcessId) ||
+        !isParentAlive(playwrightProcess, liveProcesses)
+      ) {
+        orphanedProcessIds.add(playwrightProcess.processId);
+        foundNewOrphan = true;
+      }
+    }
+  }
+  return playwrightProcesses
+    .map((playwrightProcess) => playwrightProcess.processId)
+    .filter((processId) => orphanedProcessIds.has(processId));
+}
+
+/**
+ * PowerShell function that turns a CIM `CreationDate` into Unix milliseconds, which survive `ConvertTo-Json` the same
+ * way on Windows PowerShell 5.1 and PowerShell 7. Returns `$null` when the date is missing.
+ */
+const UNIX_MILLISECONDS_FUNCTION =
+  "function ConvertTo-UnixMilliseconds($date) { if ($date) { ([DateTimeOffset]$date).ToUnixTimeMilliseconds() } else { $null } }";
+
+/** PowerShell calculated property that adds each process start time, in Unix milliseconds, as `StartedAtMs`. */
+const STARTED_AT_MS_PROPERTY = "@{ Name = 'StartedAtMs'; Expression = { ConvertTo-UnixMilliseconds $_.CreationDate } }";
+
+/**
+ * Reads a start time from a PowerShell row.
+ * @param {unknown} startedAtMs - Value printed for `StartedAtMs`.
+ * @returns {number | null} Start time in Unix milliseconds, or `null` when unknown.
+ */
+function parseStartedAtMs(startedAtMs) {
+  return typeof startedAtMs === "number" ? startedAtMs : null;
 }
 
 /**
@@ -88,27 +145,33 @@ async function queryPowerShellJson(command) {
 async function listWindowsWebKitProcesses() {
   const nameFilter = WEBKIT_HELPER_EXECUTABLES.map((executableName) => `Name='${executableName}'`).join(" OR ");
   const rows = await queryPowerShellJson(
-    `Get-CimInstance Win32_Process -Filter "${nameFilter}" | Select-Object ProcessId,ParentProcessId,ExecutablePath | ConvertTo-Json -Compress`,
+    `${UNIX_MILLISECONDS_FUNCTION}; Get-CimInstance Win32_Process -Filter "${nameFilter}" | Select-Object ProcessId,ParentProcessId,ExecutablePath,${STARTED_AT_MS_PROPERTY} | ConvertTo-Json -Compress`,
   );
   return rows.map((row) => {
-    const { ProcessId, ParentProcessId, ExecutablePath } = /** @type {Record<string, unknown>} */ (row);
+    const { ProcessId, ParentProcessId, ExecutablePath, StartedAtMs } = /** @type {Record<string, unknown>} */ (row);
     return {
       processId: Number(ProcessId),
       parentProcessId: Number(ParentProcessId),
       executablePath: typeof ExecutablePath === "string" ? ExecutablePath : null,
+      startedAtMs: parseStartedAtMs(StartedAtMs),
     };
   });
 }
 
 /**
- * Lists every running process identifier through CIM.
- * @returns {Promise<Set<number>>} Running process identifiers.
+ * Lists every running process and its start time through CIM.
+ * @returns {Promise<Map<number, number | null>>} Start time in Unix milliseconds of each running process, by identifier.
  */
-async function listWindowsLiveProcessIds() {
-  const processIds = await queryPowerShellJson(
-    "Get-CimInstance Win32_Process | Select-Object -ExpandProperty ProcessId | ConvertTo-Json -Compress",
+async function listWindowsLiveProcesses() {
+  const rows = await queryPowerShellJson(
+    `${UNIX_MILLISECONDS_FUNCTION}; Get-CimInstance Win32_Process | Select-Object ProcessId,${STARTED_AT_MS_PROPERTY} | ConvertTo-Json -Compress`,
   );
-  return new Set(processIds.map(Number));
+  return new Map(
+    rows.map((row) => {
+      const { ProcessId, StartedAtMs } = /** @type {Record<string, unknown>} */ (row);
+      return [Number(ProcessId), parseStartedAtMs(StartedAtMs)];
+    }),
+  );
 }
 
 /**
@@ -129,7 +192,7 @@ function describeError(error) {
 export async function cleanOrphanedPlaywrightProcesses({
   platform = process.platform,
   listWebKitProcesses = listWindowsWebKitProcesses,
-  listLiveProcessIds = listWindowsLiveProcessIds,
+  listLiveProcesses = listWindowsLiveProcesses,
   // On Windows `process.kill` calls TerminateProcess.
   terminateProcess = (processId) => process.kill(processId),
   warn = console.warn,
@@ -141,7 +204,7 @@ export async function cleanOrphanedPlaywrightProcesses({
     const webKitProcesses = await listWebKitProcesses();
     // The usual run finds no helpers, so it skips the full process scan.
     if (!webKitProcesses.length) return [];
-    orphanedProcessIds = selectOrphanedPlaywrightProcessIds(webKitProcesses, await listLiveProcessIds());
+    orphanedProcessIds = selectOrphanedPlaywrightProcessIds(webKitProcesses, await listLiveProcesses());
   } catch (error) {
     warn(`playwright-orphan-cleanup:listProcesses failed, skipping cleanup: ${describeError(error)}`);
     return [];
