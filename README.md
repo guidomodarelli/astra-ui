@@ -47,7 +47,7 @@ import { Avatar, Button, Calendar, DataTable } from "@astra-kit/ui";
 <Avatar name="Ana Núñez" src="/ana.jpg" />;
 ```
 
-Desde 3.0.0 los componentes adoptados de [Arc](https://uiarc.dev) usan la API pública de Arc: `Switch`, `Checkbox`, `RadioGroup`, `Badge`, `Avatar`, `AvatarGroup`, `Skeleton`, `Card`, `Alert`, `Tooltip`, `HoverCard`, `DropdownMenu`, `Select`, `Pagination`, `Calendar` y `Carousel` son componentes cerrados que se configuran por props (`items`, `options`, `members`, `content`, `title`); `Dialog` (`Dialog`, `DialogTrigger`, `DialogContent` con `title` y `description`, `DialogClose`), `Popover` y `Tabs` conservan las partes de Arc. Cada uno suma solo las extensiones que Arc no cubre, con copy en español por defecto, por ejemplo `getHref` en `Pagination`, `trigger` e ítems con `href` en `DropdownMenu`, `onOpenChange` en `HoverCard`, `footer` y el modo `alert` en `Dialog` (reemplaza a `AlertDialog`), `hideLabel` en `Select` y `onSettle` en `Carousel`. La tabla de migración desde 2.x está en [Migración a 3.0.0](#migración-a-300).
+Los componentes adoptados de [Arc](https://uiarc.dev) usan la API pública de Arc: `Switch`, `Checkbox`, `RadioGroup`, `Badge`, `Avatar`, `AvatarGroup`, `Skeleton`, `Card`, `Alert`, `Tooltip`, `HoverCard`, `DropdownMenu`, `Select`, `Pagination`, `Calendar` y `Carousel` son componentes cerrados que se configuran por props (`items`, `options`, `members`, `content`, `title`); `Dialog` (`Dialog`, `DialogTrigger`, `DialogContent` con `title` y `description`, `DialogClose`), `Popover` y `Tabs` conservan las partes de Arc. Cada uno suma solo las extensiones que Arc no cubre, con copy en español por defecto, por ejemplo `getHref` en `Pagination`, `trigger` e ítems con `href` en `DropdownMenu`, `onOpenChange` en `HoverCard`, `footer` y el modo `alert` en `Dialog` (reemplaza a `AlertDialog`), `hideLabel` en `Select` y `onSettle` en `Carousel`. La tabla de migración desde `beez-ui` 2.x está en [`docs/history/beez-ui-changelog.md`](docs/history/beez-ui-changelog.md).
 
 Agrupar los imports de componentes desde la raíz. El paquete publica JavaScript ESM y declaraciones TypeScript en `dist`; el consumidor no necesita transpilar el código fuente de la librería. La gramática de filtros y los helpers de mes-año son independientes de React.
 
@@ -66,32 +66,6 @@ El menú de `DropdownMenu` toma el ancho natural de sus opciones, con un mínimo
 Los componentes usan por defecto los espaciados compactos de Agenda: `Select` mide 2 rem (1.75 rem en tamaño pequeño), `TabsList` horizontal mide 2 rem y `PopoverContent` usa 0.625 rem de padding. Los menús tienen un mínimo de 12 rem, con filas compactas. `Dialog` usa 1 rem de padding y un footer con borde superior y fondo diferenciado; `Textarea` distingue el estado deshabilitado mediante su fondo. Estos valores conservan los colores y fuentes del tema compartido. Son cambios de los defaults, sin una prop adicional para activarlos; los consumidores pueden personalizarlos mediante `className`.
 
 Los `Sheet` superiores e inferiores limitan su altura al viewport dinámico (`100dvh`) y permiten desplazar el contenido para mantener accesibles las acciones de paneles largos.
-
-## Migración a 3.0.0
-
-| Componente | 2.x | 3.0.0 |
-| --- | --- | --- |
-| `Switch` | `size="sm"` | Un solo tamaño, sin `size` |
-| `RadioGroup` | `RadioGroup` + `RadioGroupItem` | `<RadioGroup label options={[{ value, label, description }]} value onValueChange />` |
-| `Badge` | `variant` (`default`, `secondary`, `outline`, `ghost`, `link`, `destructive`) | `tone` (`neutral`, `success`, `info`, `warning`, `danger`); `destructive` pasa a `danger`, el resto a `neutral` |
-| `Avatar` | `Avatar` + `AvatarImage` + `AvatarFallback` (+ `AvatarBadge`) | `<Avatar name src size fallback badge />`; `size="default"` pasa a `md` |
-| `AvatarGroup` | `AvatarGroup` con `Avatar` hijos + `AvatarGroupCount` | `<AvatarGroup members={[{ name, src, status }]} max label />`; con una vista previa de los integrantes, `total` hace que el chip +N cuente contra el total |
-| `Skeleton` | `<Skeleton className="h-4 w-24" />` | `<Skeleton lines={1} className />`, `avatar`, `label`, o `loading` con hijos |
-| `Card` | `CardHeader`, `CardTitle`, `CardDescription`, `CardAction`, `CardContent`, `CardFooter`, `CardMedia` | `title`, `description`, `action`, `children`, `footer`, `media` |
-| `Alert` | `AlertTitle`, `AlertDescription`, `AlertAction`, `variant="destructive"` | `<Alert title tone="danger" action>detalle</Alert>` |
-| `Tooltip` | `TooltipProvider` + `Tooltip` + `TooltipTrigger asChild` + `TooltipContent` | `<Tooltip content side align>{trigger}</Tooltip>`, sin provider |
-| `Popover` | `PopoverAnchor`, `PopoverHeader`, `PopoverTitle`, `PopoverDescription`; `align` centrado por defecto | Solo `Popover`, `PopoverTrigger`, `PopoverContent`, `PopoverClose`; `align="start"` por defecto |
-| `HoverCard` | `HoverCard` + `HoverCardTrigger asChild` + `HoverCardContent` | `<HoverCard content onOpenChange className>{trigger}</HoverCard>` |
-| `DropdownMenu` | `DropdownMenuTrigger asChild`, `Content`, `Item`, `Separator`, `RadioGroup`, `RadioItem`, `CheckboxItem`, `Shortcut`, `Sub*` | `<DropdownMenu label trigger items={[{ label, icon, onSelect, href, destructive, separatorBefore, checked, trailing }]} selection />`; sin submenús. El click dentro del menú no sube por el árbol de React hasta los contenedores que lo envuelven |
-| `Select` | `SelectTrigger`, `SelectValue placeholder`, `SelectContent`, `SelectItem` | `<Select label hideLabel placeholder options={[{ value, label, disabled }]} value onValueChange triggerClassName />`; `aria-describedby` del trigger pasa a `Select` y `options` acepta listas `as const` |
-| `Tabs` | `TabsList variant="line"`, `tabsListVariants` | Solo la lista segmentada |
-| `Pagination` | `PaginationContent`, `PaginationItem`, `PaginationLink`, `PaginationPrevious`, `PaginationNext`, `PaginationEllipsis` | `<Pagination page pageCount onPageChange getHref label />`; sin `pageCount`, `hasNextPage` dibuja solo Anterior y Siguiente. `onPageChange(page, event)` recibe el click: con `getHref`, `event.preventDefault()` pagina en el lugar sin navegar |
-| `Dialog` | `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogFooter`, `DialogPortal`, `DialogOverlay` | `<DialogContent title description footer hideTitle>`; el cierre se llama "Cerrar diálogo". Lo que acompañaba al título dentro de `DialogHeader` (etiquetas, estado) pasa a `headerContent`, y el ref del cierre a `closeButtonRef` |
-| `AlertDialog` | `AlertDialog`, `AlertDialogContent`, `AlertDialogAction`, `AlertDialogCancel`… y `@astra-kit/ui/alert-dialog` | `<Dialog alert>` con `DialogContent` y `DialogClose asChild` para cancelar y confirmar |
-| `Calendar` | `mode`, `selected`, `onSelect`, `disabled`, `defaultMonth`, `components`, `classNames` | `<Calendar value onChange month onMonthChange minDate maxDate disabledDates locale showToday />`; solo selección simple |
-| `Carousel` | `CarouselContent`, `CarouselItem`, `CarouselPrevious`, `CarouselNext`, `CarouselIndicators`, `opts`, `setApi`, `CarouselApi` | `<Carousel label loop defaultIndex onIndexChange onSettle slideSize>{slides}</Carousel>`; `reInit` ya no hace falta. Las clases de `CarouselContent` y de su pista pasan a `viewportClassName` y `trackClassName` |
-| `AccountMenu` | `children` con `DropdownMenuItem` | `items` con los ítems de `DropdownMenu` |
-| `DataTable` | `columnVisibilityMenuExtraContent` | `columnVisibilityMenuExtraItems` |
 
 ## Movimiento
 
