@@ -24,6 +24,10 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 - Se quitan los tokens de movimiento que no son de Arc: `MOTION_EASE_DRAWER`, `MOTION_EASE_UNFOLD`, `SPRING_HIGHLIGHT`, `SPRING_TABS`, `SPRING_TOOLTIP`, `SPRING_THUMB`, `MOTION_SUBTLE_PRESS_SCALE`, `MOTION_TOGGLE_PRESS_SCALE`, `MOTION_HOVER_SCALE`, `MOTION_THUMB_SQUISH_SCALE`, `MOTION_ITEM_CHECK_SCALE`, `MOTION_ICON_SWAP_SCALE`, `MOTION_CLOSE_BUTTON_SCALE`, `MOTION_LIST_ITEM_DISTANCE`, `MOTION_ITEM_ENTER_SCALE`, `MOTION_REVEAL_SCALE`, `MOTION_REVEAL_BLUR_PX`, `MOTION_SHIMMER_TRANSLATE`, `MOTION_CARD_SHADOW_LIFT`, `MOTION_CARD_SHADOW_REST`, `MOTION_SURFACE_CLIP_PERCENT`, `MOTION_SURFACE_CLIP_BLEED_PX`, `MOTION_TOOLTIP_DISTANCE`, `MOTION_TOOLTIP_SCALE`, `MOTION_CENTER_MORPH_FOLDED_PERCENT`, `MOTION_CONTENT_DISTANCE` y `MOTION_INVALID_SHAKE_PX`.
 - `MOTION_TIMING` pierde `message`, `surfaceClip`, `shake`, `checkDrawDelay`, `iconSwap`, `listItem`, `listDelay`, `closeEnter`, `closeDelay`, `centerMorph`, `centerMorphFold`, `reveal`, `pop`, `collapse`, `monthSwap` y `skeleton`, y `MotionKind` queda con los tipos que usa la biblioteca (`rotate`, `item-check`, `icon-swap`, `message`, `reveal`, `dialog`, `sheet` y `overlay`).
 
+### Fixed
+
+- Los submenús de `Sidebar` recortan su contenido solo mientras abren o cierran: una vez abiertos, el anillo de foco de sus ítems se ve completo.
+
 ## [3.0.1] - 2026-10-16
 
 ### Fixed

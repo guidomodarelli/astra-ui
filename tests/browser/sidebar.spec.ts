@@ -284,6 +284,26 @@ test.describe("desktop", () => {
     await expect(page.getByRole("button", { name: "Inicio" })).not.toHaveAttribute("aria-current");
   });
 
+  for (const reducedMotion of ["no-preference", "reduce"] as const) {
+    test(`should stop clipping an open submenu once it settles so its focus ring shows (${reducedMotion})`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion });
+      await page.goto("/sidebar.html");
+      const projects = page.getByRole("button", { name: "Proyectos" });
+      await projects.click();
+      const submenuRegion = page.locator('[data-slot="sidebar-menu-sub"]').locator("..");
+      await expect(submenuRegion).toHaveCSS("opacity", "1");
+      await expect(submenuRegion).toHaveCSS("overflow", "visible");
+
+      await projects.focus();
+      await page.keyboard.press("Tab");
+      await expect(page.locator('[data-slot="sidebar-menu-sub"]').getByRole("button", { name: "Beez" })).toBeFocused();
+      await expect(submenuRegion).toHaveCSS("overflow", "visible");
+
+      await projects.click();
+      await expect(page.locator('[data-slot="sidebar-menu-sub"]')).toHaveCount(0);
+    });
+  }
+
   test("should open the rail when a group is selected from the icon rail", async ({ page }) => {
     await page.goto("/sidebar.html");
     await page.getByRole("button", { name: "Alternar navegación" }).click();

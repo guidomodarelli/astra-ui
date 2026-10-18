@@ -13,6 +13,7 @@ import { Slot } from "radix-ui";
 import {
   AnimatePresence,
   motion,
+  PresenceContext,
   type HTMLMotionProps,
 } from "motion/react";
 import { createPortal } from "react-dom";
@@ -877,6 +878,38 @@ export type SidebarMenuSubProps = Omit<HTMLMotionProps<"ul">, "children"> & {
   children?: React.ReactNode;
 };
 
+type SidebarMenuSubRegionProps = {
+  /** Applies only the opacity fade, without animating the height. */
+  reduce: boolean;
+  children: React.ReactNode;
+};
+
+/**
+ * Height-animated wrapper of an open submenu. It clips overflow only while the height or the fade
+ * runs, so the outward focus ring of its items is not cut once the submenu settles.
+ * @param props - Reduced motion flag and the submenu list.
+ * @returns The animated wrapper.
+ */
+function SidebarMenuSubRegion({ reduce, children }: SidebarMenuSubRegionProps) {
+  // `AnimatePresence initial={false}` mounts an already open submenu without an entrance.
+  const isMountedWithoutEntrance = React.useContext(PresenceContext)?.initial === false;
+  const [isSettled, setIsSettled] = React.useState(isMountedWithoutEntrance);
+
+  return (
+    <motion.div
+      initial={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+      animate={reduce ? { opacity: 1 } : { height: "auto", opacity: 1, transition: SUBMENU_OPEN_TRANSITION }}
+      exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0, transition: SUBMENU_CLOSE_TRANSITION }}
+      transition={reduce ? { duration: MOTION_TIMING.exit } : undefined}
+      className={isSettled ? "overflow-visible" : "overflow-hidden"}
+      onAnimationStart={() => setIsSettled(false)}
+      onAnimationComplete={() => setIsSettled(true)}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 /**
  * Nested list that opens its height on Arc's smooth spring.
  * @param props - Open state and motion-enabled list attributes.
@@ -889,14 +922,7 @@ function SidebarMenuSub({ open, children, className, ...props }: SidebarMenuSubP
   return (
     <AnimatePresence initial={false}>
       {open && !panel.collapsed ? (
-        <motion.div
-          key="sidebar-submenu"
-          initial={context.reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
-          animate={context.reduce ? { opacity: 1 } : { height: "auto", opacity: 1, transition: SUBMENU_OPEN_TRANSITION }}
-          exit={context.reduce ? { opacity: 0 } : { height: 0, opacity: 0, transition: SUBMENU_CLOSE_TRANSITION }}
-          transition={context.reduce ? { duration: MOTION_TIMING.exit } : undefined}
-          className="overflow-hidden"
-        >
+        <SidebarMenuSubRegion key="sidebar-submenu" reduce={context.reduce}>
           <motion.ul
             {...props}
             data-slot="sidebar-menu-sub"
@@ -907,7 +933,7 @@ function SidebarMenuSub({ open, children, className, ...props }: SidebarMenuSubP
           >
             {children}
           </motion.ul>
-        </motion.div>
+        </SidebarMenuSubRegion>
       ) : null}
     </AnimatePresence>
   );
