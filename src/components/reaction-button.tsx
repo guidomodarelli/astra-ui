@@ -6,7 +6,7 @@
  */
 import { useEffect, useRef, type ComponentType, type CSSProperties, type MouseEvent, type SVGProps } from "react";
 import { HeartIcon } from "lucide-react";
-import { animate, motion, useMotionValue } from "motion/react";
+import { animate, motion, useMotionValue, type AnimationPlaybackControls } from "motion/react";
 
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js";
 import { cn } from "../lib/utils.js";
@@ -66,13 +66,24 @@ export function ReactionButton({
   const scale = useMotionValue(1);
   const rotate = useMotionValue(0);
   const wasActive = useRef(isActive);
+  const kickControls = useRef<AnimationPlaybackControls[]>([]);
   useEffect(() => {
     const becameActive = isActive && !wasActive.current;
     wasActive.current = isActive;
-    if (!becameActive || shouldReduceMotion) return;
+    if (shouldReduceMotion) {
+      // Turning reduced motion on mid-kick stops it and puts the icon straight back at rest.
+      kickControls.current.forEach((controls) => controls.stop());
+      kickControls.current = [];
+      scale.jump(1);
+      rotate.jump(0);
+      return;
+    }
+    if (!becameActive) return;
     // The kick is not stopped when the reaction is undone: the icon always settles back at rest.
-    animate(scale, 1, { ...REACTION_KICK, velocity: scale.getVelocity() + REACTION_KICK_SCALE_VELOCITY });
-    animate(rotate, 0, { ...REACTION_KICK, velocity: rotate.getVelocity() + REACTION_KICK_ROTATE_VELOCITY });
+    kickControls.current = [
+      animate(scale, 1, { ...REACTION_KICK, velocity: scale.getVelocity() + REACTION_KICK_SCALE_VELOCITY }),
+      animate(rotate, 0, { ...REACTION_KICK, velocity: rotate.getVelocity() + REACTION_KICK_ROTATE_VELOCITY }),
+    ];
   }, [isActive, rotate, scale, shouldReduceMotion]);
   const activeColorStyle: ReactionButtonStyle | undefined = activeColor ? { "--beez-reaction-active-color": activeColor } : undefined;
 
