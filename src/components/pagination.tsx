@@ -3,7 +3,7 @@
 /**
  * Arc's Pagination (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): previous and next arrows around a
  * sliding five page window, with a current-page mark that glides to the selected page. Arc's API (`page`,
- * `pageCount`, `onPageChange`, `label`), with beez-ui's extensions: links through the provider's `Link` adapter
+ * `pageCount`, `onPageChange`, `label`), with @astra-kit/ui's extensions: links through the provider's `Link` adapter
  * (`getHref`), cursor paging without a page count (`hasNextPage`), arrow labels and Spanish copy.
  */
 import type { MouseEvent } from "react"

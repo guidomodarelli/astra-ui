@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { UserIcon } from "lucide-react";
 
-import { Avatar, AvatarGroup, BeezUIProvider } from "beez-ui";
-import { BeezUIProvider as NextBeezUIProvider } from "beez-ui/next";
+import { Avatar, AvatarGroup, AstraUIProvider } from "@astra-kit/ui";
+import { AstraUIProvider as NextAstraUIProvider } from "@astra-kit/ui/next";
 
 describe("Avatar", () => {
   it("should name the avatar once and show the first two initials while there is no photo", () => {
@@ -61,9 +61,9 @@ describe("Avatar", () => {
   it("should give the xl photo its 88px intrinsic size through the default and Next image adapters", () => {
     // Arrange
     const { unmount } = render(
-      <BeezUIProvider>
+      <AstraUIProvider>
         <Avatar name="Perfil" src="https://images.unsplash.com/photo-example" size="xl" />
-      </BeezUIProvider>
+      </AstraUIProvider>
     );
     const unpicImage = screen.getByRole("img", { name: "Perfil" }).querySelector("img")!;
 
@@ -76,9 +76,9 @@ describe("Avatar", () => {
     expect(unpicImage.srcset).toContain(" 88w");
     unmount();
     render(
-      <NextBeezUIProvider>
+      <NextAstraUIProvider>
         <Avatar name="Perfil" src="/profile.png" size="xl" />
-      </NextBeezUIProvider>
+      </NextAstraUIProvider>
     );
     const nextImage = screen.getByRole("img", { name: "Perfil" }).querySelector("img")!;
     expect(nextImage).toHaveAttribute("width", "88");
@@ -89,8 +89,8 @@ describe("Avatar", () => {
     // Arrange
     const sources = [
       <Avatar key="native" name="Perfil" src="/profile.png" />,
-      <BeezUIProvider key="default"><Avatar name="Perfil" src="https://images.unsplash.com/photo-example" /></BeezUIProvider>,
-      <NextBeezUIProvider key="next"><Avatar name="Perfil" src="/profile.png" /></NextBeezUIProvider>,
+      <AstraUIProvider key="default"><Avatar name="Perfil" src="https://images.unsplash.com/photo-example" /></AstraUIProvider>,
+      <NextAstraUIProvider key="next"><Avatar name="Perfil" src="/profile.png" /></NextAstraUIProvider>,
     ];
 
     for (const avatar of sources) {

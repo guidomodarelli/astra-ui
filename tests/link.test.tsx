@@ -2,7 +2,7 @@
 import type { ComponentProps } from "react";
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { BeezUIProvider, Link } from "beez-ui";
+import { AstraUIProvider, Link } from "@astra-kit/ui";
 
 /** Represents an application adapter that receives the navigation hints. */
 function ConsumerLink({ prefetch, ...props }: ComponentProps<"a"> & { prefetch?: boolean }) {
@@ -17,7 +17,7 @@ describe("Link", () => {
   });
 
   it("should preserve explicit prefetch overrides through the adapter", () => {
-    render(<BeezUIProvider components={{ Link: ConsumerLink }}><Link href="/courses" prefetch={false}>Cursos</Link></BeezUIProvider>);
+    render(<AstraUIProvider components={{ Link: ConsumerLink }}><Link href="/courses" prefetch={false}>Cursos</Link></AstraUIProvider>);
     expect(screen.getByRole("link")).toHaveAttribute("data-prefetch", "false");
   });
 });

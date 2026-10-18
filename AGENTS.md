@@ -33,5 +33,5 @@ Cada aspecto que cambie con el componente debe quedar cubierto por un test (Vite
 
 ## Release
 
-- `pnpm create-version` (alias `pnpm cv`) es el comando compartido `astra-rp create-version`. Lo propio de beez-ui (incluida la zona horaria de la fecha del CHANGELOG, `releaseTimeZone`) se configura en `astra-rp.config.js` y en el hook `prepare` de `scripts/release-hooks.js`; la verificación y publicación del tarball y las credenciales de npm las resuelve astra-rp. No reimplementar el orquestador ni la publicación en este repositorio. No publicar con `pnpm publish`: `prepublishOnly` (`astra-rp guard-publish`) lo bloquea a propósito.
+- `pnpm create-version` (alias `pnpm cv`) es el comando compartido `astra-rp create-version`. Lo propio de @astra-kit/ui (incluida la zona horaria de la fecha del CHANGELOG, `releaseTimeZone`) se configura en `astra-rp.config.js` y en el hook `prepare` de `scripts/release-hooks.js`; la verificación y publicación del tarball y las credenciales de npm las resuelve astra-rp. No reimplementar el orquestador ni la publicación en este repositorio. No publicar con `pnpm publish`: `prepublishOnly` (`astra-rp guard-publish`) lo bloquea a propósito.
 - Cada versión queda en un commit cuyo asunto es exactamente `X.Y.Z`, con el tag anotado `vX.Y.Z`. No crear commits de release ni tags a mano.

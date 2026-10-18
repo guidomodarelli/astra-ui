@@ -1,6 +1,6 @@
 /** Demonstrates Pagination with Arc's API: the five page window, links and cursor paging. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Pagination } from "beez-ui";
+import { Pagination } from "@astra-kit/ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */

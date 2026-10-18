@@ -1,7 +1,7 @@
 /** Demonstrates SplitButton through its public component contract. */
 import { useEffect, useRef, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { SplitButton } from "beez-ui";
+import { SplitButton } from "@astra-kit/ui";
 import { Check, Copy, ExternalLink, FileText, Trash2 } from "lucide-react";
 
 /** Editable inputs specific to this example. */

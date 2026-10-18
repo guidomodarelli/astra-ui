@@ -1,9 +1,9 @@
-/** Covers the interaction contract of Arc's closed Select and beez-ui's extensions. */
+/** Covers the interaction contract of Arc's closed Select and @astra-kit/ui's extensions. */
 import { createRef, useState } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { Select, type SelectProps } from "beez-ui";
+import { Select, type SelectProps } from "@astra-kit/ui";
 
 /** Options of the currency select, with a disabled one. */
 const CURRENCIES = [

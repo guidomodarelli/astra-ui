@@ -1,7 +1,7 @@
 /** Mounts Arc's DropdownMenu and Select from the public barrel, so their layout and motion run in real engines. */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BeezUIProvider, DropdownMenu, Input, Select, type DropdownItem } from "beez-ui";
+import { AstraUIProvider, DropdownMenu, Input, Select, type DropdownItem } from "@astra-kit/ui";
 import "./styles.css";
 
 /** Labels of the document menu, enough rows to see the stagger reach its last step. */
@@ -94,13 +94,13 @@ function LabelledSelect() {
 
 /** Renders the menus the spec drives. */
 function ArcMenus() {
-  return <BeezUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
+  return <AstraUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
     <h1>Menús</h1>
     <section><DocumentMenu /></section>
     <section><ViewMenu /></section>
     <section><CurrencySelects /></section>
     <section><LabelledSelect /></section>
-  </main></BeezUIProvider>;
+  </main></AstraUIProvider>;
 }
 
 createRoot(document.getElementById("root")!).render(<ArcMenus />);

@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { ChevronsUpDown, FolderKanban, Home, Settings } from "lucide-react";
 import {
   AccountMenu,
-  BeezUIProvider,
+  AstraUIProvider,
   Sidebar,
   SidebarBrandButton,
   SidebarContent,
@@ -23,26 +23,26 @@ import {
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
-} from "beez-ui";
+} from "@astra-kit/ui";
 import "./styles.css";
 
 const SECTIONS = [
   { name: "Inicio", icon: <Home /> },
   { name: "Ajustes", icon: <Settings /> },
 ] as const;
-const PROJECTS = ["Beez", "Agenda"] as const;
+const PROJECTS = ["Astra", "Agenda"] as const;
 
 /** Keeps the selected section in state so navigation can be observed without a router. */
 function SidebarShell() {
   const [section, setSection] = useState<string>("Inicio");
   const [isProjectsOpen, setIsProjectsOpen] = useState(false);
   return (
-    <BeezUIProvider>
+    <AstraUIProvider>
       <SidebarProvider>
         <Sidebar ariaLabel="Navegación principal">
           <SidebarHeader>
             <SidebarBrandButton icon={<span>BZ</span>} trailing={<ChevronsUpDown />}>
-              Beez
+              Astra
             </SidebarBrandButton>
           </SidebarHeader>
           <SidebarContent>
@@ -97,7 +97,7 @@ function SidebarShell() {
           <div style={{ height: "200vh" }} />
         </SidebarInset>
       </SidebarProvider>
-    </BeezUIProvider>
+    </AstraUIProvider>
   );
 }
 

@@ -3,7 +3,7 @@
 /**
  * Arc's Carousel (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md) as a closed component: one child per
  * slide, a centered slide row that is dragged, flicked or arrowed through, and a control row under it with an optional
- * rotation control, the indicator tab list and the arrows. Embla runs inside and is never exposed; the beez-ui
+ * rotation control, the indicator tab list and the arrows. Embla runs inside and is never exposed; the @astra-kit/ui
  * extensions (`loop`, `duration`, `watchFocus`, `onSettle`, deferred re-initialization, labels and visibility of the
  * controls) cover media viewers that used Embla's API directly.
  */
@@ -36,7 +36,7 @@ import {
   type CarouselOptions,
 } from "./primitives/carousel.js"
 
-/** Props of {@link Carousel}: Arc's carousel API plus the beez-ui extensions marked below. */
+/** Props of {@link Carousel}: Arc's carousel API plus the @astra-kit/ui extensions marked below. */
 type CarouselProps = {
   /** Names the carousel for assistive technology, for example "Fotos del encuentro". */
   label: string
@@ -61,33 +61,33 @@ type CarouselProps = {
   autoplay?: boolean
   /** Class of the root section. */
   className?: string
-  /** beez-ui: wraps from the last slide to the first and back. Defaults to `false`. */
+  /** @astra-kit/ui: wraps from the last slide to the first and back. Defaults to `false`. */
   loop?: boolean
-  /** beez-ui: speed of a scroll between slides, in Embla's units (higher is slower). Defaults to Embla's 25. */
+  /** @astra-kit/ui: speed of a scroll between slides, in Embla's units (higher is slower). Defaults to Embla's 25. */
   duration?: number
   /**
-   * beez-ui: scrolls to a slide when something inside it receives focus. Defaults to `true`; turn it off when a slide
+   * @astra-kit/ui: scrolls to a slide when something inside it receives focus. Defaults to `true`; turn it off when a slide
    * holds content that keeps focus, such as an embedded player, so it never pulls the carousel back.
    */
   watchFocus?: boolean
-  /** beez-ui: called once a scroll has come to rest on a slide, the moment to mount heavy slide content. */
+  /** @astra-kit/ui: called once a scroll has come to rest on a slide, the moment to mount heavy slide content. */
   onSettle?: (index: number) => void
-  /** beez-ui: accessible name of the previous arrow. Defaults to "Diapositiva anterior". */
+  /** @astra-kit/ui: accessible name of the previous arrow. Defaults to "Diapositiva anterior". */
   previousLabel?: string
-  /** beez-ui: accessible name of the next arrow. Defaults to "Diapositiva siguiente". */
+  /** @astra-kit/ui: accessible name of the next arrow. Defaults to "Diapositiva siguiente". */
   nextLabel?: string
-  /** beez-ui: shows the previous and next arrows. Defaults to `true`. */
+  /** @astra-kit/ui: shows the previous and next arrows. Defaults to `true`. */
   showControls?: boolean
-  /** beez-ui: shows the indicator tab list. Defaults to `true`. */
+  /** @astra-kit/ui: shows the indicator tab list. Defaults to `true`. */
   showIndicators?: boolean
-  /** beez-ui: class added to every slide panel. */
+  /** @astra-kit/ui: class added to every slide panel. */
   slideClassName?: string
   /**
-   * beez-ui: class of the clipped, focusable viewport around the slide track, for example to give a media viewer a
+   * @astra-kit/ui: class of the clipped, focusable viewport around the slide track, for example to give a media viewer a
    * definite height.
    */
   viewportClassName?: string
-  /** beez-ui: class of the slide track inside the viewport, which lays the slides out in a row. */
+  /** @astra-kit/ui: class of the slide track inside the viewport, which lays the slides out in a row. */
   trackClassName?: string
 }
 
@@ -184,7 +184,7 @@ function useDeferredReInit() {
 /**
  * A centered row of slides browsed by drag, flick, the arrow keys, Home and End, the arrows or the indicator tabs, with
  * optional rotation. Neighbouring slides stay in view as a hint that there is more, and are inert until selected.
- * @param props - Arc's carousel props plus the beez-ui extensions.
+ * @param props - Arc's carousel props plus the @astra-kit/ui extensions.
  * @returns The carousel section.
  */
 function Carousel({

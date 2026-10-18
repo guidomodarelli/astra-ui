@@ -1,7 +1,7 @@
 /** Mounts product helpers that depend on real browser APIs in a plain React consumer. */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BeezUIProvider, Button, FileUploadItem, FileUploadList, copyTextToClipboard } from "beez-ui";
+import { AstraUIProvider, Button, FileUploadItem, FileUploadList, copyTextToClipboard } from "@astra-kit/ui";
 import "./styles.css";
 
 const CLIPBOARD_TEXT = "https://example.com/invitacion";
@@ -29,7 +29,7 @@ function MigratedExample() {
 }
 
 createRoot(document.getElementById("root")!).render(
-  <BeezUIProvider>
+  <AstraUIProvider>
     <MigratedExample />
-  </BeezUIProvider>,
+  </AstraUIProvider>,
 );

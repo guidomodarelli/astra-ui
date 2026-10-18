@@ -5,9 +5,9 @@
     "moduleResolution": "bundler",
     "types": ["node", "vite/client"],
     "paths": {
-      "beez-ui": ["../dist/index"],
-      "beez-ui/tanstack": ["../dist/tanstack"],
-      "beez-ui/hooks": ["../dist/hooks"]
+      "@astra-kit/ui": ["../dist/index"],
+      "@astra-kit/ui/tanstack": ["../dist/tanstack"],
+      "@astra-kit/ui/hooks": ["../dist/hooks"]
     }
   },
   "include": [

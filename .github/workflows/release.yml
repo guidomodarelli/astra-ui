@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: beez-ui-release
+  group: astra-ui-release
   cancel-in-progress: false
 
 jobs:

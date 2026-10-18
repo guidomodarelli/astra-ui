@@ -1,4 +1,4 @@
-/** Exercises Arc's Tooltip, Popover and Hover Card through their public API and beez-ui's extensions. */
+/** Exercises Arc's Tooltip, Popover and Hover Card through their public API and @astra-kit/ui's extensions. */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -11,7 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
   Tooltip,
-} from "beez-ui";
+} from "@astra-kit/ui";
 
 /** The bubble Radix renders for the open tooltip. */
 function tooltipBubble() {

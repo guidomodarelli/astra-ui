@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 
-import { Skeleton } from "beez-ui";
+import { Skeleton } from "@astra-kit/ui";
 
 describe("Skeleton", () => {
   it("should draw Arc's three lines by default and size the placeholder through its class", () => {

@@ -1,12 +1,12 @@
 /** Verifies the optional entrypoint using real Next.js and Base UI components. */
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { Avatar, Pagination } from "beez-ui";
-import { BeezUIProvider } from "beez-ui/next";
+import { Avatar, Pagination } from "@astra-kit/ui";
+import { AstraUIProvider } from "@astra-kit/ui/next";
 
-describe("BeezUIProvider", () => {
+describe("AstraUIProvider", () => {
   it("should activate Next Image while preserving the avatar lifecycle", async () => {
-    render(<BeezUIProvider><Avatar name="Gonzalo Herrera" src="/profile.png" /></BeezUIProvider>);
+    render(<AstraUIProvider><Avatar name="Gonzalo Herrera" src="/profile.png" /></AstraUIProvider>);
     const image = screen.getByRole("img", { name: "Gonzalo Herrera" }).querySelector("img")!;
     expect(image).toHaveAttribute("data-nimg", "1");
     expect(image.src).toBe(new URL("/profile.png", window.location.href).href);
@@ -17,12 +17,12 @@ describe("BeezUIProvider", () => {
   });
 
   it("should opt into the Next image optimizer when requested", () => {
-    render(<BeezUIProvider optimizeImages><Avatar name="Perfil" src="/profile.png" /></BeezUIProvider>);
+    render(<AstraUIProvider optimizeImages><Avatar name="Perfil" src="/profile.png" /></AstraUIProvider>);
     expect(screen.getByRole("img", { name: "Perfil" }).querySelector("img")!.getAttribute("src")).toContain("/_next/image?");
   });
 
   it("should preserve navigation hrefs through the Next adapter", () => {
-    render(<BeezUIProvider><Pagination page={1} pageCount={2} getHref={(page) => `/page/${page}`} /></BeezUIProvider>);
+    render(<AstraUIProvider><Pagination page={1} pageCount={2} getHref={(page) => `/page/${page}`} /></AstraUIProvider>);
     expect(screen.getByRole("link", { name: "Ir a la página siguiente" })).toHaveAttribute("href", "/page/2");
   });
 });

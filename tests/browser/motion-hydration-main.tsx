@@ -3,14 +3,14 @@ import { useState } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import {
-  BeezUIProvider,
+  AstraUIProvider,
   Sidebar,
   SidebarContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-} from "beez-ui";
+} from "@astra-kit/ui";
 import "./styles.css";
 
 const SECTIONS = ["Inicio", "Reportes", "Ajustes"] as const;
@@ -19,7 +19,7 @@ const SECTIONS = ["Inicio", "Reportes", "Ajustes"] as const;
 function HydratedSidebar() {
   const [section, setSection] = useState<(typeof SECTIONS)[number]>("Inicio");
   return (
-    <BeezUIProvider>
+    <AstraUIProvider>
         <SidebarProvider className="min-h-0">
           <Sidebar collapsible="none" className="h-auto rounded-lg border">
             <SidebarContent>
@@ -39,7 +39,7 @@ function HydratedSidebar() {
           </Sidebar>
           <output aria-label="Sección activa">{section}</output>
         </SidebarProvider>
-    </BeezUIProvider>
+    </AstraUIProvider>
   );
 }
 

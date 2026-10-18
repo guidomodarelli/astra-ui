@@ -1,6 +1,6 @@
 # Third-party notices
 
-beez-ui includes code adapted from the following projects.
+@astra-kit/ui includes code adapted from the following projects.
 
 ## Arc
 

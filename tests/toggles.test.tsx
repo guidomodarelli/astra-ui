@@ -4,7 +4,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 
-import { Checkbox, RadioGroup, Switch } from "beez-ui";
+import { Checkbox, RadioGroup, Switch } from "@astra-kit/ui";
 
 describe("Switch", () => {
   it("should name the switch with its inline label and toggle when the label is clicked", async () => {

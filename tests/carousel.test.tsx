@@ -3,7 +3,7 @@ import { act, render, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { hydrateRoot, type Root } from "react-dom/client";
 
-import { Carousel } from "beez-ui";
+import { Carousel } from "@astra-kit/ui";
 
 const SLIDES = ["Uno", "Dos", "Tres"];
 

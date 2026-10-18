@@ -20,11 +20,11 @@ import {
   SidebarProvider,
   SidebarTrigger,
   useSidebarPanel,
-  BeezUIProvider,
+  AstraUIProvider,
   SIDEBAR_COOKIE_COLLAPSED_VALUE,
   SIDEBAR_COOKIE_NAME,
   SIDEBAR_COOKIE_OPEN_VALUE,
-} from "beez-ui";
+} from "@astra-kit/ui";
 
 /** Represents an application routing adapter that marks the links it renders. */
 function ConsumerLink(props: ComponentProps<"a">) {
@@ -60,7 +60,7 @@ function Navigation({ defaultOpen = true }: { defaultOpen?: boolean }) {
                 </SidebarMenuButton>
                 <SidebarMenuSub open={isProjectsOpen}>
                   <SidebarMenuSubItem>
-                    <SidebarMenuSubButton href="/proyectos/beez">Beez</SidebarMenuSubButton>
+                    <SidebarMenuSubButton href="/proyectos/astra">Astra</SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                 </SidebarMenuSub>
               </SidebarMenuItem>
@@ -109,21 +109,21 @@ describe("Sidebar", () => {
     render(<Navigation />);
     const projects = screen.getByRole("button", { name: "Proyectos" });
     expect(projects).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("link", { name: "Beez" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Astra" })).not.toBeInTheDocument();
     await userEvent.click(projects);
     expect(projects).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("link", { name: "Beez" })).toHaveAttribute("href", "/proyectos/beez");
+    expect(screen.getByRole("link", { name: "Astra" })).toHaveAttribute("href", "/proyectos/astra");
   });
 
   it("should expand the icon rail when a group is selected so its submenu can be reached", async () => {
     render(<Navigation defaultOpen={false} />);
     await userEvent.click(screen.getByRole("button", { name: "Proyectos" }));
     expect(screen.getByRole("complementary", { name: "Sidebar" })).toHaveAttribute("data-state", "expanded");
-    expect(await screen.findByRole("link", { name: "Beez" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Astra" })).toBeInTheDocument();
   });
 
   it("should render linked entries through the configured routing adapter", () => {
-    render(<BeezUIProvider components={{ Link: ConsumerLink }}><Navigation /></BeezUIProvider>);
+    render(<AstraUIProvider components={{ Link: ConsumerLink }}><Navigation /></AstraUIProvider>);
     expect(screen.getByRole("link", { name: /^Reportes/ })).toHaveAttribute("data-router-link", "true");
   });
 

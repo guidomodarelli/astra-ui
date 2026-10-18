@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { BeezUIProvider, Pagination, type BeezLinkProps } from "beez-ui";
+import { AstraUIProvider, Pagination, type AstraLinkProps } from "@astra-kit/ui";
 
 /**
  * Reads the page numbers the navigation currently shows.
@@ -89,7 +89,7 @@ describe("Pagination", () => {
     const onNavigate = vi.fn();
     const onPageChange = vi.fn();
     /** Router link that intercepts navigation, as the Next.js or TanStack adapters do. */
-    function RouterLink({ href, onClick, ...props }: BeezLinkProps) {
+    function RouterLink({ href, onClick, ...props }: AstraLinkProps) {
       return (
         <a
           {...props}
@@ -105,9 +105,9 @@ describe("Pagination", () => {
       );
     }
     render(
-      <BeezUIProvider components={{ Link: RouterLink }}>
+      <AstraUIProvider components={{ Link: RouterLink }}>
         <Pagination page={1} pageCount={4} getHref={(page) => `/eventos?pagina=${page}`} onPageChange={onPageChange} />
-      </BeezUIProvider>,
+      </AstraUIProvider>,
     );
 
     // Act
@@ -168,7 +168,7 @@ describe("Pagination click event", () => {
     const onNavigate = vi.fn();
     const requestedPages: number[] = [];
     /** Router link that skips prevented clicks, as the Next.js and TanStack adapters do. */
-    function RouterLink({ href, onClick, ...props }: BeezLinkProps) {
+    function RouterLink({ href, onClick, ...props }: AstraLinkProps) {
       return (
         <a
           {...props}
@@ -183,7 +183,7 @@ describe("Pagination click event", () => {
       );
     }
     render(
-      <BeezUIProvider components={{ Link: RouterLink }}>
+      <AstraUIProvider components={{ Link: RouterLink }}>
         <Pagination
           page={2}
           pageCount={4}
@@ -194,7 +194,7 @@ describe("Pagination click event", () => {
             requestedPages.push(page);
           }}
         />
-      </BeezUIProvider>,
+      </AstraUIProvider>,
     );
 
     // Act

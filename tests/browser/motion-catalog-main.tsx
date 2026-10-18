@@ -8,7 +8,7 @@ import {
   DialogClose,
   DialogContent,
   DialogTrigger,
-  BeezUIProvider,
+  AstraUIProvider,
   Button,
   DropdownMenu,
   Form,
@@ -45,7 +45,7 @@ import {
   TabsList,
   TabsTrigger,
   Textarea,
-} from "beez-ui";
+} from "@astra-kit/ui";
 import "./styles.css";
 
 const SECTIONS = ["Inicio", "Reportes", "Ajustes"] as const;
@@ -106,7 +106,7 @@ function MotionCatalog() {
   const [isNoticeShown, setIsNoticeShown] = useState(false);
   const [lastAction, setLastAction] = useState("");
   return (
-    <BeezUIProvider>
+    <AstraUIProvider>
       <main>
         <h1>Catálogo de movimiento</h1>
         <SidebarProvider className="min-h-0">
@@ -235,7 +235,7 @@ function MotionCatalog() {
           </Tabs>
         </section>
       </main>
-    </BeezUIProvider>
+    </AstraUIProvider>
   );
 }
 createRoot(document.getElementById("root")!).render(<MotionCatalog />);

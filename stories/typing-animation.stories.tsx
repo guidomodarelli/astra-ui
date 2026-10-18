@@ -1,6 +1,6 @@
 /** Demonstrates TypingAnimation through its public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { TypingAnimation } from "beez-ui";
+import { TypingAnimation } from "@astra-kit/ui";
 
 /** Editable inputs specific to this example. */
 type Args = {

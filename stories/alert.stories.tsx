@@ -1,7 +1,7 @@
 /** Demonstrates Alert through its public component contract. */
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Alert, Button } from "beez-ui";
+import { Alert, Button } from "@astra-kit/ui";
 
 /** Editable inputs specific to this example. */
 type Args = {

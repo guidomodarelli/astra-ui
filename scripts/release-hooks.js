@@ -1,5 +1,5 @@
 /**
- * @module release-hooks `prepare` hook of `astra-rp create-version` for beez-ui.
+ * @module release-hooks `prepare` hook of `astra-rp create-version` for @astra-kit/ui.
  *
  * The shared command bumps the version (commit `X.Y.Z` + tag `vX.Y.Z`) and
  * then calls `prepareReleaseArtifact` on that commit: it reuses the tarball

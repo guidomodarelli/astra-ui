@@ -37,10 +37,10 @@
 
 @theme inline {
   /* Arc typography: Inter for text and controls, Geist for headings 30px and up. */
-  --font-sans: var(--font-inter, "Beez Inter", sans-serif);
-  --font-heading: var(--font-geist, "Beez Geist", sans-serif);
-  --font-display: var(--font-geist, "Beez Geist", sans-serif);
-  --font-mono: var(--font-ibm-plex-mono, "Beez Mono", monospace);
+  --font-sans: var(--font-inter, "Astra Inter", sans-serif);
+  --font-heading: var(--font-geist, "Astra Geist", sans-serif);
+  --font-display: var(--font-geist, "Astra Geist", sans-serif);
+  --font-mono: var(--font-ibm-plex-mono, "Astra Mono", monospace);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-sidebar-ring: var(--sidebar-ring);
