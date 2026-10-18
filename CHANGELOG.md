@@ -4,6 +4,10 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+### Changed
+
+- El proceso de release pasa de `beez-rp` a `@astra-kit/rp` 1.0.0: el comando sigue siendo `pnpm create-version`, la configuración vive en `astra-rp.config.js` y el workflow de release usa los nombres nuevos (`ASTRA_RP_RELEASE_VERSION`, `ASTRA_RP_RELEASE_SHA`). El paquete publicado no cambia.
+
 ## [4.0.1] - 2026-10-18
 
 ### Fixed
