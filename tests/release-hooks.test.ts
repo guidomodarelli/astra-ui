@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * Verifies the `prepare` hook that `beez-rp create-version` calls
+ * Verifies the `prepare` hook that `astra-rp create-version` calls
  * for beez-ui, against disposable Git repositories and real `releases/` folders.
  * The hook context is the engine's plain input contract: Git reads are real,
  * and `run` records the command line instead of launching the multi-minute
