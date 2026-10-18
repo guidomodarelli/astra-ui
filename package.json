@@ -356,7 +356,7 @@
     "check": "pnpm build && pnpm lint && pnpm typecheck:src && pnpm typecheck:tests && pnpm typecheck:stories && pnpm exec vitest run",
     "lint": "oxlint",
     "test:browser": "pnpm build && playwright test",
-    "test:browser:cleanup": "node scripts/playwright-orphan-cleanup.js",
+    "test:browser:cleanup": "cleaner playwright",
     "build": "node scripts/build.js",
     "prepack": "pnpm build",
     "prepublishOnly": "beez-rp guard-publish",
@@ -391,6 +391,7 @@
     "sonner": "^2.0.8"
   },
   "devDependencies": {
+    "@astra-kit/cleaner": "^0.2.0",
     "@playwright/test": "^1.63.0",
     "@storybook/addon-a11y": "^10.6.0",
     "@storybook/addon-docs": "^10.6.0",

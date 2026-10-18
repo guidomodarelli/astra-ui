@@ -4,9 +4,9 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/storybook",
   timeout: 120_000,
-  // Closes WebKit helpers that killed runs leave behind on Windows; see scripts/playwright-orphan-cleanup.js.
-  globalSetup: "./scripts/playwright-orphan-cleanup.js",
-  globalTeardown: "./scripts/playwright-orphan-cleanup.js",
+  // Closes WebKit helpers that killed runs leave behind on Windows (see @astra-kit/cleaner).
+  globalSetup: "@astra-kit/cleaner/playwright/global-setup",
+  globalTeardown: "@astra-kit/cleaner/playwright/global-teardown",
   use: { baseURL: "http://127.0.0.1:6007" },
   // Started through `node`, not `pnpm exec`, so the server stops with the run on Linux too.
   webServer: {
