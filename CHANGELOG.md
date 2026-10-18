@@ -4,6 +4,10 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+### Fixed
+
+- Con reduced motion, `DropdownMenu`, `Select`, `Popover`, `Tooltip` y `HoverCard` se desmontan al instante al cerrarse, sin el fundido de salida, así el resto de la página vuelve a estar disponible para los lectores de pantalla apenas se elige una opción.
+
 ## [4.0.0] - 2026-10-18
 
 ### Changed

@@ -45,7 +45,7 @@ const ANIMATED_PROPERTIES: readonly AnimatedProperty[] = ["opacity", "transform"
 
 const REST_POSE: ArcFloatingPose = { travel: 0, scale: 1, opacity: 1 };
 
-/** Reduced motion keeps the layer in place and only fades it, on Arc's instant timing. */
+/** Reduced motion keeps an entering layer in place and only fades it in, on Arc's instant timing. */
 const REDUCED_TWEEN: AnimationOptions = { duration: ARC_DURATION.instant, ease: [...ARC_EASE.standard] };
 
 /** Grace, in ms, past the planned exit before the layer is removed even if its playback never reports completion. */
@@ -109,6 +109,16 @@ export function ArcFloatingSlot({
         queueMicrotask(() => {
           if (active) safeToRemoveRef.current?.();
         });
+      return () => {
+        active = false;
+      };
+    }
+    // Reduced motion removes a leaving layer at once, like `MotionSlot`: a fade would keep the modal layer hiding the
+    // rest of the page from assistive technology until it ends.
+    if (reduceMotion && !isPresent) {
+      queueMicrotask(() => {
+        if (active) safeToRemoveRef.current?.();
+      });
       return () => {
         active = false;
       };
