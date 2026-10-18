@@ -4,6 +4,8 @@ Todos los cambios relevantes de beez-ui se documentan en este archivo con el for
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-10-18
+
 ### Changed
 
 - El movimiento de todos los componentes queda alineado únicamente con Arc: se quitan las entradas al montar de `Card`, `Badge`, `Separator`, las filas de `Table`, `Alert` estático y la raíz de `Avatar`; el hover de `Link` y del ícono de WhatsApp; la reacción al foco de `Input`, `Textarea`, `InputGroup`, `Label` y el trigger de `Select`; el pop demorado de los botones de cierre de `Dialog` y `Sheet`; el pop de los íconos de las toasts; la presión de los ítems de `Sidebar` y del avatar de `AccountMenu`; y el giro del botón de `AnimatedThemeToggler`.
