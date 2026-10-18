@@ -11,6 +11,9 @@ const COLLISION_PADDING_PX = 12;
 /** Time a transition gets to settle: headless CI engines can stall animation frames for seconds. */
 const SETTLE_TIMEOUT_MS = 15_000;
 
+/** Lead the frozen clock is paused at; it never reaches it, so no timer or animation frame runs past this point. */
+const FROZEN_CLOCK_LEAD_MS = 1000;
+
 /**
  * Resolves a CSS color expression against the page theme.
  * @param page - Page that holds the theme.
@@ -148,6 +151,28 @@ test.describe("Arc dropdown menu", () => {
       "aria-checked",
       "true",
     );
+  });
+
+  test("should unmount at once with reduced motion, so the page is reachable right after choosing an item", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.clock.install();
+    await page.goto("/arc-menus.html");
+    await page.getByRole("button", { name: "Acciones del documento" }).click();
+    const menu = page.getByRole("menu", { name: "Acciones del documento" });
+    await expect(menu).toHaveCSS("opacity", "1", { timeout: SETTLE_TIMEOUT_MS });
+    // From here no timer or animation frame runs: a menu that still faded out on close would stay mounted, and with it
+    // the modal guard that hides the rest of the page from assistive technology.
+    await page.clock.pauseAt((await page.evaluate(() => Date.now())) + FROZEN_CLOCK_LEAD_MS);
+
+    await menu.getByRole("menuitem", { name: "Renombrar" }).click();
+
+    await expect(page.getByLabel("Última acción")).toHaveText("Renombrar");
+    await expect(page.locator("[data-slot='dropdown-menu-content']")).toHaveCount(0);
+    // getByRole only finds a control outside the menu once nothing hides it from the accessibility tree.
+    await expect(page.getByRole("button", { name: "Vista" })).toHaveCount(1);
+    await expect(page.locator("#root")).not.toHaveAttribute("aria-hidden", "true");
   });
 });
 
