@@ -153,6 +153,29 @@ describe("Select", () => {
     rerender(<CurrencySelect open={false} onOpenChange={onOpenChange} />);
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
+
+  it("should play the entrance of its option list on every opening, not only the first", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    render(<CurrencySelect defaultValue="ars" />);
+    const trigger = screen.getByRole("combobox", { name: "Moneda" });
+
+    // Act
+    await user.click(trigger);
+    const firstList = await screen.findByRole("listbox");
+    const firstOpacity = firstList.style.opacity;
+    // The first entrance settles before closing, so the reopening cannot resume an interrupted one.
+    await vi.waitFor(() => expect(firstList).not.toHaveAttribute("data-motion-entering"));
+    await user.keyboard("{Escape}");
+    await vi.waitFor(() => expect(screen.queryByRole("listbox")).not.toBeInTheDocument());
+    await user.click(trigger);
+    const reopenedOpacity = (await screen.findByRole("listbox")).style.opacity;
+
+    // Assert: each opening is still fading in instead of jumping to its resting place.
+    expect(Number.parseFloat(firstOpacity)).toBeLessThan(1);
+    expect(Number.parseFloat(reopenedOpacity)).toBeLessThan(1);
+    expect(trigger).toHaveTextContent("Pesos");
+  });
 });
 
 describe("Select described by external copy", () => {

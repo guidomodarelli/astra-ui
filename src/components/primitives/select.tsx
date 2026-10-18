@@ -13,6 +13,7 @@ import { Select as SelectPrimitive } from "radix-ui"
 import { SELECT_COLLISION_PADDING_PX, SELECT_MOTION } from "../../constants/select.js"
 import { ArcFloatingSlot } from "../../motion/arc-floating-slot.js"
 import { MotionSlot } from "../../motion/motion-slot.js"
+import { MotionOpenProvider, useMotionOpen, useMotionOpenState } from "../../motion/presence.js"
 import { cn } from "../../lib/utils.js"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
@@ -22,7 +23,9 @@ const resolveSelectMotion = () => SELECT_MOTION
 function Select({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />
+  const [motionOpen, setMotionOpen] = useMotionOpenState(props)
+
+  return <MotionOpenProvider scope="select" open={motionOpen}><SelectPrimitive.Root data-slot="select" {...props} open={motionOpen} onOpenChange={setMotionOpen} /></MotionOpenProvider>
 }
 
 function SelectValue({
@@ -79,8 +82,15 @@ function SelectContent({
   collisionPadding = SELECT_COLLISION_PADDING_PX,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
+  const open = useMotionOpen("select")
+  /*
+   * Radix keeps the closed list mounted in a detached fragment, so the selected option still fills `SelectValue`;
+   * `MotionPresence` would unmount it and empty the trigger. Each opening gets a fresh slot instead, so it plays its
+   * entrance again rather than resuming the finished one at rest. Radix drops the list's node as soon as it closes,
+   * so, as in Arc, there is no exit to play.
+   */
   return (
-    <SelectPrimitive.Portal><ArcFloatingSlot motion={resolveSelectMotion}>
+    <SelectPrimitive.Portal><ArcFloatingSlot key={open ? "open" : "closed"} motion={resolveSelectMotion}>
       <SelectPrimitive.Content
         data-slot="select-content"
         data-align-trigger={position === "item-aligned"}
