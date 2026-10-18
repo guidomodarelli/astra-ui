@@ -391,7 +391,7 @@
     "sonner": "^2.0.8"
   },
   "devDependencies": {
-    "@astra-kit/cleaner": "^0.1.0",
+    "@astra-kit/cleaner": "^0.2.0",
     "@playwright/test": "^1.63.0",
     "@storybook/addon-a11y": "^10.6.0",
     "@storybook/addon-docs": "^10.6.0",
