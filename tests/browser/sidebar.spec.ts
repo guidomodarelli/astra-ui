@@ -24,8 +24,8 @@ const RAIL_MORPH_MAX_DURATION_MS = 900;
 const RAIL_MORPH_MIN_INTERMEDIATE_FRAMES = 5;
 /**
  * Fastest the rail width may change between two painted frames, in pixels per millisecond: about three times the
- * spring's peak speed of roughly 1 px/ms, measured against the time between frames so a late frame or WebKit's
- * uneven frame timestamps are not mistaken for a jump, while a snap across the rail in one frame still is.
+ * spring's peak speed of roughly 1 px/ms, measured against the time between frames so a late frame is not mistaken
+ * for a jump, while a snap across the rail in one frame still is.
  */
 const RAIL_MAX_SPEED_PX_PER_MS = 3;
 /** Width the rail crosses halfway through a morph, where an interrupted toggle reverses it. */
@@ -38,7 +38,11 @@ type HorizontalBox = { left: number; right: number; width: number };
 
 /** Layout of the desktop rail and what it holds or pushes, captured on one painted frame. */
 type RailFrame = {
-  /** Frame timestamp, in milliseconds. */
+  /**
+   * When the frame was sampled, in milliseconds on `performance.now()`: the clock Motion samples its springs on. The
+   * animation frame timestamp is not used because WebKit can run frame callbacks well after it, so it drifts from the
+   * time the spring was actually sampled at.
+   */
   time: number;
   rail: HorizontalBox;
   panel: HorizontalBox;
@@ -69,7 +73,8 @@ function sampleRailFrames(page: Page, reverseBelowWidthPx?: number): Promise<Rai
         const frames: RailFrame[] = [];
         let hasReversed = false;
         let start: number | null = null;
-        const tick = (time: number) => {
+        const tick = () => {
+          const time = performance.now();
           start ??= time;
           const frame = {
             time,
@@ -111,12 +116,17 @@ function expectUnclippedRail(frames: RailFrame[]) {
 
 /**
  * Asserts that the rail width never jumps between two painted frames.
+ *
+ * Motion updates the width in its own animation frame callback, which can run before or after the sampler's in the
+ * same frame, so the width read on a frame was produced somewhere between the previous sample and this one. The
+ * spring may therefore have advanced for up to the two frame intervals that end at this sample, and the step is
+ * bounded against that span.
  * @param frames - Sampled rail frames.
  */
 function expectContinuousRail(frames: RailFrame[]) {
   for (let index = 1; index < frames.length; index++) {
     const step = Math.abs(frames[index].rail.width - frames[index - 1].rail.width);
-    const elapsedMs = frames[index].time - frames[index - 1].time;
+    const elapsedMs = frames[index].time - frames[Math.max(index - 2, 0)].time;
     expect(step).toBeLessThanOrEqual(RAIL_MAX_SPEED_PX_PER_MS * elapsedMs + LAYOUT_TOLERANCE_PX);
   }
 }
