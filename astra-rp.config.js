@@ -1,5 +1,5 @@
 /**
- * @file Configuration of `beez-rp create-version` (`pnpm create-version`, alias `pnpm cv`) for beez-ui.
+ * @file Configuration of `astra-rp create-version` (`pnpm create-version`, alias `pnpm cv`) for beez-ui.
  *
  * The shared command diagnoses the repository, requires entries in the changelog
  * `[Unreleased]` block (drafted by Claude Code, then Codex, when they are missing;
@@ -14,7 +14,7 @@
  */
 import { prepareReleaseArtifact } from "./scripts/release-hooks.js";
 
-/** @type {import("beez-rp/create-version").CreateVersionConfig} */
+/** @type {import("@astra-kit/rp/create-version").CreateVersionConfig} */
 export default {
   projectName: "beez-ui",
   // Dates the `## [X.Y.Z] - YYYY-MM-DD` changelog heading in Argentina time instead of the runner's UTC day.

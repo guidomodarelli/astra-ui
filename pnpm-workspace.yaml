@@ -10,5 +10,5 @@ minimumReleaseAgeExclude:
   - scheduler@0.28.0
   - '@types/react-dom@19.3.0'
   - '@types/react@19.3.0'
-  - beez-rp
+  - "@astra-kit/rp"
   - "@astra-kit/cleaner"

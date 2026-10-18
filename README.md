@@ -304,14 +304,14 @@ El compilador `tsc` es TypeScript 7. El paquete `typescript` apunta a la [API de
 El workflow **Release** se ejecuta automáticamente con cada push o merge a `main`,
 incluidos los cambios de `package.json`. También se puede iniciar en GitHub desde
 **Actions → Release → Run workflow**, seleccionando `main`.
-El workflow usa `pnpm create-version --accept-suggested`: beez-rp calcula la versión
+El workflow usa `pnpm create-version --accept-suggested`: astra-rp calcula la versión
 y verifica que `[Unreleased]` tenga entradas escritas a mano, cierra esa sección con la versión, prepara y valida el tarball, crea y sube
 el commit y el tag y publica en npm con trusted publishing (OIDC).
 
 El disparador también incluye los pushes que cambian `package.json`, pero
-beez-rp 0.6.1 no retoma una versión editada a mano en un commit común: necesita
+astra-rp no retoma una versión editada a mano en un commit común: necesita
 su commit de versión y tag de release. Para el flujo automático, dejar que
-beez-rp aumente la versión según los commits.
+astra-rp aumente la versión según los commits.
 
 No necesita secrets manuales: pasa `GITHUB_TOKEN` como `NPM_TOKEN`, con
 `contents: write` para subir el release y `packages: write` para publicar.
@@ -331,7 +331,7 @@ Para retomar una publicación fallida después del push, volver a ejecutar **Rel
 
 ### Desde una terminal local
 
-Desde este repositorio, configurar `NPM_TOKEN` con un token personal de GitHub **clásico** con `write:packages` en el entorno o en `.env`, tomando `.env.example` como referencia. Si el valor existente es un token de npm, reemplazarlo localmente por el de GitHub. No pegarlo en el chat ni agregar credenciales al `.npmrc` del proyecto: beez-rp rechaza esas credenciales. El campo `repository` del manifest vincula el paquete con este repositorio.
+Desde este repositorio, configurar `NPM_TOKEN` con un token personal de GitHub **clásico** con `write:packages` en el entorno o en `.env`, tomando `.env.example` como referencia. Si el valor existente es un token de npm, reemplazarlo localmente por el de GitHub. No pegarlo en el chat ni agregar credenciales al `.npmrc` del proyecto: astra-rp rechaza esas credenciales. El campo `repository` del manifest vincula el paquete con este repositorio.
 
 ### Un solo comando: `pnpm create-version` (alias `pnpm cv`)
 
@@ -351,18 +351,18 @@ pnpm create-version -h                      # todas las opciones (atajo de --hel
 
 Los flags cortos distinguen mayúsculas (`-m` es minor y `-M` major) y van de a uno (`-l -m`, no `-lm`). Pedir dos tipos de versión distintos, combinar un tipo con `--set-version` o `--ci` con `--local` corta con un error.
 
-El comando es el motor compartido de los proyectos Beez, `beez-rp create-version` (devDependency `beez-rp`). Su funcionamiento general (diagnóstico, bloqueos, reanudación, versiones permitidas) está documentado en el README de [beez-rp](https://github.com/guidomodarelli/beez-rp#create-version). Lo propio de beez-ui vive en `beez-rp.config.js`: la descripción de cada tipo de versión, la zona horaria de la fecha del CHANGELOG (`releaseTimeZone`), el hook `prepare` de `scripts/release-hooks.js` y la publicación en npm del tarball preparado (`publish: "npm"` + `artifact`, con `publication.authentication: "oidc"`).
+El comando es el motor compartido `astra-rp create-version` (devDependency `@astra-kit/rp`). Su funcionamiento general (diagnóstico, bloqueos, reanudación, versiones permitidas) está documentado en el README de [@astra-kit/rp](https://github.com/guidomodarelli/astra-rp#create-version). Lo propio de beez-ui vive en `astra-rp.config.js`: la descripción de cada tipo de versión, la zona horaria de la fecha del CHANGELOG (`releaseTimeZone`), el hook `prepare` de `scripts/release-hooks.js` y la publicación en npm del tarball preparado (`publish: "npm"` + `artifact`, con `publication.authentication: "oidc"`).
 
 Los releases salen sólo desde `main`, limpio y al día con origin (sólo `CHANGELOG.md` puede quedar sin commitear). En otra rama explica qué falta: pushear, abrir o mergear el PR. El último release es el último commit de `origin/main` que cambió el `version` de `package.json`, así que reconoce tanto los commits `X.Y.Z` como los anteriores `chore(release): prepara la versión X.Y.Z`.
 
 ### Flujo validado de un release nuevo
 
 1. Actualiza `main` con fast-forward si está atrás.
-2. Verifica que `CHANGELOG.md` tenga un bloque `## [Unreleased]` con entradas y solo secciones de Keep a Changelog. Si faltan, las redacta con Claude Code o, si falla, con Codex (`changelogDraft: true` en `beez-rp.config.js`) y las muestra en la terminal; si ningún agente puede, bloquea el release.
+2. Verifica que `CHANGELOG.md` tenga un bloque `## [Unreleased]` con entradas y solo secciones de Keep a Changelog. Si faltan, las redacta con Claude Code o, si falla, con Codex (`changelogDraft: true` en `astra-rp.config.js`) y las muestra en la terminal; si ningún agente puede, bloquea el release.
 3. Pide la versión (sugiere `patch`, `minor` o `major` según los commits) y crea el commit `X.Y.Z` con la versión del manifiesto, el CHANGELOG con `[Unreleased]` renombrado a `## [X.Y.Z] - AAAA-MM-DD` y un `## [Unreleased]` vacío arriba, y el tag anotado `vX.Y.Z`, antes de las validaciones largas.
 4. `prepare` (`scripts/release-hooks.js`): reusa el tarball ya preparado para esa versión si es posterior al último cambio de código (el commit de versión no cuenta); si no, ejecuta `pnpm release:prepare` sobre el commit de versión: instalación congelada, tests sin React Compiler, build optimizado, lint, typechecks, tests unitarios y pruebas de navegador, y genera el tarball verificado con `npm pack --ignore-scripts` (npm y no pnpm, para que sea reproducible) en `releases/<version>-<sha256>/beez-ui-<version>.tgz`.
 5. Sube `main` y el tag `vX.Y.Z` a origin con un único `git push --atomic`.
-6. Publicación: beez-rp exige que el commit de versión siga sin cambios, toma `releases/<version>-<sha256>/beez-ui-<version>.tgz`, verifica el SHA-256 de su ruta y compara su SHA-512 con el `integrity` de `npm pack --dry-run` sobre ese commit (`npm pack` es reproducible, así que coincidir prueba que es byte a byte lo que npm empaqueta) y recién ahí lo publica en npm con etiqueta `latest`. Además, `prepublishOnly` ejecuta `beez-rp guard-publish`, que corta un `pnpm publish` manual (o yarn/bun): se publica sólo con `pnpm create-version`, que usa npm.
+6. Publicación: astra-rp exige que el commit de versión siga sin cambios, toma `releases/<version>-<sha256>/beez-ui-<version>.tgz`, verifica el SHA-256 de su ruta y compara su SHA-512 con el `integrity` de `npm pack --dry-run` sobre ese commit (`npm pack` es reproducible, así que coincidir prueba que es byte a byte lo que npm empaqueta) y recién ahí lo publica en npm con etiqueta `latest`. Además, `prepublishOnly` ejecuta `astra-rp guard-publish`, que corta un `pnpm publish` manual (o yarn/bun): se publica sólo con `pnpm create-version`, que usa npm.
 
 Si algo falla después del commit de versión, basta con volver a ejecutar `pnpm create-version`: si `HEAD` es el commit `X.Y.Z` y npm todavía no tiene esa versión, retoma sólo la preparación (reusando el tarball si sigue vigente), el push si falta y la publicación. Nunca vuelve a subir la versión.
 
@@ -370,7 +370,7 @@ La publicación usa el cliente oficial de npm contra `https://registry.npmjs.org
 
 ### CHANGELOG
 
-`CHANGELOG.md` sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Cada cambio agrega sus entradas en el bloque `## [Unreleased]`, agrupadas en `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed` y `### Security` (solo las que apliquen). Si faltan entradas, `pnpm create-version` las redacta con Claude Code o Codex y las escribe sin confirmar (revisalas en la salida del comando); si ningún agente puede, bloquea el release mientras `[Unreleased]` no exista o no tenga entradas. Con beez-rp 0.10.0, el commit de versión renombra `[Unreleased]` a `## [X.Y.Z] - AAAA-MM-DD` (fecha en la hora de Argentina por `releaseTimeZone: "America/Argentina/Buenos_Aires"`, aunque el workflow **Release** corra en un runner en UTC) y deja un `[Unreleased]` vacío arriba; si el CHANGELOG no está en UTF-8, el release se detiene antes del bump. Ni las personas ni los hooks cierran la sección: hacerlo (por ejemplo con `releaseUnreleased`) la cerraría dos veces o dejaría `[Unreleased]` vacío y bloquearía el release. `release:prepare` exige el bloque fechado que coincide con la versión del manifiesto. La regla completa está en `AGENTS.md`.
+`CHANGELOG.md` sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Cada cambio agrega sus entradas en el bloque `## [Unreleased]`, agrupadas en `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed` y `### Security` (solo las que apliquen). Si faltan entradas, `pnpm create-version` las redacta con Claude Code o Codex y las escribe sin confirmar (revisalas en la salida del comando); si ningún agente puede, bloquea el release mientras `[Unreleased]` no exista o no tenga entradas. Con `@astra-kit/rp` 1.0.0, el commit de versión renombra `[Unreleased]` a `## [X.Y.Z] - AAAA-MM-DD` (fecha en la hora de Argentina por `releaseTimeZone: "America/Argentina/Buenos_Aires"`, aunque el workflow **Release** corra en un runner en UTC) y deja un `[Unreleased]` vacío arriba; si el CHANGELOG no está en UTF-8, el release se detiene antes del bump. Ni las personas ni los hooks cierran la sección: hacerlo (por ejemplo con `releaseUnreleased`) la cerraría dos veces o dejaría `[Unreleased]` vacío y bloquearía el release. `release:prepare` exige el bloque fechado que coincide con la versión del manifiesto. La regla completa está en `AGENTS.md`.
 
 Para validar y empaquetar la versión actual sin publicarla:
 
