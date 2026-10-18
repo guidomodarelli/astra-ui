@@ -183,3 +183,45 @@ test("should place a tooltip on the requested side", async ({ page }) => {
   if (side === "right") expect(bubbleBounds.x).toBeGreaterThanOrEqual(triggerBounds.x + triggerBounds.width);
   else expect(side).toBe("left");
 });
+
+test.describe("with reduced motion", () => {
+  /** Lead the frozen clock is paused at; it never reaches it, so no timer or animation frame runs past this point. */
+  const FROZEN_CLOCK_LEAD_MS = 1000;
+
+  /**
+   * Opens a layer, waits for it to settle and freezes the page clock, so a layer that still faded out on close would
+   * stay mounted for the rest of the test.
+   * @param layer - Layer to wait for.
+   * @param open - How the layer opens.
+   */
+  async function openAndFreeze(layer: Locator, open: () => Promise<void>) {
+    const page = layer.page();
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.clock.install();
+    await page.goto("/arc-overlays.html");
+    await open();
+    await expectSettled(layer);
+    await page.clock.pauseAt((await page.evaluate(() => Date.now())) + FROZEN_CLOCK_LEAD_MS);
+  }
+
+  test("should unmount the popover at once on Escape", async ({ page }) => {
+    const panel = page.locator("[data-slot=popover-content]");
+    await openAndFreeze(panel, () => page.getByRole("button", { name: "Ver filtros" }).click());
+    await page.keyboard.press("Escape");
+    await expect(panel).toHaveCount(0);
+  });
+
+  test("should unmount the tooltip at once on Escape", async ({ page }) => {
+    const bubble = page.locator("[data-slot=tooltip-content]");
+    await openAndFreeze(bubble, () => page.getByRole("button", { name: "Guardar" }).focus());
+    await page.keyboard.press("Escape");
+    await expect(bubble).toHaveCount(0);
+  });
+
+  test("should unmount the hover card at once on Escape", async ({ page }) => {
+    const card = page.locator("[data-slot=hover-card-content]");
+    await openAndFreeze(card, () => page.getByRole("link", { name: "Ana Pérez" }).focus());
+    await page.keyboard.press("Escape");
+    await expect(card).toHaveCount(0);
+  });
+});
