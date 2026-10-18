@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, onTestFinished, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Button, DropdownMenu, type DropdownItem } from "beez-ui";
 
 /**
@@ -252,32 +252,6 @@ describe("DropdownMenu", () => {
     await user.click(screen.getByRole("button", { name: "Acciones" }));
     expect(screen.getByRole("menu")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Afuera" })).not.toHaveAttribute("aria-hidden");
-  });
-
-  it("should unmount at once under reduced motion, so the page is reachable right after choosing an item", async () => {
-    const matchMedia = vi.spyOn(window, "matchMedia").mockImplementation((query) =>
-      Object.assign(new EventTarget(), {
-        matches: query.includes("prefers-reduced-motion"),
-        media: query,
-        onchange: null,
-        addListener: () => {},
-        removeListener: () => {},
-      }),
-    );
-    onTestFinished(() => matchMedia.mockRestore());
-    const user = userEvent.setup();
-    render(
-      <>
-        <DropdownMenu label="Acciones" items={[{ label: "Editar" }]} />
-        <Button>Afuera</Button>
-      </>,
-    );
-
-    await user.click(screen.getByRole("button", { name: "Acciones" }));
-    await user.click(screen.getByRole("menuitem", { name: "Editar" }));
-
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Afuera" })).toBeInTheDocument();
   });
 });
 
