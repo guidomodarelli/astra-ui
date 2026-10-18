@@ -23,11 +23,12 @@ const RAIL_MORPH_MAX_DURATION_MS = 900;
 /** Fewest in-between frames a real morph paints; a jump paints none. */
 const RAIL_MORPH_MIN_INTERMEDIATE_FRAMES = 5;
 /**
- * Fastest the rail width may change between two painted frames, in pixels per millisecond: about three times the
- * spring's peak speed of roughly 1 px/ms, measured against the time between frames so a late frame is not mistaken
- * for a jump, while a snap across the rail in one frame still is.
+ * Fastest the rail width may change across the two frame intervals that end at a sample, in pixels per millisecond.
+ * The spring peaks at about 0.95 px/ms, and steps measured over that window stay below about 0.65 px/ms; the bound
+ * leaves room above both while allowing at most about 42 px for a one-frame jump at 60 Hz, a fraction of the 188 px
+ * morph.
  */
-const RAIL_MAX_SPEED_PX_PER_MS = 3;
+const RAIL_MAX_SPEED_PX_PER_MS = 1.25;
 /** Width the rail crosses halfway through a morph, where an interrupted toggle reverses it. */
 const RAIL_MIDPOINT_WIDTH_PX = (EXPANDED_WIDTH_PX + COLLAPSED_WIDTH_PX) / 2;
 
@@ -120,13 +121,16 @@ function expectUnclippedRail(frames: RailFrame[]) {
  * Motion updates the width in its own animation frame callback, which can run before or after the sampler's in the
  * same frame, so the width read on a frame was produced somewhere between the previous sample and this one. The
  * spring may therefore have advanced for up to the two frame intervals that end at this sample, and the step is
- * bounded against that span.
+ * bounded against that span. The first step has no earlier interval, because the spring can start a frame before the
+ * first sample, so its own interval stands in for the missing one.
  * @param frames - Sampled rail frames.
  */
 function expectContinuousRail(frames: RailFrame[]) {
   for (let index = 1; index < frames.length; index++) {
     const step = Math.abs(frames[index].rail.width - frames[index - 1].rail.width);
-    const elapsedMs = frames[index].time - frames[Math.max(index - 2, 0)].time;
+    const intervalMs = frames[index].time - frames[index - 1].time;
+    const previousIntervalMs = index > 1 ? frames[index - 1].time - frames[index - 2].time : intervalMs;
+    const elapsedMs = intervalMs + previousIntervalMs;
     expect(step).toBeLessThanOrEqual(RAIL_MAX_SPEED_PX_PER_MS * elapsedMs + LAYOUT_TOLERANCE_PX);
   }
 }
