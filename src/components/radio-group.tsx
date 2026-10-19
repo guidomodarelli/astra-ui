@@ -76,8 +76,10 @@ export type RadioGroupOption = {
 };
 
 export type RadioGroupProps = {
-  /** Visible legend of the fieldset, which names the group. */
+  /** Legend of the fieldset, which names the group. */
   label: string;
+  /** Keeps `label` for assistive technology only, for layouts that already show their own label. */
+  hideLabel?: boolean;
   /** Rows in order. Values double as keys, so keep them unique. */
   options: RadioGroupOption[];
   /** Selected value when controlled. */
@@ -168,10 +170,19 @@ function RadioGroupOptionRow({ value, label, description, disabled }: RadioGroup
 
 /**
  * A choice of one option from a visible set, controlled with `value` or uncontrolled with `defaultValue`.
- * @param props - Legend, options, value, change handler, form name and classes.
+ * @param props - Legend, its visibility, options, value, change handler, form name and classes.
  * @returns The fieldset with its legend and option rows.
  */
-function RadioGroup({ label, options, value, defaultValue, onValueChange, name, className }: RadioGroupProps) {
+function RadioGroup({
+  label,
+  hideLabel = false,
+  options,
+  value,
+  defaultValue,
+  onValueChange,
+  name,
+  className,
+}: RadioGroupProps) {
   const reduceMotion = usePrefersReducedMotion();
   const generatedId = useId();
   const legendId = `${generatedId}-legend`;
@@ -218,7 +229,12 @@ function RadioGroup({ label, options, value, defaultValue, onValueChange, name, 
           aria-labelledby={legendId}
           className={cn("m-0 grid min-w-0 border-0 p-0", className)}
         >
-          <legend id={legendId} data-slot="radio-group-label" className="mb-(--space-2) p-0 text-sm font-medium text-foreground">
+          {/* A hidden legend leaves the flow but stays the group's name, so the rows start where the legend would. */}
+          <legend
+            id={legendId}
+            data-slot="radio-group-label"
+            className={hideLabel ? "sr-only" : "mb-(--space-2) p-0 text-sm font-medium text-foreground"}
+          >
             {label}
           </legend>
           <div ref={optionsRef} data-slot="radio-group-options" className="relative grid w-full gap-(--space-2)">

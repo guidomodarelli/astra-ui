@@ -6,6 +6,7 @@ import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */
 type Args = {
   label: string;
+  hideLabel: boolean;
   value: string;
   descriptions: boolean;
   disabledOption: boolean;
@@ -14,6 +15,7 @@ const meta = {
   title: "Components/RadioGroup",
   args: {
     label: "Frecuencia de cobro",
+    hideLabel: false,
     value: "monthly",
     descriptions: true,
     disabledOption: false,
@@ -21,6 +23,9 @@ const meta = {
   argTypes: {
     label: {
       control: "text",
+    },
+    hideLabel: {
+      control: "boolean",
     },
     value: {
       control: "select",
@@ -35,7 +40,7 @@ const meta = {
       description: "Deshabilita la opción anual.",
     },
   },
-  parameters: { controls: { include: ["label", "value", "descriptions", "disabledOption"] } },
+  parameters: { controls: { include: ["label", "hideLabel", "value", "descriptions", "disabledOption"] } },
   render: function Render(args) {
     const [, updateArgs] = useArgs<Args>();
     return (
@@ -44,6 +49,7 @@ const meta = {
           <RadioGroup
             className="StoryStack"
             label={args.label}
+            hideLabel={args.hideLabel}
             value={value}
             onValueChange={(nextValue) => setValue(nextValue)}
             options={[

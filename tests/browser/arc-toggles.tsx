@@ -10,7 +10,7 @@ function SelectAllCheckbox() {
   return <Checkbox label="Seleccionar todo" checked={state} onCheckedChange={setState} />;
 }
 
-/** Renders each control in the variants the spec drives. */
+/** Renders each control in the variants the spec drives, including a radio group whose visible title replaces its legend. */
 function ArcToggles() {
   return <AstraUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
     <h1>Interruptores y selecciones</h1>
@@ -31,6 +31,18 @@ function ArcToggles() {
           { value: "monthly", label: "Mensual", description: "Se renueva cada mes." },
           { value: "quarterly", label: "Trimestral" },
           { value: "yearly", label: "Anual", description: "Dos meses sin cargo." },
+        ]}
+      />
+    </section>
+    <section className="narrow-field" data-testid="titled-radio-group">
+      <h2>Frecuencia de pago</h2>
+      <RadioGroup
+        label="Frecuencia de pago"
+        hideLabel
+        defaultValue="weekly"
+        options={[
+          { value: "weekly", label: "Semanal" },
+          { value: "biweekly", label: "Quincenal" },
         ]}
       />
     </section>
