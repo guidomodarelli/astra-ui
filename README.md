@@ -320,7 +320,7 @@ pnpm release:prepare
 
 El paquete excluye fuentes privadas, tests, scripts, `.env` y `.npmrc`; incluye JavaScript, declaraciones, CSS, fuentes tipográficas y licencias. Conserva releases anteriores.
 
-`prepack` ejecuta el build para los empaquetados manuales. `dist` y `releases` son generados e ignorados por Git. La CI verifica los checks, los tres providers y el catálogo de Storybook (`pnpm test:storybook`) en ambos motores de navegador en Linux y Windows. La publicación se ejecuta desde el workflow **Release**, que recibe la versión, el tag y el commit creados por `pnpm create-version`.
+`prepack` ejecuta el build para los empaquetados manuales. `dist` y `releases` son generados e ignorados por Git. La CI verifica los checks, los tres providers y el catálogo de Storybook (`pnpm test:storybook`) en ambos motores de navegador (Chromium y WebKit) en Linux. La publicación se ejecuta desde el workflow **Release**, que recibe la versión, el tag y el commit creados por `pnpm create-version`.
 
 Tras publicar, los consumidores pueden instalar `pnpm add @astra-kit/ui`. También pueden instalar directamente el `.tgz` validado antes de una publicación.
 

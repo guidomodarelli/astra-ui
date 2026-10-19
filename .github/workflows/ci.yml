@@ -7,18 +7,17 @@ permissions:
   contents: read
 jobs:
   validate:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    # Linux only: the suite checks browser behavior, which does not depend on the runner's OS, and
+    # local development already runs it on Windows.
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.0.0
         with:
           node-version-file: .nvmrc
           package-manager-cache: false
-      # Install the native pnpm binary instead of PowerShell shims, and wait for
-      # frozen installation before checks or cache persistence can start.
+      # Install pnpm from packageManager and wait for the frozen installation before checks or cache
+      # persistence can start.
       - uses: pnpm/setup@v2.1.0
         with:
           cache: true
