@@ -125,6 +125,44 @@ test.describe("Arc dropdown menu", () => {
     expect(bounds.width).toBeGreaterThanOrEqual(Math.min(192, viewportWidth - 2 * COLLISION_PADDING_PX));
   });
 
+  test("should keep the menu closed while its custom trigger is disabled and open it once enabled", async ({ page }) => {
+    await page.goto("/arc-menus.html");
+    const trigger = page.getByRole("button", { name: "Más acciones de la fila" });
+    await expect(trigger).toBeDisabled();
+    // The engine still delivers `pointerdown` to a disabled button, and that is what opens a Radix menu; `force` skips
+    // Playwright's wait for an enabled element so the real pointer sequence reaches it.
+    await trigger.click({ force: true });
+    await expect(page.getByRole("menu")).toHaveCount(0);
+    await page.getByRole("button", { name: "Habilitar fila" }).click();
+    await trigger.click();
+    await expect(page.getByRole("menu", { name: "Acciones de la fila" })).toBeVisible();
+  });
+
+  test("should keep the menu closed while a fieldset disables its trigger and open it once the fieldset is enabled", async ({
+    page,
+  }) => {
+    await page.goto("/arc-menus.html");
+    const trigger = page.getByRole("button", { name: "Más acciones de la sección" });
+    await expect(trigger).toBeDisabled();
+    await trigger.click({ force: true });
+    await expect(page.getByRole("menu")).toHaveCount(0);
+    await page.getByRole("button", { name: "Habilitar sección" }).click();
+    await trigger.click();
+    await expect(page.getByRole("menu", { name: "Acciones de la sección" })).toBeVisible();
+  });
+
+  test("should not open from an aria-disabled trigger with the keyboard and let Tab leave it", async ({ page }) => {
+    await page.goto("/arc-menus.html");
+    const trigger = page.getByRole("button", { name: "Acciones en curso" });
+    await expect(trigger).toHaveAttribute("aria-disabled", "true");
+    await trigger.focus();
+    for (const key of ["Enter", "Space", "ArrowDown"]) await page.keyboard.press(key);
+    await expect(page.getByRole("menu")).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("button", { name: "Después del menú" })).toBeFocused();
+  });
+
   test("should name the menu after its label and return focus to Arc's trigger on Escape", async ({ page }) => {
     await page.goto("/arc-menus.html");
     const trigger = page.getByRole("button", { name: "Acciones del documento" });

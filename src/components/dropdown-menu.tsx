@@ -7,9 +7,10 @@
  * children. @astra-kit/ui adds a custom trigger, link, checkbox and radio rows, trailing content, and placement and open
  * state of the menu.
  */
-import type { ReactElement, ReactNode } from "react"
+import type { KeyboardEvent, PointerEvent, ReactElement, ReactNode } from "react"
 import { ChevronDownIcon } from "lucide-react"
 
+import { DROPDOWN_MENU_OPEN_KEYS, DROPDOWN_MENU_UNAVAILABLE_TRIGGER_SELECTOR } from "../constants/dropdown-menu.js"
 import { cn } from "../lib/utils.js"
 import { Button } from "./button.js"
 import {
@@ -42,7 +43,8 @@ export type DropdownMenuProps = {
   icon?: ReactNode
   /**
    * Your own trigger, rendered with `asChild` instead of Arc's labelled button, such as an icon button with its own
-   * `aria-label`. It must accept a ref and be focusable.
+   * `aria-label`. It must accept a ref and be focusable. While the rendered trigger is disabled (its own `disabled`, an
+   * ancestor `<fieldset disabled>`) or has `aria-disabled="true"`, the menu does not open.
    */
   trigger?: ReactElement
   /** Single selection: rows with a `value` render as radio items checked against `selection.value`. */
@@ -68,6 +70,34 @@ export type DropdownMenuProps = {
 }
 
 /**
+ * Tells whether the rendered trigger is unavailable, however it got there: its own `disabled`, an ancestor
+ * `<fieldset disabled>`, state derived inside a custom component, or `aria-disabled="true"`.
+ * @param trigger - Element the event reached.
+ * @returns Whether the menu must stay closed.
+ */
+function isUnavailableTrigger(trigger: HTMLElement) {
+  return trigger.matches(DROPDOWN_MENU_UNAVAILABLE_TRIGGER_SELECTOR)
+}
+
+/**
+ * Keeps an unavailable trigger from opening the menu on press. The engine still delivers `pointerdown` to a disabled
+ * button, and Radix opens on it unless the event is already default-prevented.
+ * @param event - Pointer event on the trigger.
+ */
+function preventPointerOpenWhileUnavailable(event: PointerEvent<HTMLElement>) {
+  if (isUnavailableTrigger(event.currentTarget)) event.preventDefault()
+}
+
+/**
+ * Keeps an `aria-disabled` trigger, which stays focusable, from opening the menu with Enter, Space or ArrowDown. Other
+ * keys, such as Tab, keep their default so focus can leave it.
+ * @param event - Keyboard event on the trigger.
+ */
+function preventKeyboardOpenWhileUnavailable(event: KeyboardEvent<HTMLElement>) {
+  if (DROPDOWN_MENU_OPEN_KEYS.includes(event.key) && isUnavailableTrigger(event.currentTarget)) event.preventDefault()
+}
+
+/**
  * A focused list of actions anchored to a trigger.
  * @param props - The label, the items and optional trigger, selection, placement and open state.
  * @returns The trigger with its menu.
@@ -90,7 +120,11 @@ function DropdownMenu({
 }: DropdownMenuProps) {
   return (
     <DropdownMenuRoot open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange} modal={modal}>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger
+        asChild
+        onPointerDown={preventPointerOpenWhileUnavailable}
+        onKeyDown={preventKeyboardOpenWhileUnavailable}
+      >
         {trigger ?? (
           <Button variant="secondary" className={cn("max-w-full", className)}>
             {icon}
