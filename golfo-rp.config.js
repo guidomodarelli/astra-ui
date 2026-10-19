@@ -10,7 +10,8 @@
  * the engine verifies that exact tarball (SHA-256 and contents) and publishes
  * it to npm through trusted publishing (OIDC) from the Release workflow, without
  * an npm token. There are no separate checks because
- * `release:prepare` already runs the full validation on the version commit.
+ * `release:prepare` already runs the checks on the version commit (the browser suite
+ * runs in the sharded CI of main).
  */
 import { prepareReleaseArtifact } from "./scripts/release-hooks.js";
 
@@ -26,7 +27,7 @@ export default {
     minor: "Funcionalidades nuevas compatibles; lo existente sigue funcionando igual.",
     major: "Cambios incompatibles: quien consume el paquete tiene que adaptar su código.",
   },
-  // release:prepare already runs the full validation on the version commit, so it is not repeated before the bump.
+  // release:prepare already runs the checks on the version commit, so they are not repeated before the bump.
   checks: false,
   // `pnpm cv` bumps and pushes locally; .github/workflows/release.yml receives version, tag and sha and runs `--ci-release`.
   ci: { workflow: "release.yml" },
