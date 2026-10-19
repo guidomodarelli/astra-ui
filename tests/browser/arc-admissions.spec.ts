@@ -295,8 +295,9 @@ test("should repaint the displays from the dark theme tokens", async ({ page }) 
     document.documentElement.classList.add("dark");
   });
 
-  await expect.poll(() => track.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(lightTrack);
-  await expect.poll(() => card.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(lightCard);
+  // Each read waits on the page's main thread, which a loaded WebKit runner can hold for seconds.
+  await expect.poll(() => track.evaluate((element) => getComputedStyle(element).backgroundColor), { timeout: SETTLE_TIMEOUT_MS }).not.toBe(lightTrack);
+  await expect.poll(() => card.evaluate((element) => getComputedStyle(element).backgroundColor), { timeout: SETTLE_TIMEOUT_MS }).not.toBe(lightCard);
 });
 
 test("should not draw the overage when the total rounds onto the limit", async ({ page }) => {
