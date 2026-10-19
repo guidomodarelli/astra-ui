@@ -1,6 +1,7 @@
 /** Checks in real engines that ButtonLink and buttonClassName paint exactly like Button, so links never look different. */
 import { expect, test } from "@playwright/test";
 import type { Locator } from "@playwright/test";
+import { NEXT_ORIGIN } from "./ports";
 
 /** Computed properties that make up the button look, compared between Button and its link and label twins. */
 const PAINTED_PROPERTIES = [
@@ -59,4 +60,16 @@ test("should navigate as a link and keep the href, so it can open in a new tab",
   await expect(link).toHaveAttribute("data-slot", "button-link");
   await link.click();
   await expect(page).toHaveURL(/#destino$/);
+});
+
+test("should build button classes and render ButtonLink from a Next Server Component", async ({ page }) => {
+  const response = await page.goto(`${NEXT_ORIGIN}/button-recipe`);
+  expect(response?.status()).toBe(200);
+  const label = page.locator("label", { hasText: "Adjuntar comprobante" });
+  await expect(label).toHaveCSS("border-top-style", "solid");
+  await expect(label).toHaveCSS("cursor", "pointer");
+  const link = page.getByRole("link", { name: "Ir al destino" });
+  await expect(link).toHaveAttribute("data-slot", "button-link");
+  await link.click();
+  await expect(page).toHaveURL(new RegExp(`${NEXT_ORIGIN}/destination$`));
 });

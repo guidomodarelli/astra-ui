@@ -6,7 +6,7 @@
  * assistive technology and the browser (it opens in a new tab, it can be copied), which a `Button` cannot.
  */
 import { cn } from "../lib/utils.js"
-import { buttonClassName, type ButtonSize, type ButtonVariant } from "./button.js"
+import { buttonClassName, type ButtonSize, type ButtonVariant } from "./button-recipe.js"
 import { Link, type LinkProps } from "./link.js"
 
 export type ButtonLinkProps = LinkProps & {

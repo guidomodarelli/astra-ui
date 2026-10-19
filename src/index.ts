@@ -7,6 +7,8 @@ export * from "./components/action-button.js";
 export * from "./components/avatar.js";
 export * from "./components/badge.js";
 export * from "./components/button.js";
+// From the recipe module, which has no client directive, so it also runs in Server Components.
+export { buttonClassName, type ButtonClassNameOptions } from "./components/button-recipe.js";
 export * from "./components/button-link.js";
 export * from "./components/card.js";
 export * from "./components/carousel.js";
