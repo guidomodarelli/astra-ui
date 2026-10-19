@@ -3,7 +3,7 @@
 /**
  * Arc's Button (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): its variants, sizes, tokens and motion,
  * with width-aware press feedback, a label that springs to its new width and a loading spinner. It renders a native
- * button; style links as links instead. Composite components that need icon sizes use the internal `ControlButton`.
+ * button: navigation that looks like a button is a `ButtonLink`, and other elements take `buttonClassName`. Composite components that need icon sizes use the internal `ControlButton`.
  */
 import type { ComponentProps, Ref } from "react"
 import { cva } from "class-variance-authority"
@@ -54,6 +54,24 @@ const buttonVariants = cva(
   }
 )
 
+/** Options of {@link buttonClassName}. */
+export type ButtonClassNameOptions = {
+  variant?: ButtonVariant
+  size?: ButtonSize
+  /** Extra classes merged after the recipe, so they win on conflicts. */
+  className?: string
+}
+
+/**
+ * Arc's button classes for an element that is not a `Button`, such as a `<label>` that opens a file picker. Links
+ * use {@link ButtonLink} instead. The press scale and the loading label are effects of `Button` and are not included.
+ * @param options - Variant, size and extra classes. Defaults to `primary` and `md`.
+ * @returns The class list.
+ */
+function buttonClassName({ variant = "primary", size = "md", className }: ButtonClassNameOptions = {}) {
+  return cn(buttonVariants({ variant, size, className }))
+}
+
 export type ButtonProps = ComponentProps<"button"> & {
   variant?: ButtonVariant
   size?: ButtonSize
@@ -102,4 +120,4 @@ function Button({
   )
 }
 
-export { Button }
+export { Button, buttonClassName }

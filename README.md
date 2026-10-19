@@ -49,6 +49,15 @@ import { Avatar, Button, Calendar, DataTable } from "@astra-kit/ui";
 
 Los componentes adoptados de [Arc](https://uiarc.dev) usan la API pública de Arc: `Switch`, `Checkbox`, `RadioGroup`, `Badge`, `Avatar`, `AvatarGroup`, `Skeleton`, `Card`, `Alert`, `Tooltip`, `HoverCard`, `DropdownMenu`, `Select`, `Pagination`, `Calendar` y `Carousel` son componentes cerrados que se configuran por props (`items`, `options`, `members`, `content`, `title`); `Dialog` (`Dialog`, `DialogTrigger`, `DialogContent` con `title` y `description`, `DialogClose`), `Popover` y `Tabs` conservan las partes de Arc. Cada uno suma solo las extensiones que Arc no cubre, con copy en español por defecto, por ejemplo `getHref` en `Pagination`, `trigger` e ítems con `href` en `DropdownMenu`, `onOpenChange` en `HoverCard`, `footer` y el modo `alert` en `Dialog` (reemplaza a `AlertDialog`), `hideLabel` en `Select` y `onSettle` en `Carousel`. La tabla de migración desde `beez-ui` 2.x está en [`docs/history/beez-ui-changelog.md`](https://github.com/guidomodarelli/astra-ui/blob/main/docs/history/beez-ui-changelog.md).
 
+`Button` es para acciones y no tiene `asChild`. Una navegación con aspecto de botón es un `ButtonLink`: el `Link` del provider (rutea con el adaptador configurado y sigue siendo un enlace, que se puede abrir en otra pestaña o copiar) con la receta de `Button` y sus `variant` y `size`. Para otro elemento con aspecto de botón, como un `<label>` que abre un selector de archivos, `buttonClassName({ variant, size, className })` devuelve las mismas clases. Ninguno de los dos incluye la presión ni el spinner de `Button`.
+
+```tsx
+import { ButtonLink, buttonClassName } from "@astra-kit/ui";
+
+<ButtonLink href="/" variant="secondary">Volver al inicio</ButtonLink>;
+<label className={buttonClassName({ variant: "ghost", size: "sm" })}>Adjuntar<input type="file" hidden /></label>;
+```
+
 Agrupar los imports de componentes desde la raíz. El paquete publica JavaScript ESM y declaraciones TypeScript en `dist`; el consumidor no necesita transpilar el código fuente de la librería. La gramática de filtros y los helpers de mes-año son independientes de React.
 
 La utilidad `cn`, también exportada desde `@astra-kit/ui`, usa el paquete `cn` para combinar clases condicionales y resolver conflictos de Tailwind.

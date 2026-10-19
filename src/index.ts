@@ -7,6 +7,7 @@ export * from "./components/action-button.js";
 export * from "./components/avatar.js";
 export * from "./components/badge.js";
 export * from "./components/button.js";
+export * from "./components/button-link.js";
 export * from "./components/card.js";
 export * from "./components/carousel.js";
 export * from "./components/checkbox.js";
