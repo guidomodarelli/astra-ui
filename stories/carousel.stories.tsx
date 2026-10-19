@@ -1,6 +1,6 @@
 /** Demonstrates Carousel with editable content and real interactions. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Carousel } from "@astra-kit/ui";
+import { Carousel } from "@golfo/ui";
 
 /** Editable inputs specific to this example. */
 type Args = {

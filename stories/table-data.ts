@@ -1,6 +1,6 @@
 /** Shares stable example records between the table, data table and query stories. */
 import type { ColumnDef } from "@tanstack/react-table";
-import type { FilterQualifierConfig } from "@astra-kit/ui";
+import type { FilterQualifierConfig } from "@golfo/ui";
 
 export const ROWS = [
   { id: "1", name: "Internet", status: "Pendiente", amount: 15000 },

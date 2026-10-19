@@ -1,12 +1,12 @@
 /**
- * Mounts the plain `Toaster` @astra-kit/ui exports (Sonner's look, not `ThemedToaster`) with the props TuTribu uses, next to
+ * Mounts the plain `Toaster` @golfo/ui exports (Sonner's look, not `ThemedToaster`) with the props TuTribu uses, next to
  * a dialog, an alert dialog and a sheet that raise toasts, so pointer input and keyboard focus run through real modal
  * overlays.
  */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
-  AstraUIProvider,
+  GolfoUIProvider,
   Button,
   Dialog,
   DialogClose,
@@ -20,7 +20,7 @@ import {
   SheetTrigger,
   Toaster,
   toast,
-} from "@astra-kit/ui";
+} from "@golfo/ui";
 import "./styles.css";
 
 /**
@@ -49,7 +49,7 @@ function SaveWithRetry({ label }: { label: string }) {
 /** Renders the modals and the consumer's toaster. */
 function App() {
   return (
-    <AstraUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}>
+    <GolfoUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}>
       <main>
         <h1>Toaster con modales</h1>
         <section className="controls">
@@ -95,7 +95,7 @@ function App() {
         </section>
       </main>
       <Toaster closeButton position="top-center" richColors theme="light" />
-    </AstraUIProvider>
+    </GolfoUIProvider>
   );
 }
 

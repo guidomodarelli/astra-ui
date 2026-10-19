@@ -4,7 +4,7 @@
  * Internal composition behind Arc's Avatar (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): a compact
  * identity marker on Arc's tokens, with a hairline border, a muted fill behind the initials and an optional presence
  * dot that pops in and out. Loading, failure and fallback stay on the Base UI avatar primitive. Not part of the public
- * API: consumers use the closed `Avatar` from `../avatar.js`, while @astra-kit/ui components such as the account menu compose
+ * API: consumers use the closed `Avatar` from `../avatar.js`, while @golfo/ui components such as the account menu compose
  * these parts directly.
  */
 import type { ComponentProps } from "react"
@@ -17,7 +17,7 @@ import { usePrefersReducedMotion } from "../../hooks/use-prefers-reduced-motion.
 import { cn } from "../../lib/utils.js"
 import { ARC_DURATION, ARC_SPRING_SNAPPY } from "../../motion/arc-tokens.js"
 import { MotionSlot } from "../../motion/motion-slot.js"
-import { useAstraUIComponents } from "../../providers/astra-ui-provider.js"
+import { useGolfoUIComponents } from "../../providers/golfo-ui-provider.js"
 
 /** Accepts native image props and nullable image sources from application results. */
 export type AvatarImageProps = Omit<ComponentProps<"img">, "src"> & {
@@ -86,7 +86,7 @@ function AvatarRoot({ className, size = "md", status, children, ...props }: Avat
  * @returns The image, mounted while it loads so the fallback can stay until it is ready.
  */
 function AvatarImage({ alt = "", className, src, ...props }: AvatarImageProps) {
-  const { Image: ImageComponent = "img" } = useAstraUIComponents()
+  const { Image: ImageComponent = "img" } = useGolfoUIComponents()
   return (
     <MotionSlot kind="reveal">
       <AvatarPrimitive.Image

@@ -1,6 +1,6 @@
 /** Demonstrates UsageMeter through its public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { UsageMeter } from "@astra-kit/ui";
+import { UsageMeter } from "@golfo/ui";
 
 /** Editable inputs specific to this example. */
 type Args = { codes: number; notices: number; limit: number; warnAt: number };

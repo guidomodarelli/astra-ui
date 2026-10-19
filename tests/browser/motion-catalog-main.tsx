@@ -8,7 +8,7 @@ import {
   DialogClose,
   DialogContent,
   DialogTrigger,
-  AstraUIProvider,
+  GolfoUIProvider,
   Button,
   DropdownMenu,
   Form,
@@ -45,7 +45,7 @@ import {
   TabsList,
   TabsTrigger,
   Textarea,
-} from "@astra-kit/ui";
+} from "@golfo/ui";
 import "./styles.css";
 
 const SECTIONS = ["Inicio", "Reportes", "Ajustes"] as const;
@@ -106,7 +106,7 @@ function MotionCatalog() {
   const [isNoticeShown, setIsNoticeShown] = useState(false);
   const [lastAction, setLastAction] = useState("");
   return (
-    <AstraUIProvider>
+    <GolfoUIProvider>
       <main>
         <h1>Catálogo de movimiento</h1>
         <SidebarProvider className="min-h-0">
@@ -235,7 +235,7 @@ function MotionCatalog() {
           </Tabs>
         </section>
       </main>
-    </AstraUIProvider>
+    </GolfoUIProvider>
   );
 }
 createRoot(document.getElementById("root")!).render(<MotionCatalog />);

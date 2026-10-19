@@ -1,7 +1,7 @@
 /** Demonstrates Avatar and AvatarGroup through their public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { PlusIcon } from "lucide-react";
-import { Avatar, AvatarGroup } from "@astra-kit/ui";
+import { Avatar, AvatarGroup } from "@golfo/ui";
 
 /** Editable inputs specific to this example. */
 type Args = {

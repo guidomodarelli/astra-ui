@@ -1,6 +1,6 @@
 /** Demonstrates Link through its public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Link } from "@astra-kit/ui";
+import { Link } from "@golfo/ui";
 
 /** Editable inputs specific to this example. */
 type Args = { children: string; href: string; newTab: boolean };

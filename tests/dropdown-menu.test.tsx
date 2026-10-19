@@ -1,9 +1,9 @@
-/** Covers the interaction contract of Arc's closed DropdownMenu and @astra-kit/ui's extensions. */
+/** Covers the interaction contract of Arc's closed DropdownMenu and @golfo/ui's extensions. */
 import { useState } from "react";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { Button, DropdownMenu, type DropdownItem } from "@astra-kit/ui";
+import { Button, DropdownMenu, type DropdownItem } from "@golfo/ui";
 
 /**
  * Builds the document actions, with a disabled row and a destructive one after a separator.

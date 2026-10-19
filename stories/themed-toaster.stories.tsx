@@ -1,6 +1,6 @@
 /** Demonstrates ThemedToaster with editable content and real interactions. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { ThemedToaster, Button, toast } from "@astra-kit/ui";
+import { ThemedToaster, Button, toast } from "@golfo/ui";
 
 /** Editable inputs specific to this example. */
 type Args = {

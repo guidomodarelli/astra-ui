@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 
-import { MetricCard } from "@astra-kit/ui";
+import { MetricCard } from "@golfo/ui";
 
 describe("MetricCard", () => {
   it("should render an article whose number is read once, formatted for es-AR", () => {

@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Check, Inbox } from "lucide-react";
-import { AstraUIProvider, Button, EmptyState, MetricCard, Stepper, Timeline, UsageMeter } from "@astra-kit/ui";
-import type { TimelineEvent } from "@astra-kit/ui";
+import { GolfoUIProvider, Button, EmptyState, MetricCard, Stepper, Timeline, UsageMeter } from "@golfo/ui";
+import type { TimelineEvent } from "@golfo/ui";
 import "./styles.css";
 
 /** Fixed reference time, so day groups never depend on the real date. */
@@ -136,7 +136,7 @@ function RequestHistory() {
 
 /** Every admissions display on one page. */
 function ArcAdmissions() {
-  return <AstraUIProvider><main>
+  return <GolfoUIProvider><main>
     <h1>Admisiones</h1>
     <MessagingQuota />
     <RoundedQuota />
@@ -145,7 +145,7 @@ function ArcAdmissions() {
     <EmptyInbox />
     <ImportStepper />
     <RequestHistory />
-  </main></AstraUIProvider>;
+  </main></GolfoUIProvider>;
 }
 
 createRoot(document.getElementById("root")!).render(<ArcAdmissions />);

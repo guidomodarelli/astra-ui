@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { Timeline } from "@astra-kit/ui";
-import type { TimelineEvent } from "@astra-kit/ui";
+import { Timeline } from "@golfo/ui";
+import type { TimelineEvent } from "@golfo/ui";
 
 /** Reference time: 22 Sep 2026, 12:00 UTC. */
 const NOW = Date.UTC(2026, 8, 22, 12);

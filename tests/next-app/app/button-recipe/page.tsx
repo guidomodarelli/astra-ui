@@ -2,7 +2,7 @@
  * A Server Component (no client directive) that calls buttonClassName while rendering and mounts a ButtonLink, as an
  * App Router page would: if the helper were a client reference, rendering this page on the server would fail.
  */
-import { ButtonLink, buttonClassName } from "@astra-kit/ui";
+import { ButtonLink, buttonClassName } from "@golfo/ui";
 
 export default function ButtonRecipePage() {
   return (

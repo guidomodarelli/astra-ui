@@ -3,8 +3,8 @@
 /** Integrates TanStack navigation without making the router a core dependency. */
 import { useMemo, type ReactNode } from "react";
 import { Link as RouterLink, defaultParseSearch, useRouter } from "@tanstack/react-router";
-import { AstraUIProvider as BaseAstraUIProvider, type AstraUIProviderProps as BaseAstraUIProviderProps } from "./providers/native-provider.js";
-import type { AstraLinkProps } from "./providers/astra-ui-provider.js";
+import { GolfoUIProvider as BaseGolfoUIProvider, type GolfoUIProviderProps as BaseGolfoUIProviderProps } from "./providers/native-provider.js";
+import type { GolfoLinkProps } from "./providers/golfo-ui-provider.js";
 
 /** Leaves absolute destinations to the router's built-in external-link handling. */
 const ABSOLUTE_URL_PATTERN = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/iu;
@@ -12,10 +12,10 @@ const ABSOLUTE_URL_PATTERN = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/iu;
 const INTENT_PRELOAD = "intent";
 
 /** Configures routing hints and shared theme behavior; the consumer owns RouterProvider. */
-export interface AstraUIProviderProps {
+export interface GolfoUIProviderProps {
   children: ReactNode;
   prefetch?: boolean;
-  themeOptions?: BaseAstraUIProviderProps["themeOptions"];
+  themeOptions?: BaseGolfoUIProviderProps["themeOptions"];
 }
 
 /** Converts a native href into TanStack's pathname/search/hash options. */
@@ -31,10 +31,10 @@ function splitHref(href: string) {
 }
 
 /** Combines TanStack links with responsive Unpic images and shared theme behavior. */
-export function AstraUIProvider({ children, prefetch = false, themeOptions }: AstraUIProviderProps) {
+export function GolfoUIProvider({ children, prefetch = false, themeOptions }: GolfoUIProviderProps) {
   const components = useMemo(() => ({
     /** Uses the real router parser so application search configuration remains authoritative. */
-    Link: function TanStackLinkAdapter({ href, prefetch: linkPrefetch, ...props }: AstraLinkProps) {
+    Link: function TanStackLinkAdapter({ href, prefetch: linkPrefetch, ...props }: GolfoLinkProps) {
       const router = useRouter();
       const preload = (linkPrefetch ?? prefetch) ? INTENT_PRELOAD : false;
       if (ABSOLUTE_URL_PATTERN.test(href)) return <RouterLink {...props} to={href} preload={preload} />;
@@ -44,5 +44,5 @@ export function AstraUIProvider({ children, prefetch = false, themeOptions }: As
       return <RouterLink {...props} to={location.pathname || "."} search={search} hash={location.hash} preload={preload} />;
     },
   }), [prefetch]);
-  return <BaseAstraUIProvider components={components} themeOptions={themeOptions}>{children}</BaseAstraUIProvider>;
+  return <BaseGolfoUIProvider components={components} themeOptions={themeOptions}>{children}</BaseGolfoUIProvider>;
 }

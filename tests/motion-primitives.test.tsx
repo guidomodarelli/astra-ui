@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, MotionGlobalConfig } from "motion/react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AnimatedCollapse, AnimatedCount, AnimatedListItem, AstraUIProvider, Dialog, DialogContent, PresenceSwap } from "@astra-kit/ui";
+import { AnimatedCollapse, AnimatedCount, AnimatedListItem, GolfoUIProvider, Dialog, DialogContent, PresenceSwap } from "@golfo/ui";
 
 function CollapseHarness() {
   const [isOpen, setIsOpen] = useState(false);
@@ -280,7 +280,7 @@ describe("motion primitives with reduced motion", () => {
       );
     }
     const user = userEvent.setup();
-    render(<AstraUIProvider><DialogRetryHarness /></AstraUIProvider>);
+    render(<GolfoUIProvider><DialogRetryHarness /></GolfoUIProvider>);
 
     await user.click(await screen.findByRole("button", { name: "Reintentar" }));
 

@@ -1,8 +1,8 @@
 /** Exposes shared UI without promoting server-safe exports into a client boundary. */
 export { useTheme } from "next-themes";
 export { Link, type LinkProps } from "./components/link.js";
-export { AstraUIProvider, type AstraUIProviderProps } from "./providers/native-provider.js";
-export type { AstraUIComponents, AstraImageProps, AstraLinkProps } from "./providers/astra-ui-provider.js";
+export { GolfoUIProvider, type GolfoUIProviderProps } from "./providers/native-provider.js";
+export type { GolfoUIComponents, GolfoImageProps, GolfoLinkProps } from "./providers/golfo-ui-provider.js";
 export * from "./components/action-button.js";
 export * from "./components/avatar.js";
 export * from "./components/badge.js";

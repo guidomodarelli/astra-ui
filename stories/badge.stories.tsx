@@ -1,7 +1,7 @@
 /** Demonstrates Badge through its public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Star } from "lucide-react";
-import { Badge } from "@astra-kit/ui";
+import { Badge } from "@golfo/ui";
 
 /** Editable inputs specific to this example. */
 type Args = {

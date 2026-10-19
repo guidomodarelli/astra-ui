@@ -11,7 +11,7 @@ const temporaryDirectories: string[] = [];
 
 /** Packs a `package/` folder the way npm lays out its tarballs and returns the archive's absolute path. */
 function createPackageArchive(): string {
-  const directory = mkdtempSync(join(tmpdir(), "astra-ui-tarball-"));
+  const directory = mkdtempSync(join(tmpdir(), "golfo-ui-tarball-"));
   temporaryDirectories.push(directory);
   mkdirSync(join(directory, "package"));
   writeFileSync(join(directory, "package", "package.json"), JSON.stringify({ name: "fixture", version: "1.0.0" }));
@@ -35,7 +35,7 @@ describe("tarball helpers", () => {
 
   it("should extract an archive given by its absolute path into another directory", () => {
     const archivePath = createPackageArchive();
-    const destination = mkdtempSync(join(tmpdir(), "astra-ui-tarball-destination-"));
+    const destination = mkdtempSync(join(tmpdir(), "golfo-ui-tarball-destination-"));
     temporaryDirectories.push(destination);
 
     extractArchive(archivePath, destination);

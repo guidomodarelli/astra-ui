@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogClose,
   Select,
-} from "@astra-kit/ui";
+} from "@golfo/ui";
 
 it("should remove a closing dialog even when it contains an unopened select", async () => {
   const user = userEvent.setup();

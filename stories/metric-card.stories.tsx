@@ -1,6 +1,6 @@
 /** Demonstrates MetricCard through its public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { MetricCard } from "@astra-kit/ui";
+import { MetricCard } from "@golfo/ui";
 
 /** Editable inputs specific to this example. */
 type Args = { label: string; value: number; suffix: string; context: string; change: string };

@@ -1,7 +1,7 @@
 /** Demonstrates EmptyState through its public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Inbox } from "lucide-react";
-import { Button, EmptyState } from "@astra-kit/ui";
+import { Button, EmptyState } from "@golfo/ui";
 
 /** Editable inputs specific to this example. */
 type Args = { title: string; description: string; withAction: boolean; withCustomIcon: boolean };

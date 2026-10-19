@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Inbox } from "lucide-react";
 
-import { EmptyState } from "@astra-kit/ui";
+import { EmptyState } from "@golfo/ui";
 
 describe("EmptyState", () => {
   it("should name the region and render the title as a heading with its description", () => {

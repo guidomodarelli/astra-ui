@@ -1,6 +1,6 @@
 /** Demonstrates FilterQueryBar with editable content and real interactions. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { FilterQueryBar } from "@astra-kit/ui";
+import { FilterQueryBar } from "@golfo/ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 import { FILTER_CONFIGS } from "./table-data.js";

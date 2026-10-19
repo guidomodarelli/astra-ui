@@ -1,5 +1,5 @@
 /**
- * @module release-hooks `prepare` hook of `astra-rp create-version` for @astra-kit/ui.
+ * @module release-hooks `prepare` hook of `golfo-rp create-version` for @golfo/ui.
  *
  * The shared command bumps the version (commit `X.Y.Z` + tag `vX.Y.Z`) and
  * then calls `prepareReleaseArtifact` on that commit: it reuses the tarball
@@ -7,10 +7,10 @@
  * or runs `pnpm release:prepare` (full validation + checksum-addressed tarball)
  * and locates the tarball it just produced. Publishing that exact tarball,
  * with its checksum and contents verified again, is done by the engine
- * (`publish: "npm"` + `artifact` in `astra-rp.config.js`).
+ * (`publish: "npm"` + `artifact` in `golfo-rp.config.js`).
  *
  * The hook receives every helper through the engine context, so this module
- * never imports `astra-rp`.
+ * never imports `golfo-rp`.
  */
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -35,7 +35,7 @@ const PREPARED_DIRECTORY_SUFFIX = /^-[0-9a-f]{64}$/u;
  *   print: (text?: string) => void,
  *   fail: (message: string, hint: string) => never,
  * }} ReleaseHookContext
- *   Subset of the `@astra-kit/rp/create-version` `HookContext` these hooks use.
+ *   Subset of the `@golfo/rp/create-version` `HookContext` these hooks use.
  */
 
 /**

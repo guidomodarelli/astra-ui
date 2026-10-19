@@ -1,8 +1,15 @@
 # Cambios
 
-Todos los cambios relevantes de `@astra-kit/ui` se documentan en este archivo con el formato de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/). Cada cambio agrega sus entradas en `[Unreleased]`; `pnpm create-version` las pasa a la versión publicada con su fecha.
+Todos los cambios relevantes de `@golfo/ui` se documentan en este archivo con el formato de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado [SemVer](https://semver.org/lang/es/). Cada cambio agrega sus entradas en `[Unreleased]`; `pnpm create-version` las pasa a la versión publicada con su fecha.
 
 ## [Unreleased]
+
+### Changed
+
+- **Cambio incompatible:** el paquete pasa a llamarse `@golfo/ui`, sin alias ni compatibilidad con `@astra-kit/ui`. Hay que reinstalarlo con `pnpm add @golfo/ui` y actualizar todas las importaciones, incluidos los subpaths (`@golfo/ui/next`, `@golfo/ui/tanstack`, `@golfo/ui/hooks`, `@golfo/ui/sonner`, `@golfo/ui/motion-tokens`, `@golfo/ui/styles.css`, `@golfo/ui/theme.css`, `@golfo/ui/fonts.css` y el resto de entradas por componente).
+- **Cambio incompatible:** la API pública usa el prefijo `Golfo` en lugar de `Astra`, también en `@golfo/ui/next` y `@golfo/ui/tanstack`: `GolfoUIProvider`, `GolfoUIProviderProps`, `GolfoUIComponents`, `GolfoLinkProps` y `GolfoImageProps`. Los nombres anteriores ya no existen.
+- **Cambio incompatible:** las fuentes de `fonts.css` se registran como `Golfo Inter`, `Golfo Geist` y `Golfo Mono`; la variable CSS de `ReactionButton` pasa a `--golfo-reaction-active-color`, el atributo del menú de tema a `data-golfo-theme-menu` y la animación de entrada del ícono de `EmptyState` a `golfo-empty-state-icon-enter`. Los estilos que usen los nombres anteriores dejan de aplicarse.
+- El repositorio pasa a `github.com/guidomodarelli/golfo-ui`.
 
 ## [1.2.1] - 2026-10-19
 

@@ -1,7 +1,7 @@
 /** Verifies the public motion tokens keep their names and carry Arc's motion presets. */
 import { describe, expect, it } from "vitest";
-import * as rootExports from "@astra-kit/ui";
-import * as motionTokens from "@astra-kit/ui/motion-tokens";
+import * as rootExports from "@golfo/ui";
+import * as motionTokens from "@golfo/ui/motion-tokens";
 
 /** Arc's presets from `components/arc/lib/motion-tokens.ts`. */
 const ARC_SNAPPY = { type: "spring", visualDuration: 0.26, bounce: 0.12 };

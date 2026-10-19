@@ -28,7 +28,7 @@ import { ARC_SPRING_SMOOTH } from "../../motion/arc-tokens.js"
 import { cn } from "../../lib/utils.js"
 import { ControlButton } from "../control-button.js"
 
-/** Embla's API, kept inside @astra-kit/ui. */
+/** Embla's API, kept inside @golfo/ui. */
 type CarouselApi = UseEmblaCarouselType[1]
 /** Embla options the public carousel forwards. */
 type CarouselOptions = Parameters<typeof useEmblaCarousel>[0]

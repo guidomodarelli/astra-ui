@@ -1,6 +1,6 @@
-/** Demonstrates Arc's closed DropdownMenu: items are data, with @astra-kit/ui's checkbox, radio and link rows. */
+/** Demonstrates Arc's closed DropdownMenu: items are data, with @golfo/ui's checkbox, radio and link rows. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button, DropdownMenu } from "@astra-kit/ui";
+import { Button, DropdownMenu } from "@golfo/ui";
 import { EllipsisIcon, ListFilterIcon, PencilIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { useArgs } from "storybook/preview-api";

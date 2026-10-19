@@ -3,7 +3,7 @@
 /**
  * Arc's Carousel (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md) as a closed component: one child per
  * slide, a centered slide row that is dragged, flicked or arrowed through, and a control row under it with an optional
- * rotation control, the indicator tab list and the arrows. Embla runs inside and is never exposed; the @astra-kit/ui
+ * rotation control, the indicator tab list and the arrows. Embla runs inside and is never exposed; the @golfo/ui
  * extensions (`loop`, `duration`, `watchFocus`, `onSettle`, deferred re-initialization, labels and visibility of the
  * controls) cover media viewers that used Embla's API directly.
  */
@@ -36,7 +36,7 @@ import {
   type CarouselOptions,
 } from "./primitives/carousel.js"
 
-/** Props of {@link Carousel}: Arc's carousel API plus the @astra-kit/ui extensions marked below. */
+/** Props of {@link Carousel}: Arc's carousel API plus the @golfo/ui extensions marked below. */
 type CarouselProps = {
   /** Names the carousel for assistive technology, for example "Fotos del encuentro". */
   label: string
@@ -61,33 +61,33 @@ type CarouselProps = {
   autoplay?: boolean
   /** Class of the root section. */
   className?: string
-  /** @astra-kit/ui: wraps from the last slide to the first and back. Defaults to `false`. */
+  /** @golfo/ui: wraps from the last slide to the first and back. Defaults to `false`. */
   loop?: boolean
-  /** @astra-kit/ui: speed of a scroll between slides, in Embla's units (higher is slower). Defaults to Embla's 25. */
+  /** @golfo/ui: speed of a scroll between slides, in Embla's units (higher is slower). Defaults to Embla's 25. */
   duration?: number
   /**
-   * @astra-kit/ui: scrolls to a slide when something inside it receives focus. Defaults to `true`; turn it off when a slide
+   * @golfo/ui: scrolls to a slide when something inside it receives focus. Defaults to `true`; turn it off when a slide
    * holds content that keeps focus, such as an embedded player, so it never pulls the carousel back.
    */
   watchFocus?: boolean
-  /** @astra-kit/ui: called once a scroll has come to rest on a slide, the moment to mount heavy slide content. */
+  /** @golfo/ui: called once a scroll has come to rest on a slide, the moment to mount heavy slide content. */
   onSettle?: (index: number) => void
-  /** @astra-kit/ui: accessible name of the previous arrow. Defaults to "Diapositiva anterior". */
+  /** @golfo/ui: accessible name of the previous arrow. Defaults to "Diapositiva anterior". */
   previousLabel?: string
-  /** @astra-kit/ui: accessible name of the next arrow. Defaults to "Diapositiva siguiente". */
+  /** @golfo/ui: accessible name of the next arrow. Defaults to "Diapositiva siguiente". */
   nextLabel?: string
-  /** @astra-kit/ui: shows the previous and next arrows. Defaults to `true`. */
+  /** @golfo/ui: shows the previous and next arrows. Defaults to `true`. */
   showControls?: boolean
-  /** @astra-kit/ui: shows the indicator tab list. Defaults to `true`. */
+  /** @golfo/ui: shows the indicator tab list. Defaults to `true`. */
   showIndicators?: boolean
-  /** @astra-kit/ui: class added to every slide panel. */
+  /** @golfo/ui: class added to every slide panel. */
   slideClassName?: string
   /**
-   * @astra-kit/ui: class of the clipped, focusable viewport around the slide track, for example to give a media viewer a
+   * @golfo/ui: class of the clipped, focusable viewport around the slide track, for example to give a media viewer a
    * definite height.
    */
   viewportClassName?: string
-  /** @astra-kit/ui: class of the slide track inside the viewport, which lays the slides out in a row. */
+  /** @golfo/ui: class of the slide track inside the viewport, which lays the slides out in a row. */
   trackClassName?: string
 }
 
@@ -184,7 +184,7 @@ function useDeferredReInit() {
 /**
  * A centered row of slides browsed by drag, flick, the arrow keys, Home and End, the arrows or the indicator tabs, with
  * optional rotation. Neighbouring slides stay in view as a hint that there is more, and are inert until selected.
- * @param props - Arc's carousel props plus the @astra-kit/ui extensions.
+ * @param props - Arc's carousel props plus the @golfo/ui extensions.
  * @returns The carousel section.
  */
 function Carousel({

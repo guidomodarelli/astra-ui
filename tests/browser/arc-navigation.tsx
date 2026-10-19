@@ -2,13 +2,13 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
-  AstraUIProvider,
+  GolfoUIProvider,
   Pagination,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@astra-kit/ui";
+} from "@golfo/ui";
 import "./styles.css";
 
 /** Sections of the panel tabs; the second panel is much taller so the height morph is measurable. */
@@ -105,7 +105,7 @@ function ControlledTabs() {
 }
 
 createRoot(document.getElementById("root")!).render(
-  <AstraUIProvider>
+  <GolfoUIProvider>
     <main>
       <section>
         <PanelTabs />
@@ -123,5 +123,5 @@ createRoot(document.getElementById("root")!).render(
         <LinkedPagination />
       </section>
     </main>
-  </AstraUIProvider>,
+  </GolfoUIProvider>,
 );

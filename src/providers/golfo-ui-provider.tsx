@@ -6,22 +6,22 @@ import { MotionConfig } from "motion/react";
 import { ThemeProvider, type ThemeProviderProps } from "next-themes";
 
 /** Defines the native link contract accepted by routing adapters. */
-export type AstraLinkProps = ComponentProps<"a"> & {
+export type GolfoLinkProps = ComponentProps<"a"> & {
   href: string;
   /** Optional navigation hint consumed by framework adapters, never by native anchors. */
   prefetch?: boolean;
 };
 /** Defines the native image contract accepted by image adapters. */
-export type AstraImageProps = ComponentProps<"img">;
+export type GolfoImageProps = ComponentProps<"img">;
 /** Lets each application select only the adapters it needs. */
-export interface AstraUIComponents {
-  Link?: ComponentType<AstraLinkProps>;
-  Image?: ComponentType<AstraImageProps>;
+export interface GolfoUIComponents {
+  Link?: ComponentType<GolfoLinkProps>;
+  Image?: ComponentType<GolfoImageProps>;
 }
 /** Configures descendants while leaving theme and application state to the consumer. */
-export interface AstraUIProviderProps {
+export interface GolfoUIProviderProps {
   children: ReactNode;
-  components?: AstraUIComponents;
+  components?: GolfoUIComponents;
   /** Shares light/dark/system behavior; the theme is written as a class and as Arc's `data-theme` attribute. */
   themeOptions?: Omit<ThemeProviderProps, "children" | "attribute">;
 }
@@ -45,11 +45,11 @@ function subscribeToRenderEnvironment(): () => void {
 }
 
 /** Native elements remain the implicit fallback for unconfigured adapters. */
-const EMPTY_COMPONENTS: AstraUIComponents = {};
-const AdapterContext = createContext<AstraUIComponents>(EMPTY_COMPONENTS);
+const EMPTY_COMPONENTS: GolfoUIComponents = {};
+const AdapterContext = createContext<GolfoUIComponents>(EMPTY_COMPONENTS);
 
 /** Merges nested overrides while preserving stable adapter identities. */
-export function AstraUIProvider({ children, components = EMPTY_COMPONENTS, themeOptions }: AstraUIProviderProps) {
+export function GolfoUIProvider({ children, components = EMPTY_COMPONENTS, themeOptions }: GolfoUIProviderProps) {
   const parent = useContext(AdapterContext);
   const value = useMemo(() => ({ ...parent, ...components }), [parent, components]);
   // Server renders and hydration read `false`, keeping the executable script the server sent;
@@ -66,6 +66,6 @@ export function AstraUIProvider({ children, components = EMPTY_COMPONENTS, theme
 }
 
 /** Reads adapters internally; native components work without a provider. */
-export function useAstraUIComponents(): AstraUIComponents {
+export function useGolfoUIComponents(): GolfoUIComponents {
   return useContext(AdapterContext);
 }

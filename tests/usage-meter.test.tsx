@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { UsageMeter } from "@astra-kit/ui";
+import { UsageMeter } from "@golfo/ui";
 
 const SEGMENTS = [
   { id: "codes", label: "Códigos", value: 120 },

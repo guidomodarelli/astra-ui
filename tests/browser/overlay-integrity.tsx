@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
-  AstraUIProvider,
+  GolfoUIProvider,
   Button,
   Dialog,
   DialogContent,
@@ -23,8 +23,8 @@ import {
   SheetTrigger,
   ThemedToaster,
   Tooltip,
-} from "@astra-kit/ui";
-import { toast } from "@astra-kit/ui/sonner";
+} from "@golfo/ui";
+import { toast } from "@golfo/ui/sonner";
 import "./styles.css";
 
 /** Options of the selects the spec opens inside overlays. */
@@ -84,7 +84,7 @@ function DialogWithToast() {
 /** Renders every context the spec checks. */
 function App() {
   return (
-    <AstraUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}>
+    <GolfoUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}>
       <main>
         <h1>Capas en contexto</h1>
         <section>
@@ -130,7 +130,7 @@ function App() {
         </section>
       </main>
       <ThemedToaster />
-    </AstraUIProvider>
+    </GolfoUIProvider>
   );
 }
 

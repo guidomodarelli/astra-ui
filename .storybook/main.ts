@@ -14,13 +14,13 @@ const config: StorybookConfig = {
       resolve: {
         alias: [
           {
-            find: /^@astra-kit\/ui$/,
+            find: /^@golfo\/ui$/,
             replacement: fileURLToPath(
               new URL("../dist/index.js", import.meta.url),
             ),
           },
           {
-            find: "@astra-kit/ui/tanstack",
+            find: "@golfo/ui/tanstack",
             replacement: fileURLToPath(
               new URL("../dist/tanstack.js", import.meta.url),
             ),

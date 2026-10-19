@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm } from "react-hook-form";
-import { Alert, AnimatedThemeToggler, Calendar, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Highlighter, Input, InputGroup, InputGroupAddon, InputGroupInput, RadioGroup, ThemedToaster, toast, TypingAnimation } from "@astra-kit/ui";
+import { Alert, AnimatedThemeToggler, Calendar, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Highlighter, Input, InputGroup, InputGroupAddon, InputGroupInput, RadioGroup, ThemedToaster, toast, TypingAnimation } from "@golfo/ui";
 
 /** Composes the shared form primitives with their actual validation provider. */
 function RequiredForm() {

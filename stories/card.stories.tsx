@@ -1,6 +1,6 @@
 /** Demonstrates Card through its public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Avatar, Button, Card } from "@astra-kit/ui";
+import { Avatar, Button, Card } from "@golfo/ui";
 
 /** Editable inputs specific to this example. */
 type Args = {

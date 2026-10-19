@@ -5,9 +5,9 @@
     "moduleResolution": "bundler",
     "types": ["node", "vite/client"],
     "paths": {
-      "@astra-kit/ui": ["../dist/index"],
-      "@astra-kit/ui/tanstack": ["../dist/tanstack"],
-      "@astra-kit/ui/hooks": ["../dist/hooks"]
+      "@golfo/ui": ["../dist/index"],
+      "@golfo/ui/tanstack": ["../dist/tanstack"],
+      "@golfo/ui/hooks": ["../dist/hooks"]
     }
   },
   "include": [

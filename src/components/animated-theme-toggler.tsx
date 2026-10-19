@@ -100,7 +100,7 @@ export const AnimatedThemeToggler = ({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        data-astra-theme-menu
+        data-golfo-theme-menu
         align="end"
         className="w-44 rounded-xl p-2"
         side="bottom"

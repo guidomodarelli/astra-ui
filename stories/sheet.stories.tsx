@@ -10,7 +10,7 @@ import {
   SheetDescription,
   SheetFooter,
   SheetClose,
-} from "@astra-kit/ui";
+} from "@golfo/ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */

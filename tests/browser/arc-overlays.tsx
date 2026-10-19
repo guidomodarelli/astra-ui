@@ -1,7 +1,7 @@
 /** Mounts Arc's Tooltip, Popover and Hover Card from the public barrel, so their placement and motion run in real engines. */
 import { createRoot } from "react-dom/client";
 import {
-  AstraUIProvider,
+  GolfoUIProvider,
   Button,
   HoverCard,
   HoverCardProfile,
@@ -10,12 +10,12 @@ import {
   PopoverContent,
   PopoverTrigger,
   Tooltip,
-} from "@astra-kit/ui";
+} from "@golfo/ui";
 import "./styles.css";
 
 function App() {
   return (
-    <AstraUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}>
+    <GolfoUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}>
       <main>
         <h1>Capas flotantes</h1>
         <section className="controls">
@@ -53,7 +53,7 @@ function App() {
           </HoverCard>
         </section>
       </main>
-    </AstraUIProvider>
+    </GolfoUIProvider>
   );
 }
 

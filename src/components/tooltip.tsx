@@ -11,7 +11,7 @@ import type { ReactElement, ReactNode } from "react"
 
 import { Tooltip as TooltipRoot, TooltipContent, TooltipTrigger } from "./primitives/tooltip.js"
 
-/** Side of the trigger a tooltip prefers. Arc offers `top` and `bottom`; @astra-kit/ui adds `left` and `right`. */
+/** Side of the trigger a tooltip prefers. Arc offers `top` and `bottom`; @golfo/ui adds `left` and `right`. */
 export type TooltipSide = "top" | "bottom" | "left" | "right"
 
 /** Alignment of the bubble against its trigger. */

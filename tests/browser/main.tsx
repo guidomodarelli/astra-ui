@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { createRoot } from "react-dom/client";
-import { Alert, AnimatedThemeToggler, Avatar, AstraUIProvider, Button, Calendar, DataTable, DropdownMenu, Highlighter, InputGroup, InputGroupInput, InputGroupAddon, RadioGroup, Sheet, SheetTrigger, SheetContent, SheetTitle, SheetDescription, ThemedToaster, toast, TypingAnimation } from "@astra-kit/ui";
+import { Alert, AnimatedThemeToggler, Avatar, GolfoUIProvider, Button, Calendar, DataTable, DropdownMenu, Highlighter, InputGroup, InputGroupInput, InputGroupAddon, RadioGroup, Sheet, SheetTrigger, SheetContent, SheetTitle, SheetDescription, ThemedToaster, toast, TypingAnimation } from "@golfo/ui";
 import "./styles.css";
 
 const ROWS = [{ name: "Luz", amount: 20 }, { name: "Internet", amount: 40 }];
@@ -40,4 +40,4 @@ function BrowserExample() {
   </main>;
 }
 
-createRoot(document.getElementById("root")!).render(<AstraUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><BrowserExample /></AstraUIProvider>);
+createRoot(document.getElementById("root")!).render(<GolfoUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><BrowserExample /></GolfoUIProvider>);

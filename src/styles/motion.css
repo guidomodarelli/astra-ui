@@ -21,7 +21,7 @@
  * opacity and transform: tw-animate's shared `enter` keyframes also animate `filter: blur(var(--tw-enter-blur))`, which
  * intermittently locks up WebKit's main thread on Linux while the page loads.
  */
-@keyframes astra-empty-state-icon-enter {
+@keyframes golfo-empty-state-icon-enter {
   from {
     opacity: 0;
     transform: scale(0.92);

@@ -1,10 +1,10 @@
 /** @module release-checks Validates metadata and the public package artifact contract. */
-import { readLatestRelease, readUnreleased } from "@astra-kit/rp/changelog";
+import { readLatestRelease, readUnreleased } from "@golfo/rp/changelog";
 import { RELEASE_VERSION_PATTERN } from "./constants/release-checks.js";
 
 /**
  * Requires release notes for the version being prepared without rewriting the changelog.
- * Requires the dated block matching the manifest version, which astra-rp creates in the
+ * Requires the dated block matching the manifest version, which golfo-rp creates in the
  * version commit by renaming `[Unreleased]` (leaving an empty Unreleased block above it).
  * @param {{version: string}} metadata - Package release metadata.
  * @param {string} changelog - UTF-8 release notes.

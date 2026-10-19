@@ -1,6 +1,6 @@
 # Third-party notices
 
-@astra-kit/ui includes code adapted from the following projects.
+@golfo/ui includes code adapted from the following projects.
 
 ## Arc
 

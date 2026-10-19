@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { Card } from "@astra-kit/ui";
+import { Card } from "@golfo/ui";
 
 describe("Card", () => {
   it("should render an article with its title, description, media, body and byline", () => {

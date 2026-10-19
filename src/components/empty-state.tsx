@@ -142,7 +142,7 @@ function EmptyState({ title, description, action, icon, label, className, ...pro
       <div
         data-slot="empty-state-icon"
         aria-hidden="true"
-        className="relative grid size-(--space-12) place-items-center rounded-(--radius-panel) border border-border bg-surface-muted text-text-secondary animate-[astra-empty-state-icon-enter_var(--duration-considered)_var(--ease-enter)_both] motion-reduce:animate-none"
+        className="relative grid size-(--space-12) place-items-center rounded-(--radius-panel) border border-border bg-surface-muted text-text-secondary animate-[golfo-empty-state-icon-enter_var(--duration-considered)_var(--ease-enter)_both] motion-reduce:animate-none"
       >
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span

@@ -10,7 +10,7 @@ import {
   parseFilterPresets,
   type FilterPreset,
   type FilterQualifierConfig,
-} from "@astra-kit/ui";
+} from "@golfo/ui";
 
 const QUERY_FILTER_CONFIGS: FilterQualifierConfig[] = [
   { key: "", kind: "text", label: "Descripción" },

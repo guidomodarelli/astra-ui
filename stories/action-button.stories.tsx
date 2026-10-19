@@ -1,6 +1,6 @@
 /** Demonstrates ActionButton through its public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { ActionButton } from "@astra-kit/ui";
+import { ActionButton } from "@golfo/ui";
 
 /** Editable inputs specific to this example. */
 type Args = {
