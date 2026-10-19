@@ -6,6 +6,7 @@ Todos los cambios relevantes de `@astra-kit/ui` se documentan en este archivo co
 
 ### Added
 
+- `ButtonLink`: un link con el aspecto de `Button` (`variant` y `size`) que rutea con el adaptador del provider y sigue siendo un enlace, para navegar sin estilos propios en cada app. También se exporta `buttonClassName({ variant, size, className })`, con las mismas clases para otros elementos, como un `<label>` que abre un selector de archivos.
 - `RadioGroup` acepta `hideLabel` (por defecto `false`), como `Select`: la leyenda sigue nombrando el grupo para lectores de pantalla pero no se ve ni ocupa espacio, para layouts que ya muestran su propio título. Ya no hace falta ocultarla con CSS propio.
 
 ## [1.0.0] - 2026-10-18

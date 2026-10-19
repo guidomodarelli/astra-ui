@@ -3,56 +3,18 @@
 /**
  * Arc's Button (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): its variants, sizes, tokens and motion,
  * with width-aware press feedback, a label that springs to its new width and a loading spinner. It renders a native
- * button; style links as links instead. Composite components that need icon sizes use the internal `ControlButton`.
+ * button: navigation that looks like a button is a `ButtonLink`, and other elements take `buttonClassName`. Composite components that need icon sizes use the internal `ControlButton`.
  */
 import type { ComponentProps, Ref } from "react"
-import { cva } from "class-variance-authority"
 import { useIsPresent } from "motion/react"
 
 import { usePrefersReducedMotion } from "../hooks/use-prefers-reduced-motion.js"
 import { cn } from "../lib/utils.js"
+import { buttonVariants, type ButtonSize, type ButtonVariant } from "./button-recipe.js"
 import { useArcPress } from "../motion/arc-press.js"
 import { useAttachedElement } from "../motion/use-attached-element.js"
 import { ButtonLabel } from "./button-label.js"
 import { LEAVING_ATTRIBUTES, LOADING_INERT_HANDLERS } from "./button-interaction.js"
-
-/** Visual weight, as in Arc: one primary action per surface. */
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger"
-
-/** Height and padding, from Arc's control heights. */
-export type ButtonSize = "sm" | "md" | "lg"
-
-/**
- * Arc's button recipe on its tokens. Press scale is driven by Motion alone, so `transform` never gets a CSS
- * transition, and anchors of floating layers never scale because Radix measures them on pointerdown. Keyboard focus
- * uses the foundation's shared outline; pointer focus draws no ring.
- */
-const buttonVariants = cva(
-  "relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-(--radius-control) border border-transparent px-4 font-sans text-sm leading-(--leading-body) font-medium whitespace-nowrap select-none [-webkit-tap-highlight-color:transparent] transition-[color,background-color,border-color,opacity,box-shadow] duration-(--duration-fast) ease-(--ease-standard) disabled:cursor-not-allowed disabled:opacity-[.52] aria-busy:cursor-progress motion-reduce:transition-none [&:is([aria-haspopup]:not([aria-haspopup=false]),[data-state],[role=combobox])]:transform-none! [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-  {
-    variants: {
-      variant: {
-        primary:
-          "border-foreground bg-foreground text-background hover-fine:not-disabled:opacity-[.91] hover-fine:not-disabled:shadow-(--shadow-resting) active:not-disabled:opacity-[.84]",
-        secondary:
-          "border-border bg-surface text-foreground hover-fine:not-disabled:bg-surface-muted hover-fine:not-disabled:shadow-(--shadow-resting) active:not-disabled:bg-surface-muted disabled:bg-surface-muted disabled:text-text-muted disabled:opacity-100",
-        ghost:
-          "bg-transparent text-text-secondary hover-fine:not-disabled:bg-surface-muted hover-fine:not-disabled:text-foreground active:not-disabled:bg-surface-muted active:not-disabled:text-foreground disabled:text-text-muted disabled:opacity-100",
-        danger:
-          "border-border bg-surface text-danger hover-fine:not-disabled:border-danger hover-fine:not-disabled:bg-surface-muted active:not-disabled:border-danger active:not-disabled:bg-surface-muted disabled:bg-surface-muted disabled:text-[color-mix(in_oklab,var(--danger)_55%,var(--surface-muted))] disabled:opacity-100",
-      },
-      size: {
-        sm: "min-h-(--control-height-sm) px-3",
-        md: "min-h-(--control-height-md)",
-        lg: "min-h-(--control-height-lg) px-5",
-      },
-    },
-    defaultVariants: {
-      variant: "primary",
-      size: "md",
-    },
-  }
-)
 
 export type ButtonProps = ComponentProps<"button"> & {
   variant?: ButtonVariant
@@ -103,3 +65,5 @@ function Button({
 }
 
 export { Button }
+// Types only: the runtime helper `buttonClassName` is exported from the server-safe recipe module.
+export type { ButtonSize, ButtonVariant } from "./button-recipe.js"

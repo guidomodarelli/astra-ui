@@ -38,6 +38,11 @@
       "import": "./dist/components/button.js",
       "default": "./dist/components/button.js"
     },
+    "./button-link": {
+      "types": "./dist/components/button-link.d.ts",
+      "import": "./dist/components/button-link.js",
+      "default": "./dist/components/button-link.js"
+    },
     "./card": {
       "types": "./dist/components/card.d.ts",
       "import": "./dist/components/card.js",
