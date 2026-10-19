@@ -267,39 +267,11 @@ El compilador `tsc` es TypeScript 7. El paquete `typescript` apunta a la [API de
 
 ## Crear y publicar una versión
 
-### Desde GitHub Actions
+### Cómo se publica
 
-El workflow **Release** se ejecuta automáticamente con cada push o merge a `main`,
-incluidos los cambios de `package.json`. También se puede iniciar en GitHub desde
-**Actions → Release → Run workflow**, seleccionando `main`.
-El workflow usa `pnpm create-version --accept-suggested`: astra-rp calcula la versión
-y verifica que `[Unreleased]` tenga entradas escritas a mano, cierra esa sección con la versión, prepara y valida el tarball, crea y sube
-el commit y el tag y publica en npm con trusted publishing (OIDC).
+`pnpm create-version` (alias `pnpm cv`) corre en tu máquina: diagnostica el repositorio, crea el commit `X.Y.Z` y el tag anotado `vX.Y.Z`, los pushea y despacha el workflow **Release** (`.github/workflows/release.yml`) con `version`, `tag` y `sha`. El workflow verifica que el tag apunte a ese commit y que esté en `main`, prepara y valida el tarball y lo publica en npm con [trusted publishing](https://docs.npmjs.com/trusted-publishers) (OIDC, `id-token: write`), sin tokens de npm ni secrets en el repositorio.
 
-El disparador también incluye los pushes que cambian `package.json`, pero
-astra-rp no retoma una versión editada a mano en un commit común: necesita
-su commit de versión y tag de release. Para el flujo automático, dejar que
-astra-rp aumente la versión según los commits.
-
-No necesita secrets manuales: pasa `GITHUB_TOKEN` como `NPM_TOKEN`, con
-`contents: write` para subir el release y `packages: write` para publicar.
-El token se entrega solo al paso de release. El workflow conserva el historial
-completo de Git, instala Chromium y WebKit para las validaciones y serializa
-los releases sin cancelar uno que ya esté en curso. Solo permite ejecutarlos
-sobre `main`.
-
-Si el paquete ya existe, este repositorio debe tener acceso de escritura en
-**Package settings → Manage Actions access**. Si una regla de protección de
-`main` impide pushes del token del workflow, debe ajustarse para permitir el
-flujo de release antes de ejecutarlo. No ejecutar un release local mientras
-esté corriendo el de Actions. Los pushes hechos con `GITHUB_TOKEN` no disparan
-otros workflows, incluido **Release**, por lo que el commit de versión no crea un
-bucle de publicaciones. La preparación del release ejecuta las validaciones completas.
-Para retomar una publicación fallida después del push, volver a ejecutar **Release**.
-
-### Desde una terminal local
-
-Desde este repositorio, configurar `NPM_TOKEN` con un token personal de GitHub **clásico** con `write:packages` en el entorno o en `.env`, tomando `.env.example` como referencia. Si el valor existente es un token de npm, reemplazarlo localmente por el de GitHub. No pegarlo en el chat ni agregar credenciales al `.npmrc` del proyecto: astra-rp rechaza esas credenciales. El campo `repository` del manifest vincula el paquete con este repositorio.
+Como la publicación usa OIDC, solo puede correr en GitHub Actions: `--local` no publica este paquete. Si el workflow falla después del push, corré `pnpm cv --retry-ci vX.Y.Z` para reintentarlo sobre el mismo tag.
 
 ### Un solo comando: `pnpm create-version` (alias `pnpm cv`)
 
