@@ -1,6 +1,6 @@
 /** Exercises ActionButton and SplitButton in real engines, where layout, the label width spring and the press exist. */
 import { expect, test } from "@playwright/test";
-import type { Locator } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 
 /**
  * Reads the rendered width of an element.
@@ -29,6 +29,76 @@ async function pressDown(locator: Locator): Promise<void> {
   await locator.page().mouse.down();
 }
 
+/** What happened on the page from the moment a press trace starts. */
+type PressTrace = {
+  /** Pointer events in order, with whether they landed on the traced button. */
+  pointerEvents: string[];
+  /** Inline `style` values the button went through, in order. */
+  styleChanges: string[];
+  /** Frames painted since the trace started, and the longest wait between two of them. */
+  frames: { count: number; longestGapMs: number };
+  /** State that makes the press feedback skip the scale. */
+  attributes: Record<string, string | null>;
+  computedTransform: string;
+};
+
+/** Window property holding the active press trace; only one press is traced at a time. */
+const PRESS_TRACE_PROPERTY = "golfoPressTrace";
+/** Attributes the press feedback reads to decide whether an element scales. */
+const PRESS_GATE_ATTRIBUTES = ["aria-busy", "aria-disabled", "data-disabled", "disabled", "data-state", "aria-haspopup"];
+
+/**
+ * Starts recording pointer events, style changes and painted frames for a button, so a press that never scales says
+ * whether the pointer missed it, the frames stalled or the animation never started.
+ * @param locator - Button about to be pressed.
+ * @returns Reads the trace recorded so far.
+ */
+async function tracePress(locator: Locator): Promise<() => Promise<PressTrace>> {
+  await locator.evaluate((element, { property, gateAttributes }) => {
+    const startedAt = performance.now();
+    const trace = { pointerEvents: [] as string[], styleChanges: [] as string[], frames: { count: 0, longestGapMs: 0 } };
+    const elapsed = () => Math.round(performance.now() - startedAt);
+    const recordPointer = (event: Event) => {
+      const pointer = event as PointerEvent;
+      trace.pointerEvents.push(
+        `${elapsed()}ms ${event.type} onButton=${element.contains(event.target as Node)} primary=${pointer.isPrimary} button=${pointer.button} at=${pointer.clientX},${pointer.clientY}`,
+      );
+    };
+    const pointerTypes = ["pointerdown", "pointerup", "pointercancel"];
+    for (const type of pointerTypes) window.addEventListener(type, recordPointer, { capture: true });
+    const styleObserver = new MutationObserver(() => trace.styleChanges.push(`${elapsed()}ms ${element.getAttribute("style")}`));
+    styleObserver.observe(element, { attributes: true, attributeFilter: ["style"] });
+    let lastFrameAt = performance.now();
+    let frameRequest = requestAnimationFrame(function countFrame(time) {
+      trace.frames.count += 1;
+      trace.frames.longestGapMs = Math.max(trace.frames.longestGapMs, Math.round(time - lastFrameAt));
+      lastFrameAt = time;
+      frameRequest = requestAnimationFrame(countFrame);
+    });
+    const read = () => ({
+      ...trace,
+      attributes: Object.fromEntries(gateAttributes.map((name) => [name, element.getAttribute(name)])),
+      computedTransform: getComputedStyle(element).transform,
+    });
+    const stop = () => {
+      for (const type of pointerTypes) window.removeEventListener(type, recordPointer, { capture: true });
+      styleObserver.disconnect();
+      cancelAnimationFrame(frameRequest);
+    };
+    Object.assign(window, { [property]: { read, stop } });
+  }, { property: PRESS_TRACE_PROPERTY, gateAttributes: PRESS_GATE_ATTRIBUTES });
+  return () =>
+    locator.page().evaluate((property) => (window as unknown as Record<string, { read: () => PressTrace }>)[property]!.read(), PRESS_TRACE_PROPERTY);
+}
+
+/**
+ * Stops the active press trace.
+ * @param page - Page holding the trace.
+ */
+async function stopPressTrace(page: Page): Promise<void> {
+  await page.evaluate((property) => (window as unknown as Record<string, { stop: () => void }>)[property]!.stop(), PRESS_TRACE_PROPERTY);
+}
+
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/action-buttons.html");
@@ -36,8 +106,8 @@ test.beforeEach(async ({ page }) => {
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
 });
 
-/** Time the label slot gets to reach its row: headless CI engines can stall animation frames for seconds. */
-const LABEL_SETTLE_TIMEOUT_MS = 15_000;
+/** Time a spring or a press gets to reach the screen: headless CI engines can stall animation frames for seconds. */
+const SETTLE_TIMEOUT_MS = 15_000;
 
 test("should spring the action button label slot to each label", async ({ page }) => {
   const button = page.getByRole("button", { name: "Publicar", exact: true });
@@ -60,7 +130,7 @@ test("should spring the action button label slot to each label", async ({ page }
   const labelRow = labelSlot.locator(":scope > span");
   await expect
     .poll(async () => Math.abs((await readWidth(labelSlot)) - (await readWidth(labelRow))), {
-      timeout: LABEL_SETTLE_TIMEOUT_MS,
+      timeout: SETTLE_TIMEOUT_MS,
     })
     .toBeLessThan(1);
   await expect(button).toHaveAttribute("data-action-state", "success");
@@ -98,8 +168,14 @@ test("should confirm the main action in place and open the split button menu fro
 test("should scale the action button and the split main action on press but keep the menu trigger still", async ({ page }) => {
   for (const name of ["Publicar", "Copiar página"]) {
     const button = page.getByRole("button", { name, exact: true });
+    const readPressTrace = await tracePress(button);
     await pressDown(button);
-    await expect.poll(() => readScale(button)).toBeLessThan(1);
+    try {
+      await expect.poll(() => readScale(button), { timeout: SETTLE_TIMEOUT_MS }).toBeLessThan(1);
+    } catch (error) {
+      throw new Error(`"${name}" did not scale while pressed. Press trace: ${JSON.stringify(await readPressTrace(), null, 2)}`, { cause: error });
+    }
+    await stopPressTrace(page);
     await page.mouse.up();
     await page.mouse.move(0, 0);
   }
