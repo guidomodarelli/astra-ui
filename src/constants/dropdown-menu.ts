@@ -4,6 +4,15 @@ import type { AnimationOptions } from "motion/react"
 import type { ArcFloatingMotion } from "../motion/arc-floating-slot.js"
 import { ARC_DURATION, ARC_EASE, ARC_SPRING_CSS } from "../motion/arc-tokens.js"
 
+/**
+ * Rendered trigger states that must not open the menu: natively disabled (its own prop, an ancestor
+ * `<fieldset disabled>` or state derived inside a custom component) or marked unavailable with `aria-disabled`.
+ */
+export const DROPDOWN_MENU_UNAVAILABLE_TRIGGER_SELECTOR = ':disabled, [aria-disabled="true"]'
+
+/** Keys that open the menu from its focused trigger, as Radix handles them; any other key keeps its default. */
+export const DROPDOWN_MENU_OPEN_KEYS: readonly string[] = ["Enter", " ", "ArrowDown"]
+
 /** Gap, in pixels, between the trigger and the menu. */
 export const DROPDOWN_MENU_SIDE_OFFSET_PX = 6
 

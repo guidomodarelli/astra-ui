@@ -138,6 +138,31 @@ test.describe("Arc dropdown menu", () => {
     await expect(page.getByRole("menu", { name: "Acciones de la fila" })).toBeVisible();
   });
 
+  test("should keep the menu closed while a fieldset disables its trigger and open it once the fieldset is enabled", async ({
+    page,
+  }) => {
+    await page.goto("/arc-menus.html");
+    const trigger = page.getByRole("button", { name: "Más acciones de la sección" });
+    await expect(trigger).toBeDisabled();
+    await trigger.click({ force: true });
+    await expect(page.getByRole("menu")).toHaveCount(0);
+    await page.getByRole("button", { name: "Habilitar sección" }).click();
+    await trigger.click();
+    await expect(page.getByRole("menu", { name: "Acciones de la sección" })).toBeVisible();
+  });
+
+  test("should not open from an aria-disabled trigger with the keyboard and let Tab leave it", async ({ page }) => {
+    await page.goto("/arc-menus.html");
+    const trigger = page.getByRole("button", { name: "Acciones en curso" });
+    await expect(trigger).toHaveAttribute("aria-disabled", "true");
+    await trigger.focus();
+    for (const key of ["Enter", "Space", "ArrowDown"]) await page.keyboard.press(key);
+    await expect(page.getByRole("menu")).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("button", { name: "Después del menú" })).toBeFocused();
+  });
+
   test("should name the menu after its label and return focus to Arc's trigger on Escape", async ({ page }) => {
     await page.goto("/arc-menus.html");
     const trigger = page.getByRole("button", { name: "Acciones del documento" });
