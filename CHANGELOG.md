@@ -4,6 +4,8 @@ Todos los cambios relevantes de `@astra-kit/ui` se documentan en este archivo co
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-18
+
 ### Changed
 
 - El paquete pasa a llamarse `@astra-kit/ui` y reinicia la numeración: reemplazá la dependencia `beez-ui` por `@astra-kit/ui` y todos los imports, incluidos los subpaths y el CSS (`@astra-kit/ui/next`, `@astra-kit/ui/styles.css`, …). El repositorio ahora es `guidomodarelli/astra-ui`.
