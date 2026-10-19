@@ -331,7 +331,7 @@ pnpm release:prepare
 
 El paquete excluye fuentes privadas, tests, scripts, `.env` y `.npmrc`; incluye JavaScript, declaraciones, CSS, fuentes tipográficas y licencias. Conserva releases anteriores.
 
-`prepack` ejecuta el build para los empaquetados manuales. `dist` y `releases` son generados e ignorados por Git. La CI verifica los checks, los tres providers y el catálogo de Storybook (`pnpm test:storybook`) en ambos motores de navegador (Chromium y WebKit) en Linux. La suite de Playwright (`tests/browser/`) corre en CI repartida en 4 shards con `fullyParallel`, y un push nuevo a un pull request cancela el run del commit anterior. La publicación se ejecuta desde el workflow **Release**, que recibe la versión, el tag y el commit creados por `pnpm create-version`; no repite las pruebas de navegador, que ya corrieron en el CI de `main`.
+`prepack` ejecuta el build para los empaquetados manuales. `dist` y `releases` son generados e ignorados por Git. La CI verifica los checks, los tres providers y el catálogo de Storybook (`pnpm test:storybook`) en ambos motores de navegador (Chromium y WebKit) en Linux. La suite de Playwright (`tests/browser/`) corre en CI repartida en 4 shards con `fullyParallel`, y un push nuevo a un pull request cancela el run del commit anterior. La publicación se ejecuta desde el workflow **Release**, que recibe la versión, el tag y el commit creados por `pnpm create-version`; no repite las pruebas de navegador: antes de publicar espera hasta 30 minutos a que el CI del commit de versión termine en verde y se detiene si falla o no termina.
 
 Tras publicar, los consumidores pueden instalar `pnpm add @golfo/ui`. También pueden instalar directamente el `.tgz` validado antes de una publicación.
 
