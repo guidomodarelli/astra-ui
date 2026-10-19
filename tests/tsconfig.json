@@ -6,10 +6,10 @@
     "allowJs": true,
     "paths": {
       "@/*": ["../src/*"],
-      "beez-ui": ["../dist/index"],
-      "beez-ui/next": ["../dist/next"],
-      "beez-ui/tanstack": ["../dist/tanstack"],
-      "beez-ui/hooks": ["../dist/hooks"]
+      "@astra-kit/ui": ["../dist/index"],
+      "@astra-kit/ui/next": ["../dist/next"],
+      "@astra-kit/ui/tanstack": ["../dist/tanstack"],
+      "@astra-kit/ui/hooks": ["../dist/hooks"]
     },
     "types": ["node", "@testing-library/jest-dom/vitest", "vite/client"]
   },

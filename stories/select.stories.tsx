@@ -1,6 +1,6 @@
 /** Demonstrates Arc's closed Select with its label, helper and error rows. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Select } from "beez-ui";
+import { Select } from "@astra-kit/ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 

@@ -1,5 +1,5 @@
 /**
- * Checks the plain `Toaster` beez-ui exports while a modal is open: real hit testing through the modal's disabled
+ * Checks the plain `Toaster` @astra-kit/ui exports while a modal is open: real hit testing through the modal's disabled
  * pointer events, Sonner's hotkey against the modal's focus trap, and focus return when the focused toast goes away,
  * none of which jsdom reproduces.
  */

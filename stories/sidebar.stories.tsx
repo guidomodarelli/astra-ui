@@ -21,7 +21,7 @@ import {
   SidebarInset,
   SidebarRail,
   SidebarTrigger,
-} from "beez-ui";
+} from "@astra-kit/ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 import { Activity, ChevronsUpDown, FolderKanban, Home, Settings } from "lucide-react";
@@ -31,7 +31,7 @@ const SECTIONS = [
   { label: "Actividad", icon: <Activity />, badge: "3" },
   { label: "Ajustes", icon: <Settings /> },
 ] as const;
-const PROJECTS = ["Beez", "Agenda"] as const;
+const PROJECTS = ["Astra", "Agenda"] as const;
 /** Editable inputs specific to this example. */
 type Args = {
   open: boolean;

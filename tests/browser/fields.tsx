@@ -1,7 +1,7 @@
 /** Mounts labelled Input and Textarea fields from the public barrel, so their layout and message motion run in real engines. */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BeezUIProvider, Button, Input, RichLinkEditor, Textarea, useRichLinkEditor } from "beez-ui";
+import { AstraUIProvider, Button, Input, RichLinkEditor, Textarea, useRichLinkEditor } from "@astra-kit/ui";
 import "./styles.css";
 
 /** Characters the bio accepts; the count starts with three digits so a keystroke rolls only the last ones. */
@@ -127,7 +127,7 @@ function RaisedSurfaceEditor() {
 
 /** Renders the fields the spec drives. */
 function Fields() {
-  return <BeezUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
+  return <AstraUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
     <h1>Campos</h1>
     <section><FlexRowField /></section>
     <section><EmailField /></section>
@@ -136,7 +136,7 @@ function Fields() {
     <section><NoticeField /></section>
     <section><CountdownField /></section>
     <section><RaisedSurfaceEditor /></section>
-  </main></BeezUIProvider>;
+  </main></AstraUIProvider>;
 }
 
 createRoot(document.getElementById("root")!).render(<Fields />);

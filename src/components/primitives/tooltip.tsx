@@ -4,7 +4,7 @@
  * Internal primitive of Arc's Tooltip (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): a short dark
  * bubble on Arc's tokens that waits a moment, then rises a few pixels from its trigger. While a tooltip is open, and
  * briefly after it closes, the next one opens at once and only fades. Internal: the Radix composition (`Tooltip`,
- * `TooltipTrigger`, `TooltipContent`, `TooltipProvider`) behind the public closed `Tooltip` and beez-ui's composite
+ * `TooltipTrigger`, `TooltipContent`, `TooltipProvider`) behind the public closed `Tooltip` and @astra-kit/ui's composite
  * components; the package does not export it.
  */
 import * as React from "react"

@@ -2,7 +2,7 @@
 import { useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { AnimatePresence, motion } from "motion/react";
-import { AnimatedCollapse, BeezUIProvider, Button } from "beez-ui";
+import { AnimatedCollapse, AstraUIProvider, Button } from "@astra-kit/ui";
 import "./styles.css";
 
 /** Parent exit long enough to outlast every interaction the spec attempts while it runs. */
@@ -35,7 +35,7 @@ function ExitInertExamples() {
   const [isCollapseOpen, setIsCollapseOpen] = useState(false);
 
   return (
-    <BeezUIProvider>
+    <AstraUIProvider>
       <main>
         <h1>Salidas inertes</h1>
         <output aria-label="Activaciones del botón">{buttonActivations}</output>
@@ -55,7 +55,7 @@ function ExitInertExamples() {
           </AnimatedCollapse>
         </section>
       </main>
-    </BeezUIProvider>
+    </AstraUIProvider>
   );
 }
 

@@ -3,7 +3,7 @@ import { act, fireEvent, render, renderHook, screen } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 
-import { Calendar, useToday } from "beez-ui";
+import { Calendar, useToday } from "@astra-kit/ui";
 
 /** Today pinned through a fake clock, so the tests never depend on the real date. */
 const NOW = new Date(2026, 8, 10, 15, 30);

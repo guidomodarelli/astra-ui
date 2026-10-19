@@ -1,6 +1,6 @@
 /** Demonstrates Input through its public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Input } from "beez-ui";
+import { Input } from "@astra-kit/ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */

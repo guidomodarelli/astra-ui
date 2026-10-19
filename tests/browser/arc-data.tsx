@@ -1,7 +1,7 @@
 /** Mounts Arc's Calendar and Carousel from the public barrel, so their layout, cursor and motion run in real engines. */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BeezUIProvider, Calendar, Carousel } from "beez-ui";
+import { AstraUIProvider, Calendar, Carousel } from "@astra-kit/ui";
 import "./styles.css";
 
 const SLIDES = [1, 2, 3, 4];
@@ -112,14 +112,14 @@ function RotatingCarousel() {
 
 function App() {
   return (
-    <BeezUIProvider>
+    <AstraUIProvider>
       <main>
         <SingleDateCalendar />
         <FeaturedCarousel />
         <ControlledGallery />
         <RotatingCarousel />
       </main>
-    </BeezUIProvider>
+    </AstraUIProvider>
   );
 }
 

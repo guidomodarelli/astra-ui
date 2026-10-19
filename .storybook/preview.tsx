@@ -1,8 +1,8 @@
 /** Shares the production theme and fonts across examples; tooltips bring their own provider. */
 import { useEffect, useEffectEvent } from "react";
 import type { Preview } from "@storybook/react-vite";
-import { BeezUIProvider, useTheme } from "beez-ui";
-import "beez-ui/styles.css";
+import { AstraUIProvider, useTheme } from "@astra-kit/ui";
+import "@astra-kit/ui/styles.css";
 import "./preview.css";
 
 /** Applies toolbar changes without preventing the theme component's own interactions. */
@@ -44,9 +44,9 @@ const preview: Preview = {
   decorators: [
     function WithProviders(Story, context) {
       return (
-        <BeezUIProvider
+        <AstraUIProvider
           themeOptions={{
-            storageKey: "beez-ui-storybook-theme",
+            storageKey: "astra-ui-storybook-theme",
             defaultTheme: "light",
           }}
         >
@@ -60,7 +60,7 @@ const preview: Preview = {
           >
             <Story />
           </div>
-        </BeezUIProvider>
+        </AstraUIProvider>
       );
     },
   ],

@@ -25,7 +25,7 @@ import {
   TabsTrigger,
   Tooltip,
   TypingAnimation,
-} from "beez-ui";
+} from "@astra-kit/ui";
 
 /** Time the activity tab shows its loading placeholder before the content arrives. */
 const ACTIVITY_LOADING_MS = 1600;

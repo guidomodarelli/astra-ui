@@ -1,7 +1,7 @@
 /** Demonstrates Dialog with Arc's API, including its `alert` mode for confirmations. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useRef } from "react";
-import { Badge, Button, Dialog, DialogClose, DialogContent, DialogTrigger } from "beez-ui";
+import { Badge, Button, Dialog, DialogClose, DialogContent, DialogTrigger } from "@astra-kit/ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */

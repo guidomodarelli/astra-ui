@@ -1,6 +1,6 @@
 /** Demonstrates Arc's closed Tooltip: the content wraps its trigger, without any provider. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button, Tooltip } from "beez-ui";
+import { Button, Tooltip } from "@astra-kit/ui";
 
 /** Editable inputs specific to this example. */
 type Args = {

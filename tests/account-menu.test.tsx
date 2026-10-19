@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AccountMenu, BeezUIProvider, Sidebar, SidebarProvider, SidebarTrigger } from "beez-ui";
+import { AccountMenu, AstraUIProvider, Sidebar, SidebarProvider, SidebarTrigger } from "@astra-kit/ui";
 
 const ACCOUNT = { name: "Ana López", email: "ana@example.com" };
 
@@ -39,9 +39,9 @@ describe("AccountMenu", () => {
       return <a data-router="app" {...props} />;
     }
     render(
-      <BeezUIProvider components={{ Link: RouterLink }}>
+      <AstraUIProvider components={{ Link: RouterLink }}>
         <AccountMenu name="Invitado" email="Sin correo" status="unauthenticated" signInHref="/ingresar" onSignOut={vi.fn()} />
-      </BeezUIProvider>,
+      </AstraUIProvider>,
     );
 
     await user.click(screen.getByRole("button", { name: "Menú de cuenta" }));

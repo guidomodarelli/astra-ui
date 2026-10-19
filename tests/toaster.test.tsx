@@ -1,9 +1,9 @@
-/** Checks the public `Toaster` keeps Sonner's props and look while adding beez-ui's modal behavior. */
+/** Checks the public `Toaster` keeps Sonner's props and look while adding @astra-kit/ui's modal behavior. */
 import { createRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { act, render, screen } from "@testing-library/react";
-import { ThemedToaster, Toaster, toast } from "beez-ui";
-import { Toaster as SubpathToaster } from "beez-ui/sonner";
+import { ThemedToaster, Toaster, toast } from "@astra-kit/ui";
+import { Toaster as SubpathToaster } from "@astra-kit/ui/sonner";
 
 afterEach(() => {
   act(() => { toast.dismiss(); });

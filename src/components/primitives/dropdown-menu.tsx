@@ -4,7 +4,7 @@
  * Internal primitive of Arc's Dropdown menu (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): Arc's raised
  * panel, item rows, danger tone, separators, placement defaults and Arc's motion: the panel grows from the trigger
  * edge, items rise in staggered, and the highlight glides for the pointer and jumps for the keyboard. Internal: the
- * Radix composition behind the public closed `DropdownMenu` and beez-ui's composite components; the package does not
+ * Radix composition behind the public closed `DropdownMenu` and @astra-kit/ui's composite components; the package does not
  * export it.
  */
 import * as React from "react"

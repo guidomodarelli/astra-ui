@@ -1,6 +1,6 @@
 /** Demonstrates Arc's closed HoverCard with the HoverCardProfile preset. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button, HoverCard, HoverCardProfile } from "beez-ui";
+import { Button, HoverCard, HoverCardProfile } from "@astra-kit/ui";
 
 /** Editable inputs specific to this example. */
 type Args = {

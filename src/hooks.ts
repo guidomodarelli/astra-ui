@@ -1,5 +1,5 @@
 /**
- * General-purpose React hooks, published at `beez-ui/hooks` so the component barrel stays focused
+ * General-purpose React hooks, published at `@astra-kit/ui/hooks` so the component barrel stays focused
  * on UI. `useIsMobile` is also exported from the package root for existing consumers.
  */
 export { useIsMobile } from "./hooks/use-mobile.js";

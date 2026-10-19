@@ -1,7 +1,7 @@
 /** Mounts ActionButton and SplitButton from the public barrel, so their layout and press motion run in real engines. */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { ActionButton, BeezUIProvider, SplitButton } from "beez-ui";
+import { ActionButton, AstraUIProvider, SplitButton } from "@astra-kit/ui";
 import "./styles.css";
 
 /** Time the fixture action takes to settle. */
@@ -35,11 +35,11 @@ function CopyPageSplitButton() {
 
 /** Renders one of each component with the labels the spec drives. */
 function ActionButtons() {
-  return <BeezUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
+  return <AstraUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
     <h1>Botones de acción</h1>
     <section><ActionButton label="Publicar" pendingLabel="Publicando cambios" successLabel="Listo" resetAfterMs={KEEP_SUCCESS_STATE_MS} onAction={simulateRequest} /></section>
     <section><CopyPageSplitButton /></section>
-  </main></BeezUIProvider>;
+  </main></AstraUIProvider>;
 }
 
 createRoot(document.getElementById("root")!).render(<ActionButtons />);

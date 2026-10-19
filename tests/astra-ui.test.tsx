@@ -2,11 +2,11 @@ import { describe, it, expect, vi } from "vitest";
 /** Verifies the distributed UI package through its public consumer contract. */
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Button, Avatar, Checkbox } from "beez-ui";
+import { Button, Avatar, Checkbox } from "@astra-kit/ui";
 
 
 
-describe("beez-ui consumer contract", () => {
+describe("@astra-kit/ui consumer contract", () => {
   it("should prevent actions when disabled", async () => {
     const onClick = vi.fn();
     render(<Button disabled onClick={onClick}>Guardar</Button>);

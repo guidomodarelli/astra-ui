@@ -3,7 +3,7 @@ import { createRef, useState, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Button, Dialog, DialogClose, DialogContent, DialogTrigger } from "beez-ui";
+import { Button, Dialog, DialogClose, DialogContent, DialogTrigger } from "@astra-kit/ui";
 
 /**
  * Renders an open dialog with the given title and description.

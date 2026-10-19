@@ -1,7 +1,7 @@
 /** Demonstrates Skeleton through its public component contract. */
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button, Skeleton } from "beez-ui";
+import { Button, Skeleton } from "@astra-kit/ui";
 
 /** Editable inputs specific to this example. */
 type Args = { avatar: boolean; lines: number; label: string };

@@ -3,8 +3,8 @@ import { useState } from "react";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { FilterQueryBar } from "beez-ui";
-import type { FilterQualifierConfig } from "beez-ui";
+import { FilterQueryBar } from "@astra-kit/ui";
+import type { FilterQualifierConfig } from "@astra-kit/ui";
 
 const CONFIGS: FilterQualifierConfig[] = [
   { key: "", kind: "text", label: "Descripción" },

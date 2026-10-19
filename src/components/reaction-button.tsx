@@ -24,7 +24,7 @@ const REACTION_KICK_SCALE_VELOCITY = 11;
 const REACTION_KICK_ROTATE_VELOCITY = -420;
 
 /** Exposes the active color to the icon classes. */
-type ReactionButtonStyle = CSSProperties & { "--beez-reaction-active-color"?: string };
+type ReactionButtonStyle = CSSProperties & { "--astra-reaction-active-color"?: string };
 
 export interface ReactionButtonProps {
   /** Accessible name, including the current count (for example "Me gusta 3"). */
@@ -85,7 +85,7 @@ export function ReactionButton({
       animate(rotate, 0, { ...REACTION_KICK, velocity: rotate.getVelocity() + REACTION_KICK_ROTATE_VELOCITY }),
     ];
   }, [isActive, rotate, scale, shouldReduceMotion]);
-  const activeColorStyle: ReactionButtonStyle | undefined = activeColor ? { "--beez-reaction-active-color": activeColor } : undefined;
+  const activeColorStyle: ReactionButtonStyle | undefined = activeColor ? { "--astra-reaction-active-color": activeColor } : undefined;
 
   return (
     <ControlButton
@@ -105,7 +105,7 @@ export function ReactionButton({
         className="inline-flex origin-center items-center justify-center"
         style={{ scale, rotate }}
       >
-        <Icon className="size-4 transition-[fill,color] group-data-active/reaction:fill-current group-data-active/reaction:text-[var(--beez-reaction-active-color,var(--destructive))]" />
+        <Icon className="size-4 transition-[fill,color] group-data-active/reaction:fill-current group-data-active/reaction:text-[var(--astra-reaction-active-color,var(--destructive))]" />
       </motion.span>
       <AnimatedCount className="min-w-[1ch]" value={count} format={formatCount} />
     </ControlButton>

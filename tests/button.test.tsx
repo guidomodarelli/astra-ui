@@ -7,7 +7,7 @@ import userEvent from "@testing-library/user-event";
 import {
   Button,
   DropdownMenu,
-} from "beez-ui";
+} from "@astra-kit/ui";
 
 /** Exit long enough for assertions to run while the leaving content is still mounted. */
 const LEAVING_EXIT_TRANSITION = { duration: 0.2 };

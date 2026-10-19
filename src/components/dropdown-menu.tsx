@@ -4,7 +4,7 @@
  * Arc's Dropdown menu (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): a labelled trigger that opens a
  * focused list of actions on Arc's raised panel, with item rows, danger tone, separators, a staggered item entrance
  * and a highlight that glides between items with the keyboard. It follows Arc's closed API: items are data, not
- * children. beez-ui adds a custom trigger, link, checkbox and radio rows, trailing content, and placement and open
+ * children. @astra-kit/ui adds a custom trigger, link, checkbox and radio rows, trailing content, and placement and open
  * state of the menu.
  */
 import type { ReactElement, ReactNode } from "react"

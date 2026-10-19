@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { PlusIcon } from "lucide-react";
-import { Alert, Avatar, AvatarGroup, Badge, BeezUIProvider, Button, Card, Skeleton } from "beez-ui";
+import { Alert, Avatar, AvatarGroup, Badge, AstraUIProvider, Button, Card, Skeleton } from "@astra-kit/ui";
 import "./styles.css";
 
 /** A badge whose label grows, so the spec can watch the pill spring to the new width. */
@@ -151,7 +151,7 @@ function CardWithBodyButton() {
 
 /** Renders one fixture per component. */
 function ArcDisplay() {
-  return <BeezUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
+  return <AstraUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
     <h1>Componentes de visualización</h1>
     <section><GrowingBadge /></section>
     <section><PresenceAvatar /></section>
@@ -184,7 +184,7 @@ function ArcDisplay() {
     <section><ScrollingReveal /></section>
     <section><BadgedPresenceAvatars /></section>
     <section><FixedHeightReveal /></section>
-  </main></BeezUIProvider>;
+  </main></AstraUIProvider>;
 }
 
 createRoot(document.getElementById("root")!).render(<ArcDisplay />);

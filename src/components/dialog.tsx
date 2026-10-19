@@ -3,7 +3,7 @@
 /**
  * Arc's Dialog (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): a focused surface for decisions that need
  * attention. Arc's API (`Dialog`, `DialogTrigger`, `DialogContent` with its `title`, `description` and built-in close
- * button, `DialogClose`) on Arc's overlay, raised panel, text swap and dialog transition. beez-ui
+ * button, `DialogClose`) on Arc's overlay, raised panel, text swap and dialog transition. @astra-kit/ui
  * extends it with a footer slot, a hidden title, the viewport close button placement, Spanish copy and an `alert` mode
  * that replaces the former `AlertDialog`.
  */
@@ -40,7 +40,7 @@ const DIALOG_CLOSE_ACTION_ATTRIBUTE = "data-dialog-close-action"
 /** Whether the surrounding `Dialog` runs in `alert` mode. */
 const DialogAlertContext = createContext(false)
 
-/** Props of `Dialog`: Radix's root contract plus beez-ui's `alert` mode. */
+/** Props of `Dialog`: Radix's root contract plus @astra-kit/ui's `alert` mode. */
 export type DialogProps = ComponentProps<typeof DialogRadix.Root> & {
   /**
    * Gives the dialog alert dialog semantics: `role="alertdialog"`, a press outside never closes it, it opens with the
@@ -94,7 +94,7 @@ function DialogClose(props: DialogCloseProps) {
   )
 }
 
-/** Props of `DialogContent`: Arc's titled panel, beez-ui's extensions and Radix's content props. */
+/** Props of `DialogContent`: Arc's titled panel, @astra-kit/ui's extensions and Radix's content props. */
 export type DialogContentProps = Omit<ComponentProps<typeof DialogRadix.Content>, "title" | "children"> & {
   /** Heading of the dialog and its accessible name. Plain text that changes while open crossfades in place. */
   title: ReactNode

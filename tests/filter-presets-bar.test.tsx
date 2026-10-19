@@ -10,7 +10,7 @@ import {
   parseFilterPresets,
   type FilterPreset,
   type FilterQualifierConfig,
-} from "beez-ui";
+} from "@astra-kit/ui";
 
 const QUERY_FILTER_CONFIGS: FilterQualifierConfig[] = [
   { key: "", kind: "text", label: "Descripción" },

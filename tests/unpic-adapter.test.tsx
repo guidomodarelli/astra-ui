@@ -1,7 +1,7 @@
 /** Verifies responsive image generation through the native provider without mocking Unpic. */
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { Avatar, BeezUIProvider } from "beez-ui";
+import { Avatar, AstraUIProvider } from "@astra-kit/ui";
 
 /**
  * Finds the photo inside the avatar named `name`.
@@ -14,7 +14,7 @@ function getAvatarImage(name: string): HTMLImageElement {
 
 describe("Unpic adapter", () => {
   it("should use the detected CDN's responsive URLs and preserve image load events", () => {
-    render(<BeezUIProvider><Avatar name="Perfil" src="https://images.unsplash.com/photo-example" /></BeezUIProvider>);
+    render(<AstraUIProvider><Avatar name="Perfil" src="https://images.unsplash.com/photo-example" /></AstraUIProvider>);
     const image = getAvatarImage("Perfil");
     expect(new URL(image.src).searchParams.get("w")).toBe("32");
     expect(image.srcset).not.toBe("");
@@ -23,7 +23,7 @@ describe("Unpic adapter", () => {
   });
 
   it("should preserve a source that has no configured image service", () => {
-    render(<BeezUIProvider><Avatar name="Perfil" src="/profile.png" /></BeezUIProvider>);
+    render(<AstraUIProvider><Avatar name="Perfil" src="/profile.png" /></AstraUIProvider>);
     expect(getAvatarImage("Perfil").src).toBe(new URL("/profile.png", window.location.href).href);
   });
 });

@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
-  BeezUIProvider,
+  AstraUIProvider,
   Button,
   DropdownMenu,
   Dialog,
@@ -24,7 +24,7 @@ import {
   Select,
   AnimatedThemeToggler,
   DataTable,
-} from "beez-ui";
+} from "@astra-kit/ui";
 
 const GROUPED_ROWS = [
   { name: "Luz", currency: "ARS" },
@@ -61,7 +61,7 @@ function MotionExamples() {
     [collapsedGroups],
   );
   return (
-    <BeezUIProvider>
+    <AstraUIProvider>
       <main>
         <h1>Movimiento compartido</h1>
         <section className="controls">
@@ -195,7 +195,7 @@ function MotionExamples() {
           <Skeleton lines={1} className="motion-skeleton" />
         </section>
       </main>
-    </BeezUIProvider>
+    </AstraUIProvider>
   );
 }
 createRoot(document.getElementById("root")!).render(<MotionExamples />);

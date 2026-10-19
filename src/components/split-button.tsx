@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * Arc's SplitButton (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md) built from beez-ui's `Button` and
+ * Arc's SplitButton (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md) built from @astra-kit/ui's `Button` and
  * `DropdownMenu`: a main action whose icon and label morph in place, joined to a menu of related actions. The menu
  * half never scales on press, so the menu opens from a still anchor.
  */

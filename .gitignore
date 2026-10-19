@@ -12,7 +12,6 @@ playwright-report/
 *.tgz
 .env*
 .env
-!.env.example
 
 storybook-static/
 
