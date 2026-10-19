@@ -4,6 +4,8 @@ Todos los cambios relevantes de `@astra-kit/ui` se documentan en este archivo co
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-19
+
 ### Added
 
 - `ButtonLink`: un link con el aspecto de `Button` (`variant` y `size`) que rutea con el adaptador del provider y sigue siendo un enlace, para navegar sin estilos propios en cada app. También se exporta `buttonClassName({ variant, size, className })`, con las mismas clases para otros elementos, como un `<label>` que abre un selector de archivos.
