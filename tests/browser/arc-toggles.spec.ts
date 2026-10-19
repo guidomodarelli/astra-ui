@@ -137,8 +137,9 @@ test("should draw the check and morph the indeterminate dash into it", async ({ 
 });
 
 test("should glide one highlight to the chosen row and follow the arrow keys", async ({ page }) => {
-  const highlight = page.locator("[data-slot=radio-group-highlight]");
-  const optionRow = (name: string) => page.locator("[data-slot=radio-group-option]", { hasText: name });
+  const group = page.getByRole("radiogroup", { name: "Facturación" });
+  const highlight = group.locator("[data-slot=radio-group-highlight]");
+  const optionRow = (name: string) => group.locator("[data-slot=radio-group-option]", { hasText: name });
   /**
    * Reads how far the highlight sits from a row, both measured in the same call so layout shifts cannot skew them.
    * @param name - Visible label of the row.
@@ -170,7 +171,7 @@ test("should lay the legend above the option rows, which stretch to the fieldset
   const [groupBox, legendBox, firstRowBox] = await Promise.all([
     readBox(group),
     readBox(group.locator("legend")),
-    readBox(page.locator("[data-slot=radio-group-option]").first()),
+    readBox(group.locator("[data-slot=radio-group-option]").first()),
   ]);
 
   expect(legendBox.y + legendBox.height).toBeLessThanOrEqual(firstRowBox.y + PIXEL_TOLERANCE);
@@ -178,10 +179,33 @@ test("should lay the legend above the option rows, which stretch to the fieldset
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
+test("should hide the legend without reserving its space while it still names the group", async ({ page }) => {
+  const section = page.getByTestId("titled-radio-group");
+  const group = section.getByRole("radiogroup", { name: "Frecuencia de pago" });
+  const legend = group.locator("legend");
+  const [titleBox, groupBox, legendBox, firstRowBox] = await Promise.all([
+    readBox(section.getByRole("heading", { name: "Frecuencia de pago" })),
+    readBox(group),
+    readBox(legend),
+    readBox(group.locator("[data-slot=radio-group-option]").first()),
+  ]);
+
+  // The legend paints nothing and takes no room: the rows start at the fieldset's top edge, right under the title.
+  expect(legendBox.width * legendBox.height).toBeLessThanOrEqual(1);
+  expect(await legend.evaluate((element) => getComputedStyle(element).position)).toBe("absolute");
+  expect(Math.abs(firstRowBox.y - groupBox.y)).toBeLessThan(PIXEL_TOLERANCE);
+  expect(groupBox.y).toBeGreaterThanOrEqual(titleBox.y + titleBox.height - PIXEL_TOLERANCE);
+  expect(firstRowBox.width).toBeCloseTo(groupBox.width, 0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  await section.getByText("Quincenal").click();
+  await expect(section.getByRole("radio", { name: "Quincenal" })).toBeChecked();
+});
+
 test("should place every mark and the highlight at once when motion is reduced", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.reload();
-  const highlight = page.locator("[data-slot=radio-group-highlight]");
+  const highlight = page.getByRole("radiogroup", { name: "Facturación" }).locator("[data-slot=radio-group-highlight]");
 
   await page.getByText("Dos meses sin cargo.").click();
   await page.getByText("Recibir novedades").click();

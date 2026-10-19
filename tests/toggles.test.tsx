@@ -174,6 +174,22 @@ describe("RadioGroup", () => {
     expect(screen.getByRole("radio", { name: "Mensual" })).toBeChecked();
   });
 
+  it("should keep naming the group by its legend when the legend is hidden", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    render(<RadioGroup label="Facturación" hideLabel options={BILLING_OPTIONS} defaultValue="monthly" />);
+    const group = screen.getByRole("radiogroup", { name: "Facturación" });
+
+    // Act
+    await user.click(screen.getByText("Dos meses sin cargo."));
+
+    // Assert
+    expect(group.tagName).toBe("FIELDSET");
+    expect(screen.getByText("Facturación").tagName).toBe("LEGEND");
+    expect(group.firstElementChild).toBe(screen.getByText("Facturación"));
+    expect(screen.getByRole("radio", { name: "Anual" })).toBeChecked();
+  });
+
   it("should choose and focus an option from its row copy", async () => {
     // Arrange
     const user = userEvent.setup();
