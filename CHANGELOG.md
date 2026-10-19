@@ -13,3 +13,7 @@ Todos los cambios relevantes de `@astra-kit/ui` se documentan en este archivo co
 ### Removed
 
 - No se aceptan los nombres anteriores (`BeezUIProvider`, `BeezLinkProps`, `BeezImageProps`, `useBeezUIComponents`, `Beez Inter`/`Geist`/`Mono`, `--beez-reaction-active-color`, `data-beez-theme-menu`): hay que migrar todo de una vez. El historial de `beez-ui` 0.8.1–4.0.1 queda en [`docs/history/beez-ui-changelog.md`](https://github.com/guidomodarelli/astra-ui/blob/main/docs/history/beez-ui-changelog.md).
+
+### Fixed
+
+- `DropdownMenu` con un `trigger` propio deshabilitado (`disabled`) ya no abre el menú al tocarlo o hacer click; antes se abría porque el navegador igual entrega el `pointerdown` al botón deshabilitado.

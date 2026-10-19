@@ -1,7 +1,7 @@
 /** Mounts Arc's DropdownMenu and Select from the public barrel, so their layout and motion run in real engines. */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { AstraUIProvider, DropdownMenu, Input, Select, type DropdownItem } from "@astra-kit/ui";
+import { AstraUIProvider, Button, DropdownMenu, Input, Select, type DropdownItem } from "@astra-kit/ui";
 import "./styles.css";
 
 /** Labels of the document menu, enough rows to see the stagger reach its last step. */
@@ -92,12 +92,28 @@ function LabelledSelect() {
   );
 }
 
+/** A menu behind a custom trigger that can be disabled, as a row whose actions are not available yet. */
+function LockedRowMenu() {
+  const [locked, setLocked] = useState(true);
+  return (
+    <div className="controls">
+      <DropdownMenu
+        label="Acciones de la fila"
+        trigger={<Button size="sm" disabled={locked} aria-label="Más acciones de la fila">⋮</Button>}
+        items={[{ label: "Editar" }, { label: "Archivar" }]}
+      />
+      <Button variant="ghost" onClick={() => setLocked(!locked)}>{locked ? "Habilitar fila" : "Bloquear fila"}</Button>
+    </div>
+  );
+}
+
 /** Renders the menus the spec drives. */
 function ArcMenus() {
   return <AstraUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
     <h1>Menús</h1>
     <section><DocumentMenu /></section>
     <section><ViewMenu /></section>
+    <section><LockedRowMenu /></section>
     <section><CurrencySelects /></section>
     <section><LabelledSelect /></section>
   </main></AstraUIProvider>;

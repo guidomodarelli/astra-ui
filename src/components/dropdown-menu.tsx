@@ -42,9 +42,9 @@ export type DropdownMenuProps = {
   icon?: ReactNode
   /**
    * Your own trigger, rendered with `asChild` instead of Arc's labelled button, such as an icon button with its own
-   * `aria-label`. It must accept a ref and be focusable.
+   * `aria-label`. It must accept a ref and be focusable. While its `disabled` prop is `true` the menu does not open.
    */
-  trigger?: ReactElement
+  trigger?: ReactElement<{ disabled?: boolean }>
   /** Single selection: rows with a `value` render as radio items checked against `selection.value`. */
   selection?: DropdownMenuSelection
   /** Preferred side of the trigger. Defaults to `bottom`. */
@@ -90,7 +90,8 @@ function DropdownMenu({
 }: DropdownMenuProps) {
   return (
     <DropdownMenuRoot open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange} modal={modal}>
-      <DropdownMenuTrigger asChild>
+      {/* A disabled button still receives `pointerdown`, which is what opens the menu, so the trigger is disabled too. */}
+      <DropdownMenuTrigger asChild disabled={trigger?.props.disabled === true}>
         {trigger ?? (
           <Button variant="secondary" className={cn("max-w-full", className)}>
             {icon}
