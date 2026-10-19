@@ -287,6 +287,31 @@
       "import": "./dist/components/progress-ring.js",
       "default": "./dist/components/progress-ring.js"
     },
+    "./empty-state": {
+      "types": "./dist/components/empty-state.d.ts",
+      "import": "./dist/components/empty-state.js",
+      "default": "./dist/components/empty-state.js"
+    },
+    "./metric-card": {
+      "types": "./dist/components/metric-card.d.ts",
+      "import": "./dist/components/metric-card.js",
+      "default": "./dist/components/metric-card.js"
+    },
+    "./stepper": {
+      "types": "./dist/components/stepper.d.ts",
+      "import": "./dist/components/stepper.js",
+      "default": "./dist/components/stepper.js"
+    },
+    "./timeline": {
+      "types": "./dist/components/timeline.d.ts",
+      "import": "./dist/components/timeline.js",
+      "default": "./dist/components/timeline.js"
+    },
+    "./usage-meter": {
+      "types": "./dist/components/usage-meter.d.ts",
+      "import": "./dist/components/usage-meter.js",
+      "default": "./dist/components/usage-meter.js"
+    },
     "./account-menu": {
       "types": "./dist/components/account-menu.d.ts",
       "import": "./dist/components/account-menu.js",

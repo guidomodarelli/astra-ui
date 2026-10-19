@@ -36,6 +36,7 @@ export const ARC_SPRING_CSS = { type: "spring", visualDuration: 0.34, bounce: 0.
 export const ARC_STAGGER = {
   char: 0.016,
   item: 0.035,
+  line: 0.08,
 } as const;
 
 /** Blur radii in pixels for brief content crossfades. */

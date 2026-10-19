@@ -4,6 +4,14 @@ Todos los cambios relevantes de `@astra-kit/ui` se documentan en este archivo co
 
 ## [Unreleased]
 
+### Added
+
+- `UsageMeter`: barra segmentada de cupo (por ejemplo, códigos y avisos enviados hoy contra el límite diario) con total animado, insignia de estado (libre, casi lleno, excedido), leyenda navegable con teclado y anuncios para lectores de pantalla. Todo el copy viene en español y se reemplaza con `freeLabel`, `overLabel` y `messages`; los números usan `locale` (por defecto `es-AR`).
+- `MetricCard`: tarjeta compacta para un número con contexto, con dígitos que ruedan al cambiar y un chip de variación (`change`) que se tiñe según el signo. Acepta `locale` (por defecto `es-AR`).
+- `EmptyState`: estado vacío centrado con ícono, título, descripción y acción opcional; al cambiar el copy, el bloque se ajusta de alto sin saltos.
+- `Timeline`: historial de eventos agrupado por día, del más reciente al más antiguo, con encabezados fijos, filas que se expanden en el lugar, tiempos relativos y anuncios de nuevas actualizaciones. Fechas en `es-AR` por defecto; el copy se reemplaza con `messages`.
+- `Stepper`: indicador de pasos horizontal o vertical, con navegación opcional a pasos completados (`onStepSelect`), estado de error por paso y modo compacto automático en contenedores angostos. Textos de accesibilidad en español, reemplazables con `label`, `completeLabel` y `messages`.
+
 ## [1.1.0] - 2026-10-19
 
 ### Added
