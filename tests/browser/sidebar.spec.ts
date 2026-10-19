@@ -310,7 +310,7 @@ test.describe("desktop", () => {
 
       await projects.focus();
       await page.keyboard.press("Tab");
-      await expect(page.locator('[data-slot="sidebar-menu-sub"]').getByRole("button", { name: "Astra" })).toBeFocused();
+      await expect(page.locator('[data-slot="sidebar-menu-sub"]').getByRole("button", { name: "Golfo" })).toBeFocused();
       await expect(submenuRegion).toHaveCSS("overflow", "visible");
 
       await projects.click();
@@ -338,7 +338,7 @@ test.describe("mobile", () => {
     const sheet = page.getByRole("dialog", { name: "Navegación principal" });
     await expect(sheet).toBeVisible();
     await expect.poll(async () => Math.round((await sheet.boundingBox())?.width ?? 0)).toBe(MOBILE_SHEET_WIDTH_PX);
-    await expect(page.getByRole("button", { name: "Astra" })).toBeFocused();
+    await expect(page.getByRole("button", { name: "Golfo" })).toBeFocused();
     await expect(page.locator("body")).toHaveCSS("overflow", "hidden");
     await page.keyboard.press("Escape");
     await expect(sheet).toBeHidden();

@@ -1,7 +1,7 @@
 /** Mounts Dialog, also in `alert` mode, from the public barrel, so Arc's surface layout and text swap run in real engines. */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { AstraUIProvider, Button, Dialog, DialogClose, DialogContent, DialogTrigger } from "@astra-kit/ui";
+import { GolfoUIProvider, Button, Dialog, DialogClose, DialogContent, DialogTrigger } from "@golfo/ui";
 import "./styles.css";
 
 /** A title long enough to wrap, so the spec can check it never runs under the close button. */
@@ -27,7 +27,7 @@ function SwappingDialog() {
 /** Renders the dialogs the spec opens one at a time. */
 function App() {
   return (
-    <AstraUIProvider>
+    <GolfoUIProvider>
       <main>
         <Dialog>
           <DialogTrigger asChild>
@@ -72,7 +72,7 @@ function App() {
           />
         </Dialog>
       </main>
-    </AstraUIProvider>
+    </GolfoUIProvider>
   );
 }
 

@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { ChevronsUpDown, FolderKanban, Home, Settings } from "lucide-react";
 import {
   AccountMenu,
-  AstraUIProvider,
+  GolfoUIProvider,
   Sidebar,
   SidebarBrandButton,
   SidebarContent,
@@ -23,26 +23,26 @@ import {
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
-} from "@astra-kit/ui";
+} from "@golfo/ui";
 import "./styles.css";
 
 const SECTIONS = [
   { name: "Inicio", icon: <Home /> },
   { name: "Ajustes", icon: <Settings /> },
 ] as const;
-const PROJECTS = ["Astra", "Agenda"] as const;
+const PROJECTS = ["Golfo", "Agenda"] as const;
 
 /** Keeps the selected section in state so navigation can be observed without a router. */
 function SidebarShell() {
   const [section, setSection] = useState<string>("Inicio");
   const [isProjectsOpen, setIsProjectsOpen] = useState(false);
   return (
-    <AstraUIProvider>
+    <GolfoUIProvider>
       <SidebarProvider>
         <Sidebar ariaLabel="Navegación principal">
           <SidebarHeader>
             <SidebarBrandButton icon={<span>BZ</span>} trailing={<ChevronsUpDown />}>
-              Astra
+              Golfo
             </SidebarBrandButton>
           </SidebarHeader>
           <SidebarContent>
@@ -97,7 +97,7 @@ function SidebarShell() {
           <div style={{ height: "200vh" }} />
         </SidebarInset>
       </SidebarProvider>
-    </AstraUIProvider>
+    </GolfoUIProvider>
   );
 }
 

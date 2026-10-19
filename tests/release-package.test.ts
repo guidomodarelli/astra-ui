@@ -16,7 +16,7 @@ const require = createRequire(import.meta.url);
 
 it("should render and filter from the installed archive without Next or a TypeScript loader", () => {
   const packing = mkdtempSync(join(root, ".package-test-"));
-  const consumer = mkdtempSync(join(tmpdir(), "astra-ui-consumer-"));
+  const consumer = mkdtempSync(join(tmpdir(), "golfo-ui-consumer-"));
   try {
     execSync(`npm pack --ignore-scripts --pack-destination ${basename(packing)}`, { cwd: root, stdio: "pipe" });
     const archive = readdirSync(packing).find(file => file.endsWith(".tgz"));
@@ -32,9 +32,9 @@ it("should render and filter from the installed archive without Next or a TypeSc
     mkdirSync(dirname(packageLink), { recursive: true });
     symlinkSync(join(consumer, "package"), packageLink, "junction");
     const packedMetadata = JSON.parse(readFileSync(join(consumer, "package", "package.json"), "utf8"));
-    expect(packedMetadata.name).toBe("@astra-kit/ui");
+    expect(packedMetadata.name).toBe("@golfo/ui");
     expect(packedMetadata.publishConfig.registry).toBe("https://registry.npmjs.org/");
-    expect(archive).toBe(`astra-kit-ui-${metadata.version}.tgz`);
+    expect(archive).toBe(`golfo-ui-${metadata.version}.tgz`);
     const dependencies = new Set([
       ...Object.keys(metadata.dependencies),
       ...Object.keys(metadata.peerDependencies).filter(name => !metadata.peerDependenciesMeta?.[name]?.optional),
@@ -51,7 +51,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { Button, parseFilterQuery, parseYearMonthFilterInput } from "@astra-kit/ui";
+import { Button, parseFilterQuery, parseYearMonthFilterInput } from "@golfo/ui";
 assert.throws(() => createRequire(import.meta.url).resolve("next"));
 assert.throws(() => createRequire(import.meta.url).resolve("@tanstack/react-router"));
 const html = renderToStaticMarkup(createElement(Button, { disabled: true }, "Guardar"));
@@ -62,10 +62,10 @@ assert.equal(parseYearMonthFilterInput("09/2026"), 202609);
 `);
     execFileSync(process.execPath, [join(consumer, "consumer.mjs")], { cwd: consumer, env: { ...process.env, NODE_PATH: "" }, stdio: "pipe" });
     writeFileSync(join(consumer, "consumer.ts"), `
-import { Button, parseFilterQuery, type AstraUIComponents } from "@astra-kit/ui";
+import { Button, parseFilterQuery, type GolfoUIComponents } from "@golfo/ui";
 import type { ComponentProps } from "react";
 const button: ComponentProps<typeof Button> = { variant: "secondary", children: "Guardar" };
-const components: AstraUIComponents = {};
+const components: GolfoUIComponents = {};
 const result: string = parseFilterQuery("luz", []).descriptionFilter;
 void [button, components, result];
 `);

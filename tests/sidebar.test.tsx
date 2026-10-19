@@ -20,11 +20,11 @@ import {
   SidebarProvider,
   SidebarTrigger,
   useSidebarPanel,
-  AstraUIProvider,
+  GolfoUIProvider,
   SIDEBAR_COOKIE_COLLAPSED_VALUE,
   SIDEBAR_COOKIE_NAME,
   SIDEBAR_COOKIE_OPEN_VALUE,
-} from "@astra-kit/ui";
+} from "@golfo/ui";
 
 /** Represents an application routing adapter that marks the links it renders. */
 function ConsumerLink(props: ComponentProps<"a">) {
@@ -60,7 +60,7 @@ function Navigation({ defaultOpen = true }: { defaultOpen?: boolean }) {
                 </SidebarMenuButton>
                 <SidebarMenuSub open={isProjectsOpen}>
                   <SidebarMenuSubItem>
-                    <SidebarMenuSubButton href="/proyectos/astra">Astra</SidebarMenuSubButton>
+                    <SidebarMenuSubButton href="/proyectos/golfo">Golfo</SidebarMenuSubButton>
                   </SidebarMenuSubItem>
                 </SidebarMenuSub>
               </SidebarMenuItem>
@@ -109,21 +109,21 @@ describe("Sidebar", () => {
     render(<Navigation />);
     const projects = screen.getByRole("button", { name: "Proyectos" });
     expect(projects).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("link", { name: "Astra" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Golfo" })).not.toBeInTheDocument();
     await userEvent.click(projects);
     expect(projects).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("link", { name: "Astra" })).toHaveAttribute("href", "/proyectos/astra");
+    expect(screen.getByRole("link", { name: "Golfo" })).toHaveAttribute("href", "/proyectos/golfo");
   });
 
   it("should expand the icon rail when a group is selected so its submenu can be reached", async () => {
     render(<Navigation defaultOpen={false} />);
     await userEvent.click(screen.getByRole("button", { name: "Proyectos" }));
     expect(screen.getByRole("complementary", { name: "Sidebar" })).toHaveAttribute("data-state", "expanded");
-    expect(await screen.findByRole("link", { name: "Astra" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Golfo" })).toBeInTheDocument();
   });
 
   it("should render linked entries through the configured routing adapter", () => {
-    render(<AstraUIProvider components={{ Link: ConsumerLink }}><Navigation /></AstraUIProvider>);
+    render(<GolfoUIProvider components={{ Link: ConsumerLink }}><Navigation /></GolfoUIProvider>);
     expect(screen.getByRole("link", { name: /^Reportes/ })).toHaveAttribute("data-router-link", "true");
   });
 

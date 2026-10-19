@@ -10,8 +10,8 @@ import {
   getFuzzyMatchRank,
   isFileTypeAccepted,
   renderHighlightedText,
-} from "@astra-kit/ui";
-import { HORIZONTAL_SWIPE_DIRECTION, resolveHorizontalSwipe } from "@astra-kit/ui/hooks";
+} from "@golfo/ui";
+import { HORIZONTAL_SWIPE_DIRECTION, resolveHorizontalSwipe } from "@golfo/ui/hooks";
 
 const BYTES_PER_KILOBYTE = 1024;
 const BYTES_PER_MEGABYTE = 1024 * 1024;

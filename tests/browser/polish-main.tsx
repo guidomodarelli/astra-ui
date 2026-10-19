@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import {
   Avatar,
   AvatarGroup,
-  AstraUIProvider,
+  GolfoUIProvider,
   Button,
   Calendar,
   Card,
@@ -19,7 +19,7 @@ import {
   SheetTrigger,
   Skeleton,
   TypingAnimation,
-} from "@astra-kit/ui";
+} from "@golfo/ui";
 import "./styles.css";
 
 /** Pages of the results pagination. */
@@ -93,7 +93,7 @@ function ReloadableAvatar() {
 /** Renders the polished components with deterministic data. */
 function PolishExamples() {
   return (
-    <AstraUIProvider>
+    <GolfoUIProvider>
       <main>
         <h1>Pulido de componentes</h1>
         <section>
@@ -139,7 +139,7 @@ function PolishExamples() {
           />
         </section>
       </main>
-    </AstraUIProvider>
+    </GolfoUIProvider>
   );
 }
 

@@ -12,7 +12,7 @@ import {
   FormLabel,
   FormMessage,
   Input,
-} from "@astra-kit/ui";
+} from "@golfo/ui";
 
 afterEach(() => vi.restoreAllMocks());
 

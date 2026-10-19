@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "@playwright/test";
-import { Avatar, Button, SidebarProvider, SidebarTrigger } from "@astra-kit/ui";
+import { Avatar, Button, SidebarProvider, SidebarTrigger } from "@golfo/ui";
 import { ownedPath } from "../../scripts/owned-path.js";
 import { extractArchive } from "../../scripts/tarball.js";
 
@@ -19,7 +19,7 @@ let server: Server;
 let origin: string;
 
 test.beforeAll(async () => {
-  directory = mkdtempSync(join(tmpdir(), "astra-ui-css-consumer-"));
+  directory = mkdtempSync(join(tmpdir(), "golfo-ui-css-consumer-"));
   execSync(`npm pack --ignore-scripts --pack-destination "${directory}"`, { cwd: root, stdio: "pipe" });
   const archive = readdirSync(directory).find((entry) => entry.endsWith(".tgz"))!;
   extractArchive(join(directory, archive), directory);
@@ -69,7 +69,7 @@ test("should style the installed package without consumer compilation", async ({
   await expect(page.locator('[data-slot="avatar"]')).toHaveCSS("width", "32px");
   await expect(page.getByRole("button", { name: "Toggle sidebar" })).toHaveCSS("width", "40px");
   expect(await page.evaluate(async () => {
-    const families = ['16px "Astra Inter"', '16px "Astra Geist"'];
+    const families = ['16px "Golfo Inter"', '16px "Golfo Geist"'];
     const loaded = (await Promise.all(families.map((family) => document.fonts.load(family)))).flat();
     return loaded.length >= families.length && loaded.every((font) => font.status === "loaded");
   })).toBe(true);

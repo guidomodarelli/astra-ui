@@ -1,6 +1,6 @@
 /** Demonstrates ButtonLink through its public component contract: navigation with the Button look. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { ButtonLink } from "@astra-kit/ui";
+import { ButtonLink } from "@golfo/ui";
 
 /** Editable inputs specific to this example. */
 type Args = {

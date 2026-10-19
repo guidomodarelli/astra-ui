@@ -3,7 +3,7 @@ import { vi, describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { RichTextContent } from "@astra-kit/ui";
+import { RichTextContent } from "@golfo/ui";
 
 describe("RichTextContent", () => {
   it("renders plain text without links", () => {

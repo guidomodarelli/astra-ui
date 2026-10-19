@@ -1,11 +1,11 @@
 /**
- * @file Configuration of `astra-rp create-version` (`pnpm create-version`, alias `pnpm cv`) for @astra-kit/ui.
+ * @file Configuration of `golfo-rp create-version` (`pnpm create-version`, alias `pnpm cv`) for @golfo/ui.
  *
  * The shared command diagnoses the repository, requires entries in the changelog
  * `[Unreleased]` block (drafted by Claude Code, then Codex, when they are missing;
  * see `changelogDraft`), bumps the version (commit `X.Y.Z` + annotated tag `vX.Y.Z`,
  * renaming `[Unreleased]` to the dated version in that commit),
- * prepares, pushes `main` and the tag atomically and publishes. @astra-kit/ui
+ * prepares, pushes `main` and the tag atomically and publishes. @golfo/ui
  * prepares a checksum-addressed tarball through `scripts/release-hooks.js`;
  * the engine verifies that exact tarball (SHA-256 and contents) and publishes
  * it to npm through trusted publishing (OIDC) from the Release workflow, without
@@ -14,9 +14,9 @@
  */
 import { prepareReleaseArtifact } from "./scripts/release-hooks.js";
 
-/** @type {import("@astra-kit/rp/create-version").CreateVersionConfig} */
+/** @type {import("@golfo/rp/create-version").CreateVersionConfig} */
 export default {
-  projectName: "@astra-kit/ui",
+  projectName: "@golfo/ui",
   // Dates the `## [X.Y.Z] - YYYY-MM-DD` changelog heading in Argentina time instead of the runner's UTC day.
   releaseTimeZone: "America/Argentina/Buenos_Aires",
   // Drafts missing `[Unreleased]` entries with Claude Code, then Codex, before a local release stops for them.
@@ -34,5 +34,5 @@ export default {
   publish: "npm",
   publication: { authentication: "oidc" },
   artifact: "releases/{version}-{sha256}/{name}-{version}.tgz",
-  summary: ["Consumidores: pnpm add @astra-kit/ui@^{version}"],
+  summary: ["Consumidores: pnpm add @golfo/ui@^{version}"],
 };

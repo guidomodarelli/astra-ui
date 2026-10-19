@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Copy } from "lucide-react";
 
-import { SplitButton } from "@astra-kit/ui";
+import { SplitButton } from "@golfo/ui";
 
 describe("SplitButton", () => {
   it("should run the main action and offer the related actions in its menu", async () => {

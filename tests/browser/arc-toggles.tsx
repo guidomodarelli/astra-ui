@@ -1,7 +1,7 @@
 /** Mounts Arc's Switch, Checkbox and RadioGroup from the public barrel, so their layout and motion run in real engines. */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { AstraUIProvider, Checkbox, RadioGroup, Switch } from "@astra-kit/ui";
+import { GolfoUIProvider, Checkbox, RadioGroup, Switch } from "@golfo/ui";
 import "./styles.css";
 
 /** A select-all checkbox that starts indeterminate, as a table header would render it. */
@@ -12,7 +12,7 @@ function SelectAllCheckbox() {
 
 /** Renders each control in the variants the spec drives, including a radio group whose visible title replaces its legend. */
 function ArcToggles() {
-  return <AstraUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
+  return <GolfoUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
     <h1>Interruptores y selecciones</h1>
     <section className="controls">
       <span data-testid="bare-switch-row" className="controls"><Switch id="bare-switch" /><label htmlFor="bare-switch">Modo compacto</label></span>
@@ -46,7 +46,7 @@ function ArcToggles() {
         ]}
       />
     </section>
-  </main></AstraUIProvider>;
+  </main></GolfoUIProvider>;
 }
 
 createRoot(document.getElementById("root")!).render(<ArcToggles />);

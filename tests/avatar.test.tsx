@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { UserIcon } from "lucide-react";
 
-import { Avatar, AvatarGroup, AstraUIProvider } from "@astra-kit/ui";
-import { AstraUIProvider as NextAstraUIProvider } from "@astra-kit/ui/next";
+import { Avatar, AvatarGroup, GolfoUIProvider } from "@golfo/ui";
+import { GolfoUIProvider as NextGolfoUIProvider } from "@golfo/ui/next";
 
 describe("Avatar", () => {
   it("should name the avatar once and show the first two initials while there is no photo", () => {
@@ -61,9 +61,9 @@ describe("Avatar", () => {
   it("should give the xl photo its 88px intrinsic size through the default and Next image adapters", () => {
     // Arrange
     const { unmount } = render(
-      <AstraUIProvider>
+      <GolfoUIProvider>
         <Avatar name="Perfil" src="https://images.unsplash.com/photo-example" size="xl" />
-      </AstraUIProvider>
+      </GolfoUIProvider>
     );
     const unpicImage = screen.getByRole("img", { name: "Perfil" }).querySelector("img")!;
 
@@ -76,9 +76,9 @@ describe("Avatar", () => {
     expect(unpicImage.srcset).toContain(" 88w");
     unmount();
     render(
-      <NextAstraUIProvider>
+      <NextGolfoUIProvider>
         <Avatar name="Perfil" src="/profile.png" size="xl" />
-      </NextAstraUIProvider>
+      </NextGolfoUIProvider>
     );
     const nextImage = screen.getByRole("img", { name: "Perfil" }).querySelector("img")!;
     expect(nextImage).toHaveAttribute("width", "88");
@@ -89,8 +89,8 @@ describe("Avatar", () => {
     // Arrange
     const sources = [
       <Avatar key="native" name="Perfil" src="/profile.png" />,
-      <AstraUIProvider key="default"><Avatar name="Perfil" src="https://images.unsplash.com/photo-example" /></AstraUIProvider>,
-      <NextAstraUIProvider key="next"><Avatar name="Perfil" src="/profile.png" /></NextAstraUIProvider>,
+      <GolfoUIProvider key="default"><Avatar name="Perfil" src="https://images.unsplash.com/photo-example" /></GolfoUIProvider>,
+      <NextGolfoUIProvider key="next"><Avatar name="Perfil" src="/profile.png" /></NextGolfoUIProvider>,
     ];
 
     for (const avatar of sources) {

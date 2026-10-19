@@ -1,7 +1,7 @@
 /** Mounts Arc's DropdownMenu and Select from the public barrel, so their layout and motion run in real engines. */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { AstraUIProvider, Button, DropdownMenu, Input, Select, type DropdownItem } from "@astra-kit/ui";
+import { GolfoUIProvider, Button, DropdownMenu, Input, Select, type DropdownItem } from "@golfo/ui";
 import "./styles.css";
 
 /** Labels of the document menu, enough rows to see the stagger reach its last step. */
@@ -140,7 +140,7 @@ function LoadingMenu() {
 
 /** Renders the menus the spec drives. */
 function ArcMenus() {
-  return <AstraUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
+  return <GolfoUIProvider themeOptions={{ defaultTheme: "light", enableSystem: false }}><main>
     <h1>Menús</h1>
     <section><DocumentMenu /></section>
     <section><ViewMenu /></section>
@@ -149,7 +149,7 @@ function ArcMenus() {
     <section><LoadingMenu /></section>
     <section><CurrencySelects /></section>
     <section><LabelledSelect /></section>
-  </main></AstraUIProvider>;
+  </main></GolfoUIProvider>;
 }
 
 createRoot(document.getElementById("root")!).render(<ArcMenus />);

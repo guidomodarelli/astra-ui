@@ -6,10 +6,10 @@
     "allowJs": true,
     "paths": {
       "@/*": ["../src/*"],
-      "@astra-kit/ui": ["../dist/index"],
-      "@astra-kit/ui/next": ["../dist/next"],
-      "@astra-kit/ui/tanstack": ["../dist/tanstack"],
-      "@astra-kit/ui/hooks": ["../dist/hooks"]
+      "@golfo/ui": ["../dist/index"],
+      "@golfo/ui/next": ["../dist/next"],
+      "@golfo/ui/tanstack": ["../dist/tanstack"],
+      "@golfo/ui/hooks": ["../dist/hooks"]
     },
     "types": ["node", "@testing-library/jest-dom/vitest", "vite/client"]
   },

@@ -1,6 +1,6 @@
 /** Demonstrates Arc's Popover composition with a close button inside the panel. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button, Popover, PopoverTrigger, PopoverContent, PopoverClose } from "@astra-kit/ui";
+import { Button, Popover, PopoverTrigger, PopoverContent, PopoverClose } from "@golfo/ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */

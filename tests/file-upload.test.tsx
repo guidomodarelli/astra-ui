@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createEvent, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { FileUpload, FileUploadDropZone, FileUploadItem, FileUploadList } from "@astra-kit/ui";
+import { FileUpload, FileUploadDropZone, FileUploadItem, FileUploadList } from "@golfo/ui";
 
 const MAX_SIZE_BYTES = 1_000;
 

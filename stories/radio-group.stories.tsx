@@ -1,6 +1,6 @@
 /** Demonstrates RadioGroup through its public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { RadioGroup } from "@astra-kit/ui";
+import { RadioGroup } from "@golfo/ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */

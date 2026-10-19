@@ -1,6 +1,6 @@
 /** Demonstrates Calendar with editable content and real interactions. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Calendar } from "@astra-kit/ui";
+import { Calendar } from "@golfo/ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */

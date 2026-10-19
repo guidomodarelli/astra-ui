@@ -10,7 +10,7 @@ import {
   FormMessage,
   Input,
   Button,
-} from "@astra-kit/ui";
+} from "@golfo/ui";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 /** Exercises validation and submission with the actual form provider. */

@@ -2,8 +2,8 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Check, Send } from "lucide-react";
-import { Button, Timeline } from "@astra-kit/ui";
-import type { TimelineEvent } from "@astra-kit/ui";
+import { Button, Timeline } from "@golfo/ui";
+import type { TimelineEvent } from "@golfo/ui";
 
 /** Editable inputs specific to this example. */
 type Args = { maxHeight: number; withScroll: boolean };

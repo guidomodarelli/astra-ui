@@ -2,7 +2,7 @@
 import type { ComponentProps } from "react";
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { AstraUIProvider, Button, ButtonLink, buttonClassName } from "@astra-kit/ui";
+import { GolfoUIProvider, Button, ButtonLink, buttonClassName } from "@golfo/ui";
 
 /** Represents an application router link that receives the navigation hints. */
 function RouterLink({ prefetch, ...props }: ComponentProps<"a"> & { prefetch?: boolean }) {
@@ -22,7 +22,7 @@ describe("ButtonLink", () => {
   });
 
   it("should route through the provider's link adapter and forward prefetch", () => {
-    render(<AstraUIProvider components={{ Link: RouterLink }}><ButtonLink href="/cursos" prefetch={false}>Cursos</ButtonLink></AstraUIProvider>);
+    render(<GolfoUIProvider components={{ Link: RouterLink }}><ButtonLink href="/cursos" prefetch={false}>Cursos</ButtonLink></GolfoUIProvider>);
     const link = screen.getByRole("link", { name: "Cursos" });
     expect(link).toHaveAttribute("data-router", "true");
     expect(link).toHaveAttribute("data-prefetch", "false");

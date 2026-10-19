@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * Arc's ActionButton (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md) on top of @astra-kit/ui's `Button`: a
+ * Arc's ActionButton (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md) on top of @golfo/ui's `Button`: a
  * call to action with a trailing arrow that runs an async action and morphs, letter by letter, through a pending
  * and a success label before returning to idle on its own.
  */

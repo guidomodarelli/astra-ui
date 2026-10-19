@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { hydrateRoot, type Root } from "react-dom/client";
-import { TypingAnimation } from "@astra-kit/ui";
+import { TypingAnimation } from "@golfo/ui";
 
 afterEach(() => vi.restoreAllMocks());
 

@@ -4,7 +4,7 @@
  * Internal primitive of Arc's Popover (https://uiarc.dev, MIT License, see THIRD_PARTY_NOTICES.md): a raised panel with
  * Arc's panel radius and floating shadow that starts a few pixels toward its trigger and settles on a spring, leaving
  * faster than it arrives. Internal: the Radix composition, including `PopoverAnchor`, behind the public `Popover` and
- * @astra-kit/ui's composite components; the package does not export it.
+ * @golfo/ui's composite components; the package does not export it.
  */
 import * as React from "react"
 import { Popover as PopoverPrimitive } from "radix-ui"

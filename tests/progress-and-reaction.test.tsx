@@ -3,7 +3,7 @@ import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ProgressRing, ReactionButton } from "@astra-kit/ui";
+import { ProgressRing, ReactionButton } from "@golfo/ui";
 
 describe("ProgressRing", () => {
   it("stays decorative without a label", () => {
@@ -89,7 +89,7 @@ describe("ReactionButton", () => {
   it("fills the active icon with the requested color", () => {
     render(<ReactionButton ariaLabel="Me gusta 1" isActive count={1} activeColor="var(--primary)" onClick={() => {}} />);
 
-    expect(screen.getByRole("button", { name: "Me gusta 1" }).style.getPropertyValue("--astra-reaction-active-color")).toBe("var(--primary)");
+    expect(screen.getByRole("button", { name: "Me gusta 1" }).style.getPropertyValue("--golfo-reaction-active-color")).toBe("var(--primary)");
   });
 
   it("stops a running kick and rests the icon when reduced motion turns on", async () => {

@@ -1,8 +1,8 @@
 /** Demonstrates Stepper through its public component contract. */
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button, Stepper } from "@astra-kit/ui";
-import type { StepperOrientation } from "@astra-kit/ui";
+import { Button, Stepper } from "@golfo/ui";
+import type { StepperOrientation } from "@golfo/ui";
 
 /** Editable inputs specific to this example. */
 type Args = { orientation: StepperOrientation; interactive: boolean; compact: boolean; withError: boolean };

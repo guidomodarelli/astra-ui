@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Star } from "lucide-react";
 
-import { Badge } from "@astra-kit/ui";
+import { Badge } from "@golfo/ui";
 
 describe("Badge", () => {
   it("should draw Arc's neutral tone and medium size by default", () => {

@@ -28,7 +28,7 @@ export function prepareRelease() {
   const staging = mkdtempSync(join(releases, "prepare-"));
   try {
     // The only interpolation is an owned, generated alphanumeric directory name.
-    // npm packs reproducibly, so astra-rp can compare this archive with `npm pack --dry-run` byte for byte.
+    // npm packs reproducibly, so golfo-rp can compare this archive with `npm pack --dry-run` byte for byte.
     execSync(`npm pack --ignore-scripts --pack-destination releases/${basename(staging)}`, { cwd: root, stdio: "inherit" });
     const archive = readdirSync(staging).find(file => file.endsWith(".tgz"));
     if (!archive) throw new Error("release: npm pack did not produce an archive");

@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 
-import { Input, Textarea } from "@astra-kit/ui";
+import { Input, Textarea } from "@golfo/ui";
 
 /** A bio field whose description counts the characters left, as a consumer would derive it from state. */
 function BioField() {

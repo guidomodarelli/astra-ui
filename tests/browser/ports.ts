@@ -1,5 +1,5 @@
 /**
- * Ports of the browser test servers. `ASTRA_UI_BROWSER_PORT` and `ASTRA_UI_NEXT_PORT` let several
+ * Ports of the browser test servers. `GOLFO_UI_BROWSER_PORT` and `GOLFO_UI_NEXT_PORT` let several
  * checkouts (for example parallel worktrees) run the suite at the same time without colliding.
  */
 const DEFAULT_VITE_PORT = 3108;
@@ -12,10 +12,10 @@ function readPort(environmentValue: string | undefined, defaultPort: number): nu
 }
 
 /** Port of the Vite server that serves the browser fixtures. */
-export const VITE_PORT = readPort(process.env.ASTRA_UI_BROWSER_PORT, DEFAULT_VITE_PORT);
+export const VITE_PORT = readPort(process.env.GOLFO_UI_BROWSER_PORT, DEFAULT_VITE_PORT);
 
 /** Port of the Next.js app that exercises the framework adapters. */
-export const NEXT_PORT = readPort(process.env.ASTRA_UI_NEXT_PORT, DEFAULT_NEXT_PORT);
+export const NEXT_PORT = readPort(process.env.GOLFO_UI_NEXT_PORT, DEFAULT_NEXT_PORT);
 
 /** Origin of the Next.js test app. */
 export const NEXT_ORIGIN = `http://127.0.0.1:${NEXT_PORT}`;

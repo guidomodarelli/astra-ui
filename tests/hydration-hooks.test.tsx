@@ -8,7 +8,7 @@ import {
   useIsHydrated,
   useViewerTimeZone,
   type HorizontalSwipeDirection,
-} from "@astra-kit/ui/hooks";
+} from "@golfo/ui/hooks";
 
 /** Renders what the hooks report, so tests read it like a user would. */
 function HydrationProbe() {

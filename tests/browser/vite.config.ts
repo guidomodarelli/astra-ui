@@ -7,10 +7,10 @@ export default defineConfig({
   root: fileURLToPath(new URL("./", import.meta.url)),
   plugins: [react()],
   resolve: { alias: [
-    { find: /^@astra-kit\/ui$/, replacement: fileURLToPath(new URL("../../dist/index.js", import.meta.url)) },
-    { find: "@astra-kit/ui/next", replacement: fileURLToPath(new URL("../../dist/next.js", import.meta.url)) },
-    { find: "@astra-kit/ui/tanstack", replacement: fileURLToPath(new URL("../../dist/tanstack.js", import.meta.url)) },
-    { find: "@astra-kit/ui/sonner", replacement: fileURLToPath(new URL("../../dist/sonner.js", import.meta.url)) },
+    { find: /^@golfo\/ui$/, replacement: fileURLToPath(new URL("../../dist/index.js", import.meta.url)) },
+    { find: "@golfo/ui/next", replacement: fileURLToPath(new URL("../../dist/next.js", import.meta.url)) },
+    { find: "@golfo/ui/tanstack", replacement: fileURLToPath(new URL("../../dist/tanstack.js", import.meta.url)) },
+    { find: "@golfo/ui/sonner", replacement: fileURLToPath(new URL("../../dist/sonner.js", import.meta.url)) },
   ] },
   server: { host: "127.0.0.1", port: 3108, strictPort: true },
 });

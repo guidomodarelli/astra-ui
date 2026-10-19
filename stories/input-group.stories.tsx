@@ -5,7 +5,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
   InputGroupButton,
-} from "@astra-kit/ui";
+} from "@golfo/ui";
 import { useArgs } from "storybook/preview-api";
 import { LiveArgs } from "./live-args.js";
 /** Editable inputs specific to this example. */

@@ -4,7 +4,7 @@
  */
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { AstraUIProvider, Calendar, Carousel } from "@astra-kit/ui";
+import { GolfoUIProvider, Calendar, Carousel } from "@golfo/ui";
 import "./styles.css";
 
 /** Five slides, so the loop boundary has dots in between that must stay resting dots. */
@@ -27,7 +27,7 @@ function PinnedCarousel() {
 
 function App() {
   return (
-    <AstraUIProvider>
+    <GolfoUIProvider>
       <main>
         <section>
           {/* Today comes from the clock the spec pins in the month with the longest Spanish name. */}
@@ -42,7 +42,7 @@ function App() {
         </section>
         <PinnedCarousel />
       </main>
-    </AstraUIProvider>
+    </GolfoUIProvider>
   );
 }
 

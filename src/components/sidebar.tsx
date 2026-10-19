@@ -4,7 +4,7 @@
  * Application sidebar on the motion of Arc's sidebar rail: the rail springs its width without
  * overshoot, labels fade and drift out of the icon rail, the active item's highlight glides between
  * items, hovered items only change color, submenus open their height on the smooth spring, and
- * small screens get a focus-trapped sheet that slides in from its edge. Links route through the `AstraUIProvider` adapter and the open state keeps the
+ * small screens get a focus-trapped sheet that slides in from its edge. Links route through the `GolfoUIProvider` adapter and the open state keeps the
  * `sidebar_state` cookie contract read by server entrypoints.
  */
 import * as React from "react";
@@ -952,7 +952,7 @@ function SidebarMenuSubItem({ className, ...props }: HTMLMotionProps<"li">) {
 type SidebarActionProps = {
   children: React.ReactNode;
   icon?: React.ReactNode;
-  /** Renders a link through the `AstraUIProvider` routing adapter instead of a button. */
+  /** Renders a link through the `GolfoUIProvider` routing adapter instead of a button. */
   href?: string;
   isActive?: boolean;
   disabled?: boolean;

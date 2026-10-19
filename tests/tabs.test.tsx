@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@astra-kit/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@golfo/ui";
 
 /** Two-tab composition shared by the scenarios. */
 function SectionTabs({

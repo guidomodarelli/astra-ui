@@ -3,12 +3,12 @@ import { createMemoryHistory, createRootRoute, createRoute, createRouter, Outlet
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { Avatar, Link } from "@astra-kit/ui";
-import { AstraUIProvider } from "@astra-kit/ui/tanstack";
+import { Avatar, Link } from "@golfo/ui";
+import { GolfoUIProvider } from "@golfo/ui/tanstack";
 
 /** Builds consumer-owned routes without mocking routing internals. */
 function renderRouter(href = "/target?tab=summary#details", initialEntry = "/") {
-  const root = createRootRoute({ component: () => <AstraUIProvider><Outlet /></AstraUIProvider> });
+  const root = createRootRoute({ component: () => <GolfoUIProvider><Outlet /></GolfoUIProvider> });
   const index = createRoute({ getParentRoute: () => root, path: "/", component: () => <><Link href={href}>Abrir</Link><Avatar name="Perfil" src="/profile.png" /></> });
   const target = createRoute({ getParentRoute: () => root, path: "/target", component: () => <h1>Destino</h1> });
   const router = createRouter({ routeTree: root.addChildren([index, target]), history: createMemoryHistory({ initialEntries: [initialEntry] }) });

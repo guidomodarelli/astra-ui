@@ -23,7 +23,7 @@ export { useToday };
 /** Returns `true` for a day that cannot be picked, such as a weekend. */
 type CalendarDateMatcher = (date: Date) => boolean;
 
-/** Props of {@link Calendar}: Arc's calendar API plus the @astra-kit/ui extensions marked below. */
+/** Props of {@link Calendar}: Arc's calendar API plus the @golfo/ui extensions marked below. */
 type CalendarProps = {
   /** Selected date. Controlled only: the calendar shows what it receives. */
   value?: Date | null;
@@ -48,7 +48,7 @@ type CalendarProps = {
   className?: string;
   /** Adds a Today button that returns to the current month and selects today when it is allowed. */
   showToday?: boolean;
-  /** @astra-kit/ui: copy of the Today button. Defaults to "Hoy". */
+  /** @golfo/ui: copy of the Today button. Defaults to "Hoy". */
   todayLabel?: string;
 };
 
@@ -59,7 +59,7 @@ type ResolvedCalendarLocale = {
 };
 
 /**
- * Maps a BCP 47 locale to react-day-picker's localization. Only Spanish and English locale data ship with @astra-kit/ui,
+ * Maps a BCP 47 locale to react-day-picker's localization. Only Spanish and English locale data ship with @golfo/ui,
  * so other languages take their month and weekday names from `Intl` and keep English accessible labels.
  * @param locale - BCP 47 locale such as `es-AR`.
  * @returns The react-day-picker locale and, for untranslated languages, `Intl` formatters.

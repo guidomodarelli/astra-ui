@@ -4,7 +4,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Sparkles } from "lucide-react";
 
-import { Alert } from "@astra-kit/ui";
+import { Alert } from "@golfo/ui";
 
 describe("Alert", () => {
   it("should interrupt only for danger and announce the info default and other tones politely", () => {

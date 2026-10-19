@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { ActionButton } from "@astra-kit/ui";
+import { ActionButton } from "@golfo/ui";
 
 /** Short reset so the automatic return to idle is observable without fake timers. */
 const SHORT_RESET_MS = 300;

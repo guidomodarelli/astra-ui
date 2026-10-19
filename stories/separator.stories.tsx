@@ -1,6 +1,6 @@
 /** Demonstrates Separator through its public component contract. */
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Separator } from "@astra-kit/ui";
+import { Separator } from "@golfo/ui";
 
 /** Editable inputs specific to this example. */
 type Args = { orientation: "horizontal" | "vertical" };

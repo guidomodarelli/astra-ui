@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { AstraUIProvider, Pagination, type AstraLinkProps } from "@astra-kit/ui";
+import { GolfoUIProvider, Pagination, type GolfoLinkProps } from "@golfo/ui";
 
 /**
  * Reads the page numbers the navigation currently shows.
@@ -89,7 +89,7 @@ describe("Pagination", () => {
     const onNavigate = vi.fn();
     const onPageChange = vi.fn();
     /** Router link that intercepts navigation, as the Next.js or TanStack adapters do. */
-    function RouterLink({ href, onClick, ...props }: AstraLinkProps) {
+    function RouterLink({ href, onClick, ...props }: GolfoLinkProps) {
       return (
         <a
           {...props}
@@ -105,9 +105,9 @@ describe("Pagination", () => {
       );
     }
     render(
-      <AstraUIProvider components={{ Link: RouterLink }}>
+      <GolfoUIProvider components={{ Link: RouterLink }}>
         <Pagination page={1} pageCount={4} getHref={(page) => `/eventos?pagina=${page}`} onPageChange={onPageChange} />
-      </AstraUIProvider>,
+      </GolfoUIProvider>,
     );
 
     // Act
@@ -168,7 +168,7 @@ describe("Pagination click event", () => {
     const onNavigate = vi.fn();
     const requestedPages: number[] = [];
     /** Router link that skips prevented clicks, as the Next.js and TanStack adapters do. */
-    function RouterLink({ href, onClick, ...props }: AstraLinkProps) {
+    function RouterLink({ href, onClick, ...props }: GolfoLinkProps) {
       return (
         <a
           {...props}
@@ -183,7 +183,7 @@ describe("Pagination click event", () => {
       );
     }
     render(
-      <AstraUIProvider components={{ Link: RouterLink }}>
+      <GolfoUIProvider components={{ Link: RouterLink }}>
         <Pagination
           page={2}
           pageCount={4}
@@ -194,7 +194,7 @@ describe("Pagination click event", () => {
             requestedPages.push(page);
           }}
         />
-      </AstraUIProvider>,
+      </GolfoUIProvider>,
     );
 
     // Act
