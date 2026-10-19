@@ -25,6 +25,29 @@ jobs:
       - run: pnpm test:uncompiled
       - run: pnpm check
       - run: pnpm exec playwright install --with-deps chromium webkit
-      - run: pnpm exec playwright test
       # Builds the Storybook catalog and runs its Playwright suite, so broken stories or controls fail CI too.
       - run: pnpm test:storybook
+
+  browser:
+    # The browser suite is the slowest step: each shard gets its own runner, so the shards add CPU
+    # instead of sharing the 4 vCPU of a single runner.
+    name: browser (${{ matrix.shard }}/${{ strategy.job-total }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - uses: pnpm/setup@v2.1.0
+        with:
+          cache: true
+          require-lockfile: true
+      # The browser fixtures import the built package from dist.
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium webkit
+      - run: pnpm exec playwright test --shard=${{ matrix.shard }}/${{ strategy.job-total }}

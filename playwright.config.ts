@@ -11,6 +11,8 @@ export default defineConfig({
   testMatch: "**/*.spec.ts",
   use: { baseURL: `http://127.0.0.1:${VITE_PORT}` },
   timeout: 60000,
+  // Splits work per test instead of per file, so CI shards and local workers stay balanced.
+  fullyParallel: true,
   // Closes WebKit helpers that killed runs leave behind on Windows (see @golfo/cleaner).
   globalSetup: "@golfo/cleaner/playwright/global-setup",
   globalTeardown: "@golfo/cleaner/playwright/global-teardown",
