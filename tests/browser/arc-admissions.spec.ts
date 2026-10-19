@@ -6,6 +6,8 @@ import type { Locator, Page } from "@playwright/test";
 const SETTLE_TIMEOUT_MS = 15_000;
 /** Frames sampled after a change; enough to catch a spring in flight. */
 const SAMPLED_FRAMES = 12;
+/** Main-thread stall after new copy commits; longer than any time window a resize may wait in. */
+const FIRST_FRAME_STALL_MS = 250;
 /** Pixels of tolerance when comparing rendered sizes with their targets. */
 const SIZE_TOLERANCE_PX = 2;
 /** Frames a reduced-motion change may take to reach the screen, far fewer than a spring needs. */
@@ -161,8 +163,27 @@ test("should roll the metric digits to the new value", async ({ page }) => {
   await expect(page.locator('[data-slot="metric-card-change"]')).toHaveAttribute("data-trend", "up");
 });
 
-test("should spring the empty state to the height of longer copy without overflowing", async ({ page }) => {
-  await openPage(page);
+/**
+ * Blocks the main thread once, right after React commits the next click, so the first frame with the new state arrives
+ * late, as it does on a busy device or CI runner.
+ * @param page - Page whose next click stalls.
+ * @param stallMs - How long the main thread stays blocked.
+ */
+async function stallFrameAfterNextClick(page: Page, stallMs: number): Promise<void> {
+  await page.evaluate((duration) => {
+    // Bubble phase on window runs after React's root listener has flushed the discrete update and its layout effects.
+    window.addEventListener("click", () => {
+      const end = performance.now() + duration;
+      while (performance.now() < end) { /* Busy-waits on purpose: a timer would let the frame through. */ }
+    }, { once: true });
+  }, stallMs);
+}
+
+/**
+ * Toggles the empty state copy and checks that its height springs to the longer copy without overflowing.
+ * @param page - Page showing the admissions fixture.
+ */
+async function expectEmptyStateSpring(page: Page): Promise<void> {
   const copy = page.getByRole("region", { name: "Bandeja vacía" }).locator('[data-slot="empty-state-copy"]');
   await copy.scrollIntoViewIfNeeded();
   const initialHeight = (await copy.boundingBox())!.height;
@@ -177,6 +198,17 @@ test("should spring the empty state to the height of longer copy without overflo
   // Some frame sits between the two heights: the block springs instead of jumping.
   expect(heights.some((height) => height > initialHeight + 1 && height < finalHeight - 1)).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+}
+
+test("should spring the empty state to the height of longer copy without overflowing", async ({ page }) => {
+  await openPage(page);
+  await expectEmptyStateSpring(page);
+});
+
+test("should still spring the empty state when the first frame after new copy arrives late", async ({ page }) => {
+  await openPage(page);
+  await stallFrameAfterNextClick(page, FIRST_FRAME_STALL_MS);
+  await expectEmptyStateSpring(page);
 });
 
 test("should show step labels on wide screens and fold into a caption on narrow ones", async ({ page }) => {

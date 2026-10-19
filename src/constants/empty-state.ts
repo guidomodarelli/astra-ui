@@ -10,7 +10,7 @@ export const EMPTY_STATE_ICON_STROKE_WIDTH = 1.5
 export const EMPTY_STATE_ICON_ENTER_SCALE = 0.6
 
 /**
- * Window, in milliseconds, after new copy arrives in which a height change springs; later resizes (fonts, container
- * width) follow instantly.
+ * Window, in milliseconds, from the first frame that shows new copy in which a height change springs; later resizes
+ * (fonts, container width) follow instantly.
  */
 export const EMPTY_STATE_HEIGHT_MORPH_WINDOW_MS = 120

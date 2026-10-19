@@ -77,7 +77,13 @@ function HeightFrame({ reduceMotion, morphKey, children }: HeightFrameProps) {
   const height = useMotionValue<number | "auto">("auto")
   const changedAt = useRef(0)
   useLayoutEffect(() => {
-    changedAt.current = performance.now()
+    // The window opens on the first frame that shows the new copy, not at commit: a busy main thread can hold that
+    // frame back longer than the window, and the copy would jump. Resize observations only arrive after that frame.
+    changedAt.current = Number.POSITIVE_INFINITY
+    const request = requestAnimationFrame(() => {
+      changedAt.current = performance.now()
+    })
+    return () => cancelAnimationFrame(request)
   }, [morphKey])
   useEffect(() => {
     const node = content.current
