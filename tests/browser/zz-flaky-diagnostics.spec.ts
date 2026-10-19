@@ -1,7 +1,7 @@
 /** TEMPORARY diagnostics for the WebKit mobile flakes; removed before merge. */
 import { expect, test } from "@playwright/test";
 
-const REPEATS = 15;
+const REPEATS = Number(process.env.DIAG_REPEATS ?? 15);
 
 for (let iteration = 0; iteration < REPEATS; iteration += 1) {
   test(`diag press ${iteration}`, async ({ page }, testInfo) => {

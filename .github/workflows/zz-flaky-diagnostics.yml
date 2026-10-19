@@ -24,4 +24,8 @@ jobs:
           require-lockfile: true
       - run: pnpm build
       - run: pnpm exec playwright install --with-deps webkit
-      - run: pnpm exec playwright test --project=webkit-mobile --repeat-each=2 --reporter=line
+      # Saturates the runner CPU so stalled frames show up far more often than in a normal run.
+      - run: for i in 1 2 3 4; do (nohup timeout 1500 sh -c 'while :; do :; done' > /dev/null 2>&1 &); done
+      - run: pnpm exec playwright test --project=webkit-mobile --reporter=line --workers=2 tests/browser/zz-flaky-diagnostics.spec.ts tests/browser/action-buttons.spec.ts:98 tests/browser/arc-admissions.spec.ts:164 --repeat-each=1
+        env:
+          DIAG_REPEATS: "60"
