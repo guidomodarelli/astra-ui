@@ -4,6 +4,19 @@ Todos los cambios relevantes de `@astra-kit/ui` se documentan en este archivo co
 
 ## [Unreleased]
 
+### Fixed
+
+- `EmptyState` ya no puede trabar la página en WebKit (Safari y navegadores basados en WebKit, sobre todo en Linux) mientras entra su ícono: la animación de entrada solo anima opacidad y escala, sin desenfoque.
+- `UsageMeter` redondea cada segmento a la precisión de `decimals` antes de calcular todo, así la barra, la insignia, la leyenda y el resumen accesible coinciden (por ejemplo, 200,4 con límite 200 y sin decimales ya no dibuja un excedente que la insignia no muestra).
+- `UsageMeter` acepta un segmento con `id="free"` sin confundirlo con el espacio libre de la leyenda.
+- La leyenda de `UsageMeter` sigue alcanzable con Tab cuando se quitan segmentos después de mover el foco entre sus ítems.
+- La insignia de estado de `UsageMeter` con un texto largo se recorta dentro del ancho del medidor en lugar de desbordarlo.
+- `Stepper` muestra el contorno de foco del teclado en el paso actual al llegar con las flechas o End.
+- `Timeline` etiqueta como "Ayer" el día calendario anterior en la zona horaria elegida, también en los cambios de horario de verano.
+- `Timeline` vuelve a anunciar una actualización nueva aunque su resumen sea igual al anterior.
+- `Timeline` ya no vuelve al principio del historial cuando solo cambia la preferencia de movimiento reducido; solo lo hace ante una actualización nueva.
+- Los números de `MetricCard` y `UsageMeter` se detienen en su valor si se activa el movimiento reducido mientras ruedan.
+
 ## [1.2.0] - 2026-10-19
 
 ### Added

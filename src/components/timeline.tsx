@@ -83,7 +83,8 @@ type Group = { day: string; label: string; rows: Row[] }
 const MILLISECONDS_PER_MINUTE = 60_000
 const MINUTES_PER_HOUR = 60
 const MILLISECONDS_PER_HOUR = MILLISECONDS_PER_MINUTE * MINUTES_PER_HOUR
-const HOURS_PER_DAY = 24
+/** Length of a `YYYY-MM-DD` day key, the start of an ISO timestamp. */
+const DAY_KEY_LENGTH = 10
 const MILLISECONDS_PER_SECOND = 1000
 const enterEase = [...ARC_EASE.enter] as [number, number, number, number]
 const standardEase = [...ARC_EASE.standard] as [number, number, number, number]
@@ -122,6 +123,17 @@ function dayKey(time: number, timeZone: string): string {
   const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(time))
   const get = (type: string) => parts.find((part) => part.type === type)?.value ?? ""
   return `${get("year")}-${get("month")}-${get("day")}`
+}
+
+/**
+ * The calendar day before a day key. It works on the date itself, so a daylight-saving change, where a day lasts 23 or
+ * 25 hours, never skips or repeats a day.
+ * @param day - A day as `YYYY-MM-DD`.
+ * @returns The previous day as `YYYY-MM-DD`.
+ */
+function previousDayKey(day: string): string {
+  const [year, month, date] = day.split("-").map(Number)
+  return new Date(Date.UTC(year!, month! - 1, date! - 1)).toISOString().slice(0, DAY_KEY_LENGTH)
 }
 
 /**
@@ -396,7 +408,7 @@ function Timeline({
 
   // Rows added after the first render are fresh: they slide in and the rest glide down. Their titles are announced.
   const ids = events.map((event) => event.id).join("|")
-  const [known, setKnown] = useState(() => ({ ids, set: new Set(events.map((event) => event.id)), fresh: new Set<string>(), announcement: "" }))
+  const [known, setKnown] = useState(() => ({ ids, set: new Set(events.map((event) => event.id)), fresh: new Set<string>(), announcement: "", announcementCount: 0 }))
   if (known.ids !== ids) {
     const added = events.filter((event) => !known.set.has(event.id))
     setKnown({
@@ -406,6 +418,8 @@ function Timeline({
       announcement: added.length
         ? copy.newUpdates(added.map((event) => [event.actor, event.title].filter(Boolean).join(" ")).join(". "))
         : known.announcement,
+      // Counts announcements, so a repeated summary still replaces the live region's node and is read again.
+      announcementCount: known.announcementCount + (added.length ? 1 : 0),
     })
   }
 
@@ -434,18 +448,26 @@ function Timeline({
     (latest, event) => (!latest || new Date(event.at).getTime() > new Date(latest.at).getTime() ? event : latest),
     null
   )?.id
+  // Only a new newest event scrolls back to the top; a change of `scrollToNew` or of the motion preference never does.
+  const scrollOptions = useRef({ scrollToNew, reduceMotion })
   useEffect(() => {
+    scrollOptions.current = { scrollToNew, reduceMotion }
+  })
+  const shownNewestId = useRef(newestId)
+  useEffect(() => {
+    if (shownNewestId.current === newestId) return
+    shownNewestId.current = newestId
     const scroller = scrollerRef.current
-    if (!scrollToNew || !scroller || scroller.scrollTop < 1) return
-    scroller.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" })
-  }, [newestId, scrollToNew, reduceMotion])
+    if (!scrollOptions.current.scrollToNew || !scroller || scroller.scrollTop < 1) return
+    scroller.scrollTo({ top: 0, behavior: scrollOptions.current.reduceMotion ? "auto" : "smooth" })
+  }, [newestId])
 
   const [initialDays] = useState(() => new Set(events.map((event) => dayKey(new Date(event.at).getTime(), timeZone))))
   const { today: todayLabel, yesterday: yesterdayLabel } = copy
   const todayKey = dayKey(now, timeZone)
   const groups = useMemo<Group[]>(() => {
     const today = dayKey(now, timeZone)
-    const yesterday = dayKey(now - HOURS_PER_DAY * MILLISECONDS_PER_HOUR, timeZone)
+    const yesterday = previousDayKey(today)
     const heading = new Intl.DateTimeFormat(locale, { weekday: "long", month: "long", day: "numeric", timeZone })
     const byDay = new Map<string, Row[]>()
     events
@@ -569,7 +591,7 @@ function Timeline({
           </div>
         </div>
         <span className="sr-only" role="status">
-          {known.announcement}
+          <span key={known.announcementCount}>{known.announcement}</span>
         </span>
       </div>
     </RevealClockContext.Provider>

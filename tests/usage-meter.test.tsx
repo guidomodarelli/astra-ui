@@ -136,4 +136,51 @@ describe("UsageMeter", () => {
     expect(screen.getByRole("group", { name: "Daily codes breakdown" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Remaining, 50" })).toBeInTheDocument();
   });
+
+  it("should read a total that rounds onto the limit the same way in the status, badge, legend and summary", () => {
+    // Arrange
+    render(<UsageMeter label="Envíos de hoy" segments={[{ id: "codes", label: "Códigos", value: 200.4 }]} limit={200} decimals={0} />);
+
+    // Act
+    const meter = screen.getByRole("group", { name: "Envíos de hoy" });
+
+    // Assert
+    expect(meter).toHaveAttribute("data-status", "near");
+    expect(meter.querySelector("[data-slot=usage-meter-status]")).toHaveTextContent("Casi lleno");
+    expect(screen.getByRole("button", { name: "Libre, 0" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Excedente/ })).not.toBeInTheDocument();
+    expect(within(meter).getByRole("img")).toHaveAccessibleName("Envíos de hoy: 200 de 200 usados. Códigos 200. 0 libres, casi lleno.");
+  });
+
+  it("should keep a segment whose id is free apart from the remaining-space item", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    render(<UsageMeter label="Cupos" segments={[{ id: "free", label: "Gratuitos", value: 30 }]} limit={100} decimals={0} />);
+    const category = screen.getByRole("button", { name: "Gratuitos, 30" });
+    const remaining = screen.getByRole("button", { name: "Libre, 70" });
+
+    // Act
+    await user.click(remaining);
+
+    // Assert
+    expect(remaining).toHaveAttribute("aria-pressed", "true");
+    expect(category).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByText("libres")).toBeInTheDocument();
+  });
+
+  it("should keep one legend tab stop when segments are removed after the tab stop moved", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    const { rerender } = render(<UsageMeter label="Envíos de hoy" segments={SEGMENTS} limit={200} decimals={0} />);
+    await user.tab();
+    await user.keyboard("{End}");
+    await user.tab();
+
+    // Act
+    rerender(<UsageMeter label="Envíos de hoy" segments={[SEGMENTS[0]!]} limit={200} decimals={0} />);
+
+    // Assert
+    const items = within(screen.getByRole("group", { name: "Envíos de hoy por categoría" })).getAllByRole("button");
+    expect(items.map((item) => item.tabIndex)).toEqual([-1, 0]);
+  });
 });

@@ -138,11 +138,11 @@ function EmptyState({ title, description, action, icon, label, className, ...pro
       )}
       {...props}
     >
-      {/* The icon settles in once when the state first appears; later changes crossfade in place. */}
+      {/* The icon settles in once when the state first appears (keyframes in src/styles/motion.css, transform and opacity only); later changes crossfade in place. */}
       <div
         data-slot="empty-state-icon"
         aria-hidden="true"
-        className="relative grid size-(--space-12) place-items-center rounded-(--radius-panel) border border-border bg-surface-muted text-text-secondary animate-in fade-in zoom-in-92 fill-mode-both duration-(--duration-considered) ease-(--ease-enter) motion-reduce:animate-none"
+        className="relative grid size-(--space-12) place-items-center rounded-(--radius-panel) border border-border bg-surface-muted text-text-secondary animate-[astra-empty-state-icon-enter_var(--duration-considered)_var(--ease-enter)_both] motion-reduce:animate-none"
       >
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span

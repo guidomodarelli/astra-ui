@@ -24,6 +24,7 @@ import {
   USAGE_METER_REVEAL_STAGGER_S,
   USAGE_METER_SEGMENT_COLOR_COUNT,
   USAGE_METER_SEGMENT_GAP_PX,
+  USAGE_METER_SEGMENT_KEY_PREFIX,
 } from "../constants/usage-meter.js"
 import type { UsageMeterCopyValues, UsageMeterMessages, UsageMeterStatus } from "../constants/usage-meter.js"
 import { useHasEnteredView } from "../hooks/use-has-entered-view.js"
@@ -119,6 +120,15 @@ const SEGMENT_COLOR_CLASS_NAMES = [
 const TRACK_COLOR_CLASS_NAME = "bg-[color-mix(in_oklab,var(--foreground)_7%,var(--surface))]"
 
 /**
+ * Legend and highlight key of a segment, namespaced apart from the remaining-space item.
+ * @param id - The segment's own id.
+ * @returns The internal key.
+ */
+function segmentKey(id: string): string {
+  return `${USAGE_METER_SEGMENT_KEY_PREFIX}${id}`
+}
+
+/**
  * Colour class of a category by its position.
  * @param index - Position of the category in `segments`.
  * @returns The background class.
@@ -152,9 +162,9 @@ function StatusBadge({ status, text, reduceMotion }: StatusBadgeProps) {
       data-slot="usage-meter-status"
       data-status={status}
       style={{ width }}
-      className="inline-flex h-7 flex-none justify-end overflow-hidden rounded-(--radius-pill) bg-surface-muted text-xs leading-none font-medium text-text-secondary transition-[background-color,color] duration-(--duration-standard) ease-(--ease-standard) data-[status=near]:bg-[color-mix(in_oklab,var(--warning)_14%,var(--surface))] data-[status=near]:text-foreground data-[status=over]:bg-[color-mix(in_oklab,var(--danger)_12%,var(--surface))] data-[status=over]:text-foreground"
+      className="inline-flex h-7 max-w-full min-w-0 shrink justify-end overflow-hidden rounded-(--radius-pill) bg-surface-muted text-xs leading-none font-medium text-text-secondary transition-[background-color,color] duration-(--duration-standard) ease-(--ease-standard) data-[status=near]:bg-[color-mix(in_oklab,var(--warning)_14%,var(--surface))] data-[status=near]:text-foreground data-[status=over]:bg-[color-mix(in_oklab,var(--danger)_12%,var(--surface))] data-[status=over]:text-foreground"
     >
-      <span ref={inner} className="inline-flex flex-none items-center gap-1.5 px-(--space-3) whitespace-nowrap">
+      <span ref={inner} className="inline-flex max-w-full min-w-0 flex-none items-center gap-1.5 px-(--space-3) whitespace-nowrap">
         <AnimatePresence mode="popLayout" initial={false}>
           {status !== "ok" ? (
             <motion.span
@@ -169,7 +179,7 @@ function StatusBadge({ status, text, reduceMotion }: StatusBadgeProps) {
             </motion.span>
           ) : null}
         </AnimatePresence>
-        <ArcTextSwap text={text} reduceMotion={reduceMotion} lineClassName="truncate" />
+        <ArcTextSwap text={text} reduceMotion={reduceMotion} className="min-w-0" lineClassName="truncate" />
       </span>
     </motion.span>
   )
@@ -248,7 +258,7 @@ function formatAmount(value: number, { locale, decimals, unit, trimZeros = false
  */
 function UsageMeter({
   label,
-  segments,
+  segments: rawSegments,
   limit,
   unit = "",
   decimals = USAGE_METER_DEFAULT_DECIMALS,
@@ -273,6 +283,9 @@ function UsageMeter({
 
   const decimalFactor = 10 ** decimals
   const round = (value: number) => Math.round(value * decimalFactor) / decimalFactor
+  // Every amount is rounded to the shown precision once, and the bar, status, badge, legend and summary all derive from
+  // these values, so a total such as 200.4 with no decimals never reads as both "at the limit" and "over it".
+  const segments = rawSegments.map((segment) => ({ ...segment, value: round(segment.value) }))
   const total = round(segments.reduce((sum, segment) => sum + segment.value, 0))
   const free = round(Math.max(0, limit - total))
   const over = round(Math.max(0, total - limit))
@@ -373,10 +386,13 @@ function UsageMeter({
   const [focused, setFocused] = useState<string | null>(null)
   const [pinned, setPinned] = useState<string | null>(null)
   const [rovingIndex, setRovingIndex] = useState(0)
+  // Legend keys are namespaced, so a segment whose id is "free" never collides with the remaining-space item.
   const items = [
-    ...segments.map((segment) => ({ id: segment.id, label: segment.label, value: segment.value })),
+    ...segments.map((segment) => ({ id: segmentKey(segment.id), label: segment.label, value: segment.value })),
     { id: USAGE_METER_FREE_ID, label: status === "over" ? overLabel : freeLabel, value: status === "over" ? over : free },
   ]
+  // A smaller list (segments removed after the tab stop moved) clamps the tab stop, so the legend stays reachable by Tab.
+  const tabStopIndex = Math.min(rovingIndex, items.length - 1)
   const active = hovered ?? focused ?? pinned
   const activeItem = items.find((item) => item.id === active) ?? null
   const highlightOf = (id: string): Highlight => (active ? (active === id ? "on" : "off") : undefined)
@@ -390,7 +406,7 @@ function UsageMeter({
     let end = 0
     for (const segment of segments) {
       end += segment.value
-      if (at <= end) return segment.id
+      if (at <= end) return segmentKey(segment.id)
     }
     return USAGE_METER_FREE_ID
   }
@@ -411,10 +427,10 @@ function UsageMeter({
       return
     }
     const targets: Record<string, number> = {
-      ArrowRight: rovingIndex + 1,
-      ArrowDown: rovingIndex + 1,
-      ArrowLeft: rovingIndex - 1,
-      ArrowUp: rovingIndex - 1,
+      ArrowRight: tabStopIndex + 1,
+      ArrowDown: tabStopIndex + 1,
+      ArrowLeft: tabStopIndex - 1,
+      ArrowUp: tabStopIndex - 1,
       Home: 0,
       End: items.length - 1,
     }
@@ -490,7 +506,7 @@ function UsageMeter({
           className={cn("relative isolate h-3.5 overflow-hidden rounded-(--radius-pill) [-webkit-tap-highlight-color:transparent]", TRACK_COLOR_CLASS_NAME)}
         >
           {segments.map((segment, index) => (
-            <SegmentBar key={segment.id} index={index} amounts={amounts} limit={shownLimit} width={trackWidth} highlight={highlightOf(segment.id)} />
+            <SegmentBar key={segment.id} index={index} amounts={amounts} limit={shownLimit} width={trackWidth} highlight={highlightOf(segmentKey(segment.id))} />
           ))}
           {/* Past the limit the bar is struck through: the overflow keeps its colours, hatched so it reads as over without colour. */}
           <motion.svg
@@ -541,7 +557,7 @@ function UsageMeter({
               data-highlight={highlightOf(item.id)}
               aria-pressed={pinned === item.id}
               aria-label={`${item.label}, ${format(item.value)}`}
-              tabIndex={index === rovingIndex ? 0 : -1}
+              tabIndex={index === tabStopIndex ? 0 : -1}
               onClick={() => {
                 setRovingIndex(index)
                 setPinned((current) => (current === item.id ? null : item.id))
