@@ -4,6 +4,8 @@ Todos los cambios relevantes de `@astra-kit/ui` se documentan en este archivo co
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-19
+
 ### Added
 
 - `UsageMeter`: barra segmentada de cupo (por ejemplo, códigos y avisos enviados hoy contra el límite diario) con total animado, insignia de estado (libre, casi lleno, excedido), leyenda navegable con teclado y anuncios para lectores de pantalla. Todo el copy viene en español y se reemplaza con `freeLabel`, `overLabel` y `messages`; los números usan `locale` (por defecto `es-AR`).
