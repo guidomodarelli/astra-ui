@@ -71,9 +71,6 @@ jobs:
         with:
           cache: true
           require-lockfile: true
-      # release:prepare runs the Playwright suite before packing the tarball.
-      - name: Install browser dependencies
-        run: pnpm exec playwright install --with-deps chromium webkit
       - name: Checks y publicación del release
         env:
           GOLFO_RP_RELEASE_VERSION: ${{ inputs.version }}

@@ -20,7 +20,9 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 export function prepareRelease() {
   const metadata = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
   validateReleaseMetadata(metadata, readFileSync(join(root, "CHANGELOG.md"), "utf8"));
-  for (const command of ["pnpm install --frozen-lockfile", "pnpm test:uncompiled", "pnpm check", "pnpm exec playwright test"]) {
+  // The browser suite runs in the sharded CI of every push to main; repeating it here on a single runner
+  // took most of the release time.
+  for (const command of ["pnpm install --frozen-lockfile", "pnpm test:uncompiled", "pnpm check"]) {
     execSync(command, { cwd: root, stdio: "inherit" });
   }
   const releases = ownedPath(root, join(root, "releases"));
