@@ -792,6 +792,11 @@ test("should keep a caller's dialog transform and opacity through its entrance a
   expect(exit[0]!.opacity).toBeGreaterThan(TILTED_DIALOG_REST.opacity / 2);
 });
 
+/** Opacity above which a dialog reopened during its exit was still visibly leaving. */
+const MID_EXIT_MIN_OPACITY = 0.05;
+/** Tries a stalled runner gets to reopen a dialog before its exit fades out. */
+const MID_EXIT_REOPEN_ATTEMPTS = 5;
+
 test("should turn a dialog reopened mid-exit around from where it is", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/motion.html");
@@ -803,55 +808,69 @@ test("should turn a dialog reopened mid-exit around from where it is", async ({ 
   const dialog = page.getByRole("dialog");
   await expect(dialog).toHaveCSS("opacity", "1");
   await expect(dialog).not.toHaveAttribute("data-motion-entering");
-  // As soon as the exit is playing, reopens through the trigger and samples every following frame.
-  // A short timer polls for that moment: frames can be sparse on a busy runner, and the watcher is
-  // installed before Escape so the exit is never missed.
   type ReopenWindow = PanelFrameWindow & {
     __reopen: Promise<{ atReopen: PanelFrame; after: PanelFrame[] }>;
   };
-  await page.evaluate(
-    ({ triggerElement, pollMs }) => {
-      const readFrame = (window as unknown as PanelFrameWindow).__readPanelFrame;
-      (window as unknown as ReopenWindow).__reopen = new Promise((resolve) => {
-        const after: PanelFrame[] = [];
-        const poll = () => {
-          const atReopen = readFrame();
-          const isExiting =
-            atReopen?.state === "closed" &&
-            document.querySelector("[data-slot=dialog-content]")!.getAnimations().length > 0;
-          if (!atReopen || !isExiting) {
-            window.setTimeout(poll, pollMs);
-            return;
-          }
-          const reopenedAt = performance.now();
-          (triggerElement as HTMLElement).click();
-          const tick = () => {
-            const frame = readFrame();
-            if (frame) after.push(frame);
-            if (performance.now() - reopenedAt > 800) resolve({ atReopen, after });
-            else requestAnimationFrame(tick);
+  /**
+   * Closes the open dialog and, as soon as its exit is playing, reopens it through the trigger and
+   * samples every following frame. A short timer polls for that moment, installed before Escape so
+   * the exit is never missed.
+   */
+  const reopenDuringExit = async () => {
+    await page.evaluate(
+      ({ triggerElement, pollMs }) => {
+        const readFrame = (window as unknown as PanelFrameWindow).__readPanelFrame;
+        (window as unknown as ReopenWindow).__reopen = new Promise((resolve) => {
+          const after: PanelFrame[] = [];
+          const poll = () => {
+            const atReopen = readFrame();
+            const isExiting =
+              atReopen?.state === "closed" &&
+              document.querySelector("[data-slot=dialog-content]")!.getAnimations().length > 0;
+            if (!atReopen || !isExiting) {
+              window.setTimeout(poll, pollMs);
+              return;
+            }
+            const reopenedAt = performance.now();
+            (triggerElement as HTMLElement).click();
+            const tick = () => {
+              const frame = readFrame();
+              if (frame) after.push(frame);
+              if (performance.now() - reopenedAt > 800) resolve({ atReopen, after });
+              else requestAnimationFrame(tick);
+            };
+            requestAnimationFrame(tick);
           };
-          requestAnimationFrame(tick);
-        };
-        poll();
-      });
-    },
-    { triggerElement: triggerNode, pollMs: 4 },
-  );
-  await page.keyboard.press("Escape");
-  const { atReopen, after } = await page.evaluate(() => (window as unknown as ReopenWindow).__reopen);
-  // The reopen happened while the exit was playing, before the panel had faded out.
-  expect(atReopen.opacity).toBeGreaterThan(0.05);
-  expect(after.length).toBeGreaterThan(1);
-  // It turns around from that frame: it neither drops back to invisible nor to the full
-  // entrance pose, and settles at rest.
-  for (const frame of after) {
-    expect(frame.state).toBe("open");
-    expect(frame.opacity).toBeGreaterThanOrEqual(atReopen.opacity - 0.03);
-    expect(frame.scale).toBeGreaterThanOrEqual(atReopen.scale - 0.003);
+          poll();
+        });
+      },
+      { triggerElement: triggerNode, pollMs: 4 },
+    );
+    await page.keyboard.press("Escape");
+    return page.evaluate(() => (window as unknown as ReopenWindow).__reopen);
+  };
+  // A runner can stall the page's timers for longer than the exit lasts, so the poll may only see
+  // the exit once the panel has faded out. That attempt still has to turn around and settle, but
+  // the reopen is tried again until it lands while the panel is visibly leaving.
+  let reopen = await reopenDuringExit();
+  for (let attempt = 1; ; attempt++) {
+    const { atReopen, after } = reopen;
+    expect(after.length).toBeGreaterThan(1);
+    // It turns around from that frame: it neither drops back to invisible nor to the full
+    // entrance pose, and settles at rest.
+    for (const frame of after) {
+      expect(frame.state).toBe("open");
+      expect(frame.opacity).toBeGreaterThanOrEqual(atReopen.opacity - 0.03);
+      expect(frame.scale).toBeGreaterThanOrEqual(atReopen.scale - 0.003);
+    }
+    await expect(dialog).toHaveCSS("opacity", "1");
+    await expect(dialog).toHaveCSS("transform", "none");
+    await expect(dialog).not.toHaveAttribute("data-motion-entering");
+    if (atReopen.opacity > MID_EXIT_MIN_OPACITY || attempt === MID_EXIT_REOPEN_ATTEMPTS) break;
+    reopen = await reopenDuringExit();
   }
-  await expect(dialog).toHaveCSS("opacity", "1");
-  await expect(dialog).toHaveCSS("transform", "none");
+  // The reopen happened while the exit was playing, before the panel had faded out.
+  expect(reopen.atReopen.opacity).toBeGreaterThan(MID_EXIT_MIN_OPACITY);
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
 });
