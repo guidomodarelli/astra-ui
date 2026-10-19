@@ -4,6 +4,8 @@ Todos los cambios relevantes de `@golfo/ui` se documentan en este archivo con el
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-19
+
 ### Changed
 
 - **Cambio incompatible:** el paquete pasa a llamarse `@golfo/ui`, sin alias ni compatibilidad con `@astra-kit/ui`. Hay que reinstalarlo con `pnpm add @golfo/ui` y actualizar todas las importaciones, incluidos los subpaths (`@golfo/ui/next`, `@golfo/ui/tanstack`, `@golfo/ui/hooks`, `@golfo/ui/sonner`, `@golfo/ui/motion-tokens`, `@golfo/ui/styles.css`, `@golfo/ui/theme.css`, `@golfo/ui/fonts.css` y el resto de entradas por componente).
