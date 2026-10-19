@@ -4,6 +4,8 @@ Todos los cambios relevantes de `@astra-kit/ui` se documentan en este archivo co
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-10-19
+
 ### Fixed
 
 - `EmptyState` ya no puede trabar la página en WebKit (Safari y navegadores basados en WebKit, sobre todo en Linux) mientras entra su ícono: la animación de entrada solo anima opacidad y escala, sin desenfoque.
