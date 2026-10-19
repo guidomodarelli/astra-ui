@@ -120,4 +120,32 @@ describe("Timeline", () => {
     expect(headings[1]).toHaveTextContent("Yesterday");
     expect(screen.getAllByRole("listitem")[0]!.querySelector("time")).toHaveTextContent("5m");
   });
+
+  it("should label the previous calendar day as yesterday across a daylight-saving change", () => {
+    // Arrange: 9 March 2026, 00:30 in New York (EDT), the day after clocks moved forward.
+    const now = Date.UTC(2026, 2, 9, 4, 30);
+    const events: TimelineEvent[] = [{ id: "sunday", at: Date.UTC(2026, 2, 8, 15), actor: "Ana", title: "envió la solicitud" }];
+
+    // Act
+    render(<Timeline events={events} now={now} label="Historial" timeZone="America/New_York" />);
+
+    // Assert
+    expect(screen.getByRole("heading", { level: 3 })).toHaveTextContent(/^Ayer/);
+  });
+
+  it("should announce a repeated update summary again with a new node", () => {
+    // Arrange
+    const { rerender } = render(<Timeline events={EVENTS} now={NOW} label="Historial" />);
+    const first = { id: "note-1", at: NOW, actor: "Ana", title: "agregó una nota" };
+    rerender(<Timeline events={[...EVENTS, first]} now={NOW} label="Historial" />);
+    const firstNode = screen.getByRole("status").firstElementChild;
+
+    // Act
+    rerender(<Timeline events={[...EVENTS, first, { ...first, id: "note-2" }]} now={NOW} label="Historial" />);
+
+    // Assert
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent("Nueva actualización: Ana agregó una nota");
+    expect(status.firstElementChild).not.toBe(firstNode);
+  });
 });

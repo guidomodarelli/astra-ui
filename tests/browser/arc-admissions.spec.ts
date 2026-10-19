@@ -145,7 +145,7 @@ test("should highlight a legend category on keyboard focus and dim the rest", as
   await expect(notices).toBeFocused();
   await expect(notices).toHaveAttribute("data-highlight", "on");
   await expect(codes).toHaveAttribute("data-highlight", "off");
-  await expect(page.locator('[data-slot="usage-meter-caption"]')).toContainText("en Avisos · 20 % del plan");
+  await expect(page.getByRole("group", { name: "Envíos de hoy", exact: true }).locator('[data-slot="usage-meter-caption"]')).toContainText("en Avisos · 20 % del plan");
 });
 
 test("should roll the metric digits to the new value", async ({ page }) => {
@@ -253,7 +253,7 @@ test("should expand a row in place on a spring and slide new updates in at the t
 
 test("should repaint the displays from the dark theme tokens", async ({ page }) => {
   await openPage(page);
-  const track = page.locator('[data-slot="usage-meter-track"]');
+  const track = page.getByRole("group", { name: "Envíos de hoy", exact: true }).locator('[data-slot="usage-meter-track"]');
   const card = page.locator('[data-slot="metric-card"]');
   const lightTrack = await track.evaluate((element) => getComputedStyle(element).backgroundColor);
   const lightCard = await card.evaluate((element) => getComputedStyle(element).backgroundColor);
@@ -265,4 +265,88 @@ test("should repaint the displays from the dark theme tokens", async ({ page }) 
 
   await expect.poll(() => track.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(lightTrack);
   await expect.poll(() => card.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(lightCard);
+});
+
+test("should not draw the overage when the total rounds onto the limit", async ({ page }) => {
+  await openPage(page);
+  const meter = page.getByRole("group", { name: "Cupo redondeado", exact: true });
+  await meter.scrollIntoViewIfNeeded();
+
+  await expect(meter).toHaveAttribute("data-status", "near");
+  await expect
+    .poll(async () => {
+      const { segments, track } = await segmentWidths(meter);
+      return Math.abs(segments[0]! - track) <= SIZE_TOLERANCE_PX;
+    }, { timeout: SETTLE_TIMEOUT_MS })
+    .toBe(true);
+  // The bar spans exactly the limit, so neither the marker nor the hatch shows.
+  await expect(meter.locator('[data-slot="usage-meter-limit"]')).toHaveCSS("opacity", "0");
+  await expect(meter.locator('[data-slot="usage-meter-overflow"]')).toHaveCSS("opacity", "0");
+});
+
+test("should keep long status copy inside a narrow meter", async ({ page }) => {
+  await openPage(page);
+  const meter = page.getByRole("group", { name: "Avisos", exact: true });
+  await meter.scrollIntoViewIfNeeded();
+  const badge = meter.locator('[data-slot="usage-meter-status"]');
+
+  await expect(badge).toContainText("Todavía quedan 80 avisos");
+  await page.evaluate(() => new Promise(requestAnimationFrame));
+
+  const meterBox = (await meter.boundingBox())!;
+  const badgeBox = (await badge.boundingBox())!;
+  expect(badgeBox.x + badgeBox.width).toBeLessThanOrEqual(meterBox.x + meterBox.width + 0.5);
+  // The header row holding the label and the badge never overflows; the badge truncates its copy instead.
+  expect(await badge.evaluate((element) => element.parentElement!.scrollWidth <= element.parentElement!.clientWidth)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test("should draw the keyboard focus outline on the current step reached with End", async ({ page }) => {
+  await openPage(page);
+  const stepper = page.getByRole("navigation", { name: "Importación CSV" });
+  const completed = stepper.getByRole("button", { name: /Subir archivo/ });
+  const current = stepper.getByRole("button", { name: /Revisar filas/ });
+  await completed.focus();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowLeft");
+
+  await page.keyboard.press("End");
+
+  await expect(current).toBeFocused();
+  await expect(current).toHaveAttribute("aria-current", "step");
+  expect(await current.evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe("none");
+});
+
+test("should stop a rolling metric at its value when reduced motion turns on mid-roll", async ({ page }) => {
+  await openPage(page);
+  const value = page.locator('[data-slot="metric-card-value"]');
+  await value.scrollIntoViewIfNeeded();
+  await expect.poll(() => visibleOdometerText(value), { timeout: SETTLE_TIMEOUT_MS }).toBe("128");
+
+  await page.getByRole("button", { name: "Actualizar métrica" }).click();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+
+  // A spring takes about 25 frames; with reduced motion the wheels land within a few.
+  const text = await value.evaluate(async (root, frames) => {
+    for (let frame = 0; frame < frames; frame += 1) await new Promise(requestAnimationFrame);
+    return root.querySelector('[data-slot="odometer"]') !== null;
+  }, REDUCED_MOTION_FRAMES);
+  expect(text).toBe(true);
+  expect(await visibleOdometerText(value)).toBe("1.543");
+});
+
+test("should not scroll the feed back to the top when only the motion preference changes", async ({ page }) => {
+  await openPage(page);
+  const scroller = page.getByRole("region", { name: "Historial de la solicitud" }).locator('[data-slot="timeline-scroller"]');
+  await scroller.scrollIntoViewIfNeeded();
+  await scroller.evaluate((element) => element.scrollTo({ top: 80 }));
+  await expect.poll(() => scroller.evaluate((element) => element.scrollTop)).toBeGreaterThan(40);
+  const scrolledTop = await scroller.evaluate((element) => element.scrollTop);
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 400)));
+
+  expect(await scroller.evaluate((element) => element.scrollTop)).toBe(scrolledTop);
+  await page.getByRole("button", { name: "Agregar actualización" }).click();
+  await expect.poll(() => scroller.evaluate((element) => element.scrollTop), { timeout: SETTLE_TIMEOUT_MS }).toBe(0);
 });

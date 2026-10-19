@@ -358,7 +358,9 @@ function Stepper({
                   data-reachable={index <= active || undefined}
                   aria-current={isCurrent ? "step" : undefined}
                   aria-disabled={isClickable ? undefined : true}
-                  tabIndex={isClickable ? undefined : -1}
+                  // The current step stays reachable by the arrows and End, so it keeps a tab stop: `tabindex="-1"`
+                  // targets never draw the keyboard focus outline. Only upcoming steps leave the tab order.
+                  tabIndex={isClickable || isCurrent ? undefined : -1}
                   onClick={isClickable ? () => onStepSelect?.(index) : undefined}
                 >
                   {content}

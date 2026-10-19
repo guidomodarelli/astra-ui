@@ -147,22 +147,28 @@ function Column({ digit, direction, armed, delay, reduceMotion }: ColumnProps) {
   useEffect(() => () => running.current?.(), [])
   useEffect(() => {
     const state = wheel.current
-    if (armed || state.digit === digit) {
+    const hasNewDigit = !armed && state.digit !== digit
+    if (hasNewDigit) {
+      state.target +=
+        direction < 0 && state.revealed ? -((state.digit - digit + WHEEL_SIZE) % WHEEL_SIZE) : (digit - state.digit + WHEEL_SIZE) % WHEEL_SIZE
+      state.digit = digit
+    }
+    // Reduced motion is handled before anything else: turning it on mid-roll stops the running wheel at its target.
+    if (reduceMotion) {
+      running.current?.()
+      running.current = null
+      if (!armed) state.revealed = true
+      if (position.get() !== state.target) position.jump(state.target)
+      return
+    }
+    if (!hasNewDigit) {
       if (!armed) state.revealed = true
       return
     }
-    state.target +=
-      direction < 0 && state.revealed ? -((state.digit - digit + WHEEL_SIZE) % WHEEL_SIZE) : (digit - state.digit + WHEEL_SIZE) % WHEEL_SIZE
-    state.digit = digit
     running.current?.()
     const target = state.target
     const transition = state.revealed ? TURN_SPRING : { ...REVEAL_SPRING, delay }
     state.revealed = true
-    if (reduceMotion) {
-      position.jump(target)
-      running.current = null
-      return
-    }
     running.current = startNextFrame(() => animate(position, target, transition))
   }, [armed, delay, digit, direction, position, reduceMotion])
   return (

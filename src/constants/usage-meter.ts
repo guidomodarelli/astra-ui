@@ -99,5 +99,8 @@ export const USAGE_METER_SEGMENT_GAP_PX = 2
 /** Category colours are steps of the accent, strongest first; up to this many read clearly. */
 export const USAGE_METER_SEGMENT_COLOR_COUNT = 4
 
-/** Legend id of the remaining space, or of the overage once usage passes the limit. */
+/** Legend key of the remaining space, or of the overage once usage passes the limit. Segment keys carry a prefix, so no segment id can collide with it. */
 export const USAGE_METER_FREE_ID = "free"
+
+/** Prefix of every segment's legend key, which keeps segment ids apart from the remaining-space item. */
+export const USAGE_METER_SEGMENT_KEY_PREFIX = "segment:"

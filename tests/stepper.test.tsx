@@ -44,8 +44,27 @@ describe("Stepper", () => {
     expect(onStepSelect).toHaveBeenCalledWith(1);
     expect(upload).not.toHaveAttribute("aria-disabled");
     expect(activate).toHaveAttribute("aria-disabled", "true");
-    expect(activate).toHaveAttribute("tabindex", "-1");
     expect(activate).toHaveAttribute("aria-current", "step");
+  });
+
+  it("should keep the current step in the tab order and take only upcoming steps out of it", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    render(<Stepper steps={STEPS} current={1} onStepSelect={vi.fn()} />);
+    const [upload, review, activate] = screen.getAllByRole("button");
+
+    // Act
+    upload!.focus();
+    await user.keyboard("{End}");
+
+    // Assert
+    expect(review).toHaveFocus();
+    expect(review).not.toHaveAttribute("tabindex");
+    expect(activate).toHaveAttribute("tabindex", "-1");
+    await user.tab({ shift: true });
+    expect(upload).toHaveFocus();
+    await user.tab();
+    expect(review).toHaveFocus();
   });
 
   it("should move focus between reachable steps with the arrows, Home and End", async () => {

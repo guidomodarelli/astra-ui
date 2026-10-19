@@ -33,6 +33,30 @@ function MessagingQuota() {
   );
 }
 
+/** A meter whose raw total sits a fraction past the limit but rounds onto it at the shown precision. */
+function RoundedQuota() {
+  return (
+    <section className="admissions-panel">
+      <UsageMeter label="Cupo redondeado" decimals={0} limit={200} segments={[{ id: "codes", label: "Códigos", value: 200.4 }]} />
+    </section>
+  );
+}
+
+/** A narrow meter whose localized status copy is longer than the room it has. */
+function NarrowQuota() {
+  return (
+    <section className="admissions-panel admissions-narrow">
+      <UsageMeter
+        label="Avisos"
+        decimals={0}
+        limit={100}
+        segments={[{ id: "notices", label: "Avisos", value: 20 }]}
+        messages={{ freeBadge: ({ free }) => `Todavía quedan ${free} avisos disponibles para enviar durante el resto del día` }}
+      />
+    </section>
+  );
+}
+
 /** A metric whose value grows, so the spec can watch the odometer land on the new digits. */
 function RequestsMetric() {
   const [value, setValue] = useState(128);
@@ -115,6 +139,8 @@ function ArcAdmissions() {
   return <AstraUIProvider><main>
     <h1>Admisiones</h1>
     <MessagingQuota />
+    <RoundedQuota />
+    <NarrowQuota />
     <RequestsMetric />
     <EmptyInbox />
     <ImportStepper />
