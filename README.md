@@ -47,7 +47,7 @@ import { Avatar, Button, Calendar, DataTable } from "@astra-kit/ui";
 <Avatar name="Ana Núñez" src="/ana.jpg" />;
 ```
 
-Los componentes adoptados de [Arc](https://uiarc.dev) usan la API pública de Arc: `Switch`, `Checkbox`, `RadioGroup`, `Badge`, `Avatar`, `AvatarGroup`, `Skeleton`, `Card`, `Alert`, `Tooltip`, `HoverCard`, `DropdownMenu`, `Select`, `Pagination`, `Calendar` y `Carousel` son componentes cerrados que se configuran por props (`items`, `options`, `members`, `content`, `title`); `Dialog` (`Dialog`, `DialogTrigger`, `DialogContent` con `title` y `description`, `DialogClose`), `Popover` y `Tabs` conservan las partes de Arc. Cada uno suma solo las extensiones que Arc no cubre, con copy en español por defecto, por ejemplo `getHref` en `Pagination`, `trigger` e ítems con `href` en `DropdownMenu`, `onOpenChange` en `HoverCard`, `footer` y el modo `alert` en `Dialog` (reemplaza a `AlertDialog`), `hideLabel` en `Select` y `RadioGroup`, y `onSettle` en `Carousel`. La tabla de migración desde `beez-ui` 2.x está en [`docs/history/beez-ui-changelog.md`](https://github.com/guidomodarelli/astra-ui/blob/main/docs/history/beez-ui-changelog.md).
+Los componentes adoptados de [Arc](https://uiarc.dev) usan la API pública de Arc: `Switch`, `Checkbox`, `RadioGroup`, `Badge`, `Avatar`, `AvatarGroup`, `Skeleton`, `Card`, `Alert`, `Tooltip`, `HoverCard`, `DropdownMenu`, `Select`, `Pagination`, `Calendar` y `Carousel` son componentes cerrados que se configuran por props (`items`, `options`, `members`, `content`, `title`); `Dialog` (`Dialog`, `DialogTrigger`, `DialogContent` con `title` y `description`, `DialogClose`), `Popover` y `Tabs` conservan las partes de Arc. Cada uno suma solo las extensiones que Arc no cubre, con copy en español por defecto, por ejemplo `getHref` en `Pagination`, `trigger` e ítems con `href` en `DropdownMenu`, `onOpenChange` en `HoverCard`, `footer` y el modo `alert` en `Dialog` (reemplaza a `AlertDialog`), `hideLabel` en `Select` y `RadioGroup`, y `onSettle` en `Carousel`. Los displays de datos de Arc `UsageMeter`, `MetricCard`, `EmptyState`, `Timeline` y `Stepper` también son cerrados y se configuran por props; sus textos visibles y anunciados vienen en español y se reemplazan con `messages` (y con `freeLabel`/`overLabel`, `label` o `completeLabel` donde Arc ya los define), y `locale` formatea números y fechas (`es-AR` por defecto). La tabla de migración desde `beez-ui` 2.x está en [`docs/history/beez-ui-changelog.md`](https://github.com/guidomodarelli/astra-ui/blob/main/docs/history/beez-ui-changelog.md).
 
 `Button` es para acciones y no tiene `asChild`. Una navegación con aspecto de botón es un `ButtonLink`: el `Link` del provider (rutea con el adaptador configurado y sigue siendo un enlace, que se puede abrir en otra pestaña o copiar) con la receta de `Button` y sus `variant` y `size`. Para otro elemento con aspecto de botón, como un `<label>` que abre un selector de archivos, `buttonClassName({ variant, size, className })` devuelve las mismas clases. Ninguno de los dos incluye la presión ni el spinner de `Button`.
 
@@ -108,8 +108,10 @@ no tiemblan al pasar a `aria-invalid="true"`.
   a 0.97 (un poco más los de solo ícono y menos los anchos) y vuelven con `snappy`; los
   disparadores de menús, popovers y diálogos responden solo con color.
 - `Checkbox`, `RadioGroup`, `Switch`, `Tabs`, `Calendar`, `Carousel`, `Card`, `Avatar`,
-  `AvatarGroup`, `Badge`, `Alert`, `ActionButton` y `SplitButton` usan el movimiento de sus
-  componentes de Arc.
+  `AvatarGroup`, `Badge`, `Alert`, `ActionButton`, `SplitButton`, `UsageMeter`, `MetricCard`,
+  `EmptyState`, `Timeline` y `Stepper` usan el movimiento de sus componentes de Arc. Los
+  números de `UsageMeter` y `MetricCard` ruedan como un odómetro y sus segmentos o dígitos
+  entran la primera vez que el componente se ve; con movimiento reducido saltan al valor final.
 - Una `Card` interactiva se eleva 2 px con el borde fuerte y la sombra `--shadow-raised` de
   Arc al pasar un puntero fino.
 - `Tooltip`, `Popover` y `HoverCard` se acercan desde su trigger con escala y fundido.
