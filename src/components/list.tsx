@@ -6,7 +6,11 @@
  */
 import type { ComponentProps } from "react"
 
-import type { ListMarker } from "../constants/typography.js"
+import {
+  ORDERED_LIST_DEFAULT_TYPE,
+  ORDERED_LIST_MARKER_CLASS_NAMES,
+  type ListMarker,
+} from "../constants/typography.js"
 import { cn } from "../lib/utils.js"
 
 export type { ListMarker }
@@ -47,15 +51,23 @@ function List({ marker = "disc", className, ...props }: ListProps) {
 export type OrderedListProps = ComponentProps<"ol">
 
 /**
- * An ordered list with decimal markers. Supports the native `start`, `reversed` and `type` attributes.
+ * An ordered list, with decimal markers by default. Supports the native `start`, `reversed` and `type` attributes;
+ * `type` also picks the marker style (`a`, `A`, `i` or `I`).
  * @param props - Native `ol` attributes.
  * @returns The list.
  */
-function OrderedList({ className, ...props }: OrderedListProps) {
+function OrderedList({ type, className, ...props }: OrderedListProps) {
   return (
     <ol
       data-slot="ordered-list"
-      className={cn(listTextClassName, listLayoutClassName, "list-decimal ps-(--space-6) marker:tabular-nums", className)}
+      type={type}
+      className={cn(
+        listTextClassName,
+        listLayoutClassName,
+        ORDERED_LIST_MARKER_CLASS_NAMES[type ?? ORDERED_LIST_DEFAULT_TYPE],
+        "ps-(--space-6) marker:tabular-nums",
+        className
+      )}
       {...props}
     />
   )

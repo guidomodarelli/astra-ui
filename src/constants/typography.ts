@@ -15,6 +15,24 @@ export type TextTone = "default" | "secondary" | "muted"
 /** Markers of an unordered list: Arc's muted disc, or none for a plain stack. */
 export type ListMarker = "disc" | "none"
 
+/** Native `type` attribute values of an ordered list: decimal, lower and upper letters, lower and upper roman. */
+export type OrderedListType = "1" | "a" | "A" | "i" | "I"
+
+/**
+ * Marker style of each native ordered list `type`. Tailwind's preflight resets `ol` to `list-style: none`, so the
+ * native attribute alone draws no marker and each type needs its explicit `list-style-type`.
+ */
+export const ORDERED_LIST_MARKER_CLASS_NAMES = {
+  "1": "list-decimal",
+  a: "list-[lower-alpha]",
+  A: "list-[upper-alpha]",
+  i: "list-[lower-roman]",
+  I: "list-[upper-roman]",
+} as const satisfies Record<OrderedListType, string>
+
+/** Native ordered list `type` used when none is given: decimal numbers. */
+export const ORDERED_LIST_DEFAULT_TYPE = "1" satisfies OrderedListType
+
 /** Visual size of each heading level when `size` is not given: a product page scale, from 36px down to 14px. */
 export const HEADING_DEFAULT_SIZE = {
   1: "3xl",

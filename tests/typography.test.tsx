@@ -268,6 +268,9 @@ describe("Lists", () => {
         <OrderedList aria-label="Pasos" start={3}>
           <ListItem>Elegí una tribu</ListItem>
         </OrderedList>
+        <OrderedList aria-label="Etapas" type="i">
+          <ListItem>Postulación</ListItem>
+        </OrderedList>
         <List aria-label="Sin viñetas" marker="none">
           <ListItem>Opción</ListItem>
         </List>
@@ -278,6 +281,7 @@ describe("Lists", () => {
     const requirements = screen.getByRole("list", { name: "Requisitos" });
     const steps = screen.getByRole("list", { name: "Pasos" });
     const plainList = screen.getByRole("list", { name: "Sin viñetas" });
+    const stages = screen.getByRole("list", { name: "Etapas" });
 
     // Assert
     expect(requirements.tagName).toBe("UL");
@@ -286,6 +290,7 @@ describe("Lists", () => {
     expect(steps.tagName).toBe("OL");
     expect(steps).toHaveAttribute("start", "3");
     expect(plainList).toHaveAttribute("data-marker", "none");
+    expect(stages).toHaveAttribute("type", "i");
   });
 
   it("should pair description terms with their details", () => {

@@ -129,7 +129,9 @@ test("should draw key caps at Arc's two heights with a heavier bottom edge", asy
 
 test("should show list markers in the muted colour", async ({ page }) => {
   const list = page.getByRole("list", { name: "Requisitos" });
-  const steps = page.getByRole("list", { name: "Pasos" });
+  const steps = page.getByRole("list", { name: "Pasos", exact: true });
+  const letteredSteps = page.getByRole("list", { name: "Pasos con letras" });
+  const stages = page.getByRole("list", { name: "Etapas" });
   const markerColour = await list
     .getByRole("listitem")
     .first()
@@ -137,6 +139,8 @@ test("should show list markers in the muted colour", async ({ page }) => {
 
   expect(await computedStyle(list, "list-style-type")).toBe("disc");
   expect(await computedStyle(steps, "list-style-type")).toBe("decimal");
+  expect(await computedStyle(letteredSteps, "list-style-type")).toBe("lower-alpha");
+  expect(await computedStyle(stages, "list-style-type")).toBe("upper-roman");
   expect(markerColour).toBe(await tokenColour(page, "--text-muted"));
 });
 

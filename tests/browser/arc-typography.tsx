@@ -60,6 +60,8 @@ function ArcTypography() {
     <section aria-label="Listas">
       <List aria-label="Requisitos"><ListItem>Cuenta verificada</ListItem><ListItem>Perfil completo</ListItem></List>
       <OrderedList aria-label="Pasos"><ListItem>Elegí una tribu</ListItem><ListItem>Pedí unirte</ListItem></OrderedList>
+      <OrderedList aria-label="Pasos con letras" type="a"><ListItem>Elegí una tribu</ListItem><ListItem>Pedí unirte</ListItem></OrderedList>
+      <OrderedList aria-label="Etapas" type="I"><ListItem>Postulación</ListItem><ListItem>Admisión</ListItem></OrderedList>
       <DescriptionList aria-label="Datos de la tribu">
         <div><DescriptionTerm>Miembros</DescriptionTerm><DescriptionDetails>128</DescriptionDetails></div>
       </DescriptionList>
