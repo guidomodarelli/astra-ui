@@ -1,0 +1,5 @@
+/* Only the published stylesheet, so no harness rule on headings competes with the components. */
+@import "../../styles.css";
+
+main { max-width: 48rem; margin-inline: auto; padding: 1rem; display: grid; gap: 1.5rem; }
+section { display: grid; gap: 1rem; min-width: 0; }

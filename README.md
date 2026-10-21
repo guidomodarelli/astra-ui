@@ -216,6 +216,25 @@ La tabla conserva agrupación estable, columnas configurables, memoización, exc
 
 Los componentes compartidos conservan el tema de LaTribu. Se incorporaron atributos `data-variant`/`data-size` del botón, scroll para paneles largos y persistencia opcional del sidebar. `Button` sigue la API de Arc: `variant` `primary`, `secondary`, `ghost` o `danger`, `size` `sm`, `md` o `lg` y `loading`; renderiza un `<button>` nativo con `type="button"` por defecto y no admite `asChild`: un link con aspecto de botón se estiliza como link. Se mantienen los estados deshabilitados y los skeletons deterministas. La foto de `Avatar` delega carga y fallback a Base UI; conserva carga diferida y recuperación al cambiar `src`. El export `Toaster` conserva el aspecto y las props de Sonner, y sus toasts responden al click y al teclado (Alt+T) con un `Dialog` o `Sheet` abierto; `ThemedToaster` se apoya en él y agrega los estilos e iconos compartidos.
 
+## Tipografía
+
+Los componentes de texto siguen las reglas tipográficas de Arc: tamaños de su escala (`--text-xs` a `--text-5xl`), pesos 400 y 500 (nunca negrita), Inter para texto y Geist para títulos de 30px en adelante, y jerarquía con los colores `--foreground`, `--text-secondary` y `--text-muted`. No usan hooks de cliente, así que también se renderizan en Server Components. Tampoco agregan márgenes: el espaciado entre bloques lo decide el layout del consumidor.
+
+- Títulos: `Heading` con `level` (1 a 6, `h2` por defecto) y `size` opcional, para separar el nivel del outline del tamaño visual; `H1` a `H6` son atajos (36, 28, 22, 18, 16 y 14px por defecto).
+- Bloques: `Text` (`p`, con `size` `xs`, `sm`, `base` o `lg` y `tone` `default`, `secondary` o `muted`), `Lead`, `Small`, `Blockquote`, `Pre` y `Address`.
+- En línea: `Strong`, `B`, `Em`, `I`, `U`, `S`, `Del`, `Ins`, `Mark`, `Code`, `Kbd` (la tecla de Arc, con `size` `md` o `sm`), `Samp`, `Var`, `Abbr`, `Cite`, `Dfn`, `Q`, `Sub`, `Sup` y `Time`. Heredan el tamaño del texto que los rodea.
+- Listas: `List` (`marker` `disc` o `none`), `OrderedList`, `ListItem`, `DescriptionList`, `DescriptionTerm` y `DescriptionDetails`.
+
+Las fuentes son las de Arc: Inter y Geist vienen autoalojadas en `fonts.css`, y el código (`Code`, `Pre`, `Samp`) usa la monoespaciada del sistema mediante `--font-code`, como el bloque de código de Arc, sin descargar otra fuente.
+
+```tsx
+import { H1, Kbd, Lead, Text } from "@golfo/ui";
+
+<H1>Tribus de lectura</H1>
+<Lead>Encontrá a la gente que comparte lo que te gusta.</Lead>
+<Text tone="secondary">Abrí la paleta con <Kbd>Ctrl</Kbd> <Kbd>K</Kbd>.</Text>
+```
+
 ## Componentes de producto reutilizables
 
 Provienen de las carpetas de producto de LaTribu y agenda-mensual y quedaron desacoplados de su dominio: reciben datos ya resueltos y textos por props, con valores por defecto en español. Solo se incorporan piezas genéricas que no fijan decisiones de un producto y que no son una composición trivial de primitivas existentes; los flujos propios de una app (notificaciones, calendarios de eventos, handoff de navegadores internos, actualización de PWA) y los envoltorios simples (estados vacío y de error, loaders, popovers de ayuda) se mantienen en esa app.
