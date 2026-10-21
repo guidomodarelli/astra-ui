@@ -235,6 +235,26 @@
       "import": "./dist/components/label.js",
       "default": "./dist/components/label.js"
     },
+    "./heading": {
+      "types": "./dist/components/heading.d.ts",
+      "import": "./dist/components/heading.js",
+      "default": "./dist/components/heading.js"
+    },
+    "./text": {
+      "types": "./dist/components/text.d.ts",
+      "import": "./dist/components/text.js",
+      "default": "./dist/components/text.js"
+    },
+    "./inline-text": {
+      "types": "./dist/components/inline-text.d.ts",
+      "import": "./dist/components/inline-text.js",
+      "default": "./dist/components/inline-text.js"
+    },
+    "./list": {
+      "types": "./dist/components/list.d.ts",
+      "import": "./dist/components/list.js",
+      "default": "./dist/components/list.js"
+    },
     "./radio-group": {
       "types": "./dist/components/radio-group.d.ts",
       "import": "./dist/components/radio-group.js",
