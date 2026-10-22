@@ -4,6 +4,10 @@ Todos los cambios relevantes de `@golfo/ui` se documentan en este archivo con el
 
 ## [Unreleased]
 
+### Changed
+
+- Cada versión se publica recién cuando el CI completo (incluidas las pruebas de navegador en Chromium y WebKit) termina en verde sobre su commit exacto, que el workflow de release corre por su cuenta; un push posterior a `main` ya no puede cancelar esa validación ni bloquear la publicación.
+
 ## [2.1.2] - 2026-10-22
 
 ### Added
