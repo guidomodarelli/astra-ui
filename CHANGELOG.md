@@ -4,6 +4,12 @@ Todos los cambios relevantes de `@golfo/ui` se documentan en este archivo con el
 
 ## [Unreleased]
 
+## [2.1.2] - 2026-10-22
+
+### Added
+
+- El catálogo de Storybook con todos los componentes se publica en GitHub Pages y se actualiza con cada cambio en `main`, así se pueden ver los componentes y sus variantes sin clonar el repositorio.
+
 ## [2.1.1] - 2026-10-22
 
 ### Fixed
