@@ -153,6 +153,50 @@ test("should align the popover with the start of its trigger", async ({ page }) 
   expect(panelBounds.y).toBeGreaterThanOrEqual(triggerBounds.y + triggerBounds.height);
 });
 
+/**
+ * Scrolls an element by a fixed distance and reports its scroll metrics.
+ * @param element - Element expected to scroll.
+ * @returns Its scroll and client heights and the scroll offset before and after the scroll.
+ */
+async function scrollAndMeasure(element: Locator) {
+  return element.evaluate((node) => {
+    const before = node.scrollTop;
+    node.scrollTop += 80;
+    return { scrollHeight: node.scrollHeight, clientHeight: node.clientHeight, before, after: node.scrollTop };
+  });
+}
+
+test("should let a child marked data-popover-shrink fit the panel and scroll its own list", async ({ page }) => {
+  await page.goto("/arc-overlays.html");
+  await page.getByRole("button", { name: "Ver avisos" }).click();
+  const panel = page.getByRole("dialog", { name: "Avisos" });
+  await expectSettled(panel);
+  const list = page.getByTestId("inbox-list");
+  const panelBounds = (await panel.boundingBox())!;
+  const childBounds = (await panel.locator("[data-popover-shrink]").boundingBox())!;
+  // The child shrinks to the panel instead of keeping its content height.
+  expect(childBounds.height).toBeLessThanOrEqual(panelBounds.height);
+  const metrics = await scrollAndMeasure(list);
+  expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight);
+  expect(metrics.after).toBeGreaterThan(metrics.before);
+  // The fixed header stays in view while the list scrolls.
+  await expect(panel.getByRole("heading", { name: "Avisos recientes" })).toBeInViewport();
+});
+
+test("should scroll the whole panel when its children have no scroll of their own", async ({ page }) => {
+  await page.goto("/arc-overlays.html");
+  await page.getByRole("button", { name: "Ver ayuda" }).click();
+  const panel = page.getByRole("dialog", { name: "Ayuda" });
+  await expectSettled(panel);
+  // Children that clip their overflow keep their content height instead of being squashed.
+  const firstEntry = panel.getByText("Aviso 1", { exact: true });
+  const entryHeights = await firstEntry.evaluate((node) => ({ client: node.clientHeight, scroll: node.scrollHeight }));
+  expect(entryHeights.client).toBe(entryHeights.scroll);
+  const metrics = await scrollAndMeasure(panel);
+  expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight);
+  expect(metrics.after).toBeGreaterThan(metrics.before);
+});
+
 test("should open the hover card below its trigger, aligned with its start", async ({ page }) => {
   await page.goto("/arc-overlays.html");
   const trigger = page.getByRole("link", { name: "Ana Pérez" });

@@ -18,7 +18,8 @@ export type PopoverContentProps = ComponentProps<typeof PopoverContentPrimitive>
 
 /**
  * Renders the portaled panel anchored to the trigger, kept inside the viewport; content taller than the room left
- * scrolls inside the panel.
+ * scrolls inside the panel. A direct child with `data-popover-shrink` shrinks to that room instead and scrolls inside
+ * itself, as a panel with a fixed header and its own scrolling list needs.
  * @param props - Radix content properties. Arc's defaults: `align="start"`, a 6px `sideOffset` and a 10px
  *   `collisionPadding`.
  * @returns The panel.
