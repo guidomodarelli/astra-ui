@@ -54,136 +54,143 @@ async function expectInsideViewport(page: Page, layer: Locator) {
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.goto("/overlay-integrity.html");
 });
 
-for (const { prefix, open, surface } of CONTAINERS) {
-  test.describe(`inside ${prefix}`, () => {
-    test.beforeEach(async ({ page }) => {
-      await open(page);
-    });
-
-    test("should stack the popover above its container, keep it in the viewport and close only the popover", async ({
-      page,
-    }) => {
-      const trigger = page.getByRole("button", { name: `${prefix}: filtros` });
-      await trigger.click();
-      const panel = page.getByRole("dialog", { name: `${prefix}: panel de filtros` });
-      await expectOnTop(panel);
-      await expectInsideViewport(page, panel);
-      await page.keyboard.press("Escape");
-      await expect(panel).toHaveCount(0);
-      await expect(trigger).toBeFocused();
-      if (surface) await expect(page.getByRole(surface).first()).toBeVisible();
-    });
-
-    test("should stack the dropdown menu above its container and close only the menu", async ({ page }) => {
-      const trigger = page.getByRole("button", { name: `${prefix}: acciones` });
-      await trigger.click();
-      const menu = page.getByRole("menu");
-      await expectOnTop(menu);
-      await expectInsideViewport(page, menu);
-      await page.keyboard.press("Escape");
-      await expect(menu).toHaveCount(0);
-      await expect(trigger).toBeFocused();
-      if (surface) await expect(page.getByRole(surface).first()).toBeVisible();
-    });
-
-    test("should stack the select list above its container and pick an option", async ({ page }) => {
-      const trigger = page.getByRole("combobox", { name: `${prefix}: frecuencia` });
-      await trigger.click();
-      const list = page.getByRole("listbox");
-      await expectOnTop(list);
-      await expectInsideViewport(page, list);
-      await page.getByRole("option", { name: "Semanal" }).click();
-      await expect(trigger).toHaveText("Semanal");
-      if (surface) await expect(page.getByRole(surface).first()).toBeVisible();
-    });
-
-    test("should stack the tooltip above its container on keyboard focus", async ({ page }) => {
-      const trigger = page.getByRole("button", { name: `${prefix}: info` });
-      // Radix closes a tooltip when its trigger scrolls, so the focus must not be what scrolls it into view.
-      await trigger.scrollIntoViewIfNeeded();
-      // Engines dispatch the resulting `scroll` events on a later frame; let them fire before the tooltip opens.
-      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-      await trigger.focus();
-      const bubble = page.locator("[data-slot=tooltip-content]", { hasText: `${prefix}: ayuda` });
-      await expect(bubble).toBeVisible();
-      await expectOnTop(bubble);
-      await expectInsideViewport(page, bubble);
-    });
+// Only the tests on this page load it: a WebKit `page.goto` that leaves a Vite page now and then fails with an internal
+// loader error, so each test navigates once, from `about:blank`.
+test.describe("on the overlay integrity page", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/overlay-integrity.html");
   });
-}
 
-test("should run a toast action from an open dialog without closing the dialog", async ({ page }) => {
-  await page.getByRole("button", { name: "Abrir edición" }).click();
-  const dialog = page.getByRole("dialog", { name: "Editar evento" });
-  await dialog.getByRole("button", { name: "Guardar" }).click();
-  const retry = page.getByRole("button", { name: "Reintentar" });
-  await expect(retry).toBeVisible();
-  await expectOnTop(retry);
-  await retry.click();
-  await expect(dialog.getByRole("status", { name: "Reintentos" })).toHaveText("1");
-  await expect(dialog).toBeVisible();
-});
+  for (const { prefix, open, surface } of CONTAINERS) {
+    test.describe(`inside ${prefix}`, () => {
+      test.beforeEach(async ({ page }) => {
+        await open(page);
+      });
 
-test("should run a toast action with the keyboard from an open dialog without closing the dialog", async ({ page }) => {
-  await page.getByRole("button", { name: "Abrir edición" }).click();
-  const dialog = page.getByRole("dialog", { name: "Editar evento" });
-  await dialog.getByRole("button", { name: "Guardar" }).click();
-  const retry = page.getByRole("button", { name: "Reintentar" });
-  await expect(retry).toBeVisible();
-  // Sonner's hotkey moves focus to the toast list; the modal's focus trap must not pull it back.
-  await page.keyboard.press("Alt+KeyT");
-  await expect(page.locator("[data-sonner-toaster]")).toBeFocused();
-  // The first Tab lands on the toast itself, the second on its action.
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Tab");
-  await expect(retry).toBeFocused();
-  await page.keyboard.press("Enter");
-  await expect(dialog.getByRole("status", { name: "Reintentos" })).toHaveText("1");
-  await expect(dialog).toBeVisible();
-  // The action dismisses its toast; focus must go back to the dialog instead of falling to the body.
-  await expect(retry).toHaveCount(0);
-  await expect.poll(() => dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
-});
+      test("should stack the popover above its container, keep it in the viewport and close only the popover", async ({
+        page,
+      }) => {
+        const trigger = page.getByRole("button", { name: `${prefix}: filtros` });
+        await trigger.click();
+        const panel = page.getByRole("dialog", { name: `${prefix}: panel de filtros` });
+        await expectOnTop(panel);
+        await expectInsideViewport(page, panel);
+        await page.keyboard.press("Escape");
+        await expect(panel).toHaveCount(0);
+        await expect(trigger).toBeFocused();
+        if (surface) await expect(page.getByRole(surface).first()).toBeVisible();
+      });
 
-test("should return focus to the dialog when a toast action dismisses its toast while others stay", async ({ page }) => {
-  await page.getByRole("button", { name: "Abrir edición" }).click();
-  const dialog = page.getByRole("dialog", { name: "Editar evento" });
-  const save = dialog.getByRole("button", { name: "Guardar" });
-  await save.click();
-  await save.click();
-  const retry = page.getByRole("button", { name: "Reintentar" });
-  await expect(retry).toHaveCount(2);
-  await page.keyboard.press("Alt+KeyT");
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Enter");
-  // The toast list stays mounted, so only the removed control could have held focus.
-  await expect(retry).toHaveCount(1);
-  await expect.poll(() => dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
-  await expect(dialog).toBeVisible();
-});
+      test("should stack the dropdown menu above its container and close only the menu", async ({ page }) => {
+        const trigger = page.getByRole("button", { name: `${prefix}: acciones` });
+        await trigger.click();
+        const menu = page.getByRole("menu");
+        await expectOnTop(menu);
+        await expectInsideViewport(page, menu);
+        await page.keyboard.press("Escape");
+        await expect(menu).toHaveCount(0);
+        await expect(trigger).toBeFocused();
+        if (surface) await expect(page.getByRole(surface).first()).toBeVisible();
+      });
 
-test("should close a toast from an open sheet without closing the sheet", async ({ page }) => {
-  await page.getByRole("button", { name: "Abrir panel" }).click();
-  const sheet = page.getByRole("dialog", { name: "Panel lateral" });
-  await sheet.getByRole("button", { name: "Aplicar" }).click();
-  const toastMessage = page.getByText("Opciones guardadas");
-  await expect(toastMessage).toBeVisible();
-  const closeToast = page.getByRole("button", { name: "Close toast" });
-  await expectOnTop(closeToast);
-  await closeToast.click();
-  await expect(toastMessage).toHaveCount(0);
-  await expect(sheet).toBeVisible();
-});
+      test("should stack the select list above its container and pick an option", async ({ page }) => {
+        const trigger = page.getByRole("combobox", { name: `${prefix}: frecuencia` });
+        await trigger.click();
+        const list = page.getByRole("listbox");
+        await expectOnTop(list);
+        await expectInsideViewport(page, list);
+        await page.getByRole("option", { name: "Semanal" }).click();
+        await expect(trigger).toHaveText("Semanal");
+        if (surface) await expect(page.getByRole(surface).first()).toBeVisible();
+      });
 
-test("should keep a popover taller than the viewport inside it and scroll its content", async ({ page }) => {
-  await page.getByRole("button", { name: "Borde: filtros" }).click();
-  const panel = page.getByRole("dialog", { name: "Borde: panel de filtros" });
-  await expectInsideViewport(page, panel);
-  await expect.poll(() => panel.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+      test("should stack the tooltip above its container on keyboard focus", async ({ page }) => {
+        const trigger = page.getByRole("button", { name: `${prefix}: info` });
+        // Radix closes a tooltip when its trigger scrolls, so the focus must not be what scrolls it into view.
+        await trigger.scrollIntoViewIfNeeded();
+        // Engines dispatch the resulting `scroll` events on a later frame; let them fire before the tooltip opens.
+        await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        await trigger.focus();
+        const bubble = page.locator("[data-slot=tooltip-content]", { hasText: `${prefix}: ayuda` });
+        await expect(bubble).toBeVisible();
+        await expectOnTop(bubble);
+        await expectInsideViewport(page, bubble);
+      });
+    });
+  }
+
+  test("should run a toast action from an open dialog without closing the dialog", async ({ page }) => {
+    await page.getByRole("button", { name: "Abrir edición" }).click();
+    const dialog = page.getByRole("dialog", { name: "Editar evento" });
+    await dialog.getByRole("button", { name: "Guardar" }).click();
+    const retry = page.getByRole("button", { name: "Reintentar" });
+    await expect(retry).toBeVisible();
+    await expectOnTop(retry);
+    await retry.click();
+    await expect(dialog.getByRole("status", { name: "Reintentos" })).toHaveText("1");
+    await expect(dialog).toBeVisible();
+  });
+
+  test("should run a toast action with the keyboard from an open dialog without closing the dialog", async ({ page }) => {
+    await page.getByRole("button", { name: "Abrir edición" }).click();
+    const dialog = page.getByRole("dialog", { name: "Editar evento" });
+    await dialog.getByRole("button", { name: "Guardar" }).click();
+    const retry = page.getByRole("button", { name: "Reintentar" });
+    await expect(retry).toBeVisible();
+    // Sonner's hotkey moves focus to the toast list; the modal's focus trap must not pull it back.
+    await page.keyboard.press("Alt+KeyT");
+    await expect(page.locator("[data-sonner-toaster]")).toBeFocused();
+    // The first Tab lands on the toast itself, the second on its action.
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Tab");
+    await expect(retry).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(dialog.getByRole("status", { name: "Reintentos" })).toHaveText("1");
+    await expect(dialog).toBeVisible();
+    // The action dismisses its toast; focus must go back to the dialog instead of falling to the body.
+    await expect(retry).toHaveCount(0);
+    await expect.poll(() => dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+  });
+
+  test("should return focus to the dialog when a toast action dismisses its toast while others stay", async ({ page }) => {
+    await page.getByRole("button", { name: "Abrir edición" }).click();
+    const dialog = page.getByRole("dialog", { name: "Editar evento" });
+    const save = dialog.getByRole("button", { name: "Guardar" });
+    await save.click();
+    await save.click();
+    const retry = page.getByRole("button", { name: "Reintentar" });
+    await expect(retry).toHaveCount(2);
+    await page.keyboard.press("Alt+KeyT");
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Enter");
+    // The toast list stays mounted, so only the removed control could have held focus.
+    await expect(retry).toHaveCount(1);
+    await expect.poll(() => dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+    await expect(dialog).toBeVisible();
+  });
+
+  test("should close a toast from an open sheet without closing the sheet", async ({ page }) => {
+    await page.getByRole("button", { name: "Abrir panel" }).click();
+    const sheet = page.getByRole("dialog", { name: "Panel lateral" });
+    await sheet.getByRole("button", { name: "Aplicar" }).click();
+    const toastMessage = page.getByText("Opciones guardadas");
+    await expect(toastMessage).toBeVisible();
+    const closeToast = page.getByRole("button", { name: "Close toast" });
+    await expectOnTop(closeToast);
+    await closeToast.click();
+    await expect(toastMessage).toHaveCount(0);
+    await expect(sheet).toBeVisible();
+  });
+
+  test("should keep a popover taller than the viewport inside it and scroll its content", async ({ page }) => {
+    await page.getByRole("button", { name: "Borde: filtros" }).click();
+    const panel = page.getByRole("dialog", { name: "Borde: panel de filtros" });
+    await expectInsideViewport(page, panel);
+    await expect.poll(() => panel.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+  });
 });
 
 test.describe("mobile sidebar", () => {
