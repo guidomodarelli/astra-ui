@@ -27,11 +27,21 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+  # release:prepare does not run the browser suite: publication needs the full CI (sharded
+  # Playwright included) on this exact commit. It runs here instead of waiting for the push run,
+  # which a later push to main can cancel.
+  ci:
     permissions:
-      actions: read
+      contents: read
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ inputs.sha }}
+
+  release:
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
       contents: read
       id-token: write
     env:
@@ -62,27 +72,6 @@ jobs:
           [[ "$tag_sha" == "$GOLFO_RP_RELEASE_SHA" ]] || fail "$RELEASE_TAG apunta a $tag_sha, no al commit $GOLFO_RP_RELEASE_SHA enviado."
           [[ "$(git rev-parse HEAD)" == "$GOLFO_RP_RELEASE_SHA" ]] || fail "El checkout no está en el commit $GOLFO_RP_RELEASE_SHA de $RELEASE_TAG."
           git merge-base --is-ancestor "$GOLFO_RP_RELEASE_SHA" "refs/remotes/origin/main" || fail "El commit $GOLFO_RP_RELEASE_SHA de $RELEASE_TAG no está en origin/main."
-      # release:prepare does not run the browser suite: publication waits for the CI of this exact
-      # commit (sharded Playwright included) and stops when it fails or does not finish in time.
-      - name: Esperar el CI del commit del release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GOLFO_RP_RELEASE_SHA: ${{ inputs.sha }}
-        run: |
-          set -euo pipefail
-          deadline=$((SECONDS + 1800))
-          while :; do
-            run="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --event push --commit "$GOLFO_RP_RELEASE_SHA" --limit 1 --json status,conclusion,url --jq '.[0] // empty')"
-            if [[ -n "$run" && "$(jq -r .status <<<"$run")" == "completed" ]]; then
-              conclusion="$(jq -r .conclusion <<<"$run")"
-              url="$(jq -r .url <<<"$run")"
-              [[ "$conclusion" == "success" ]] || { echo "::error title=CI del release en rojo::El CI de $GOLFO_RP_RELEASE_SHA terminó en $conclusion ($url); no se publica."; exit 1; }
-              echo "CI de $GOLFO_RP_RELEASE_SHA en verde: $url"
-              break
-            fi
-            (( SECONDS < deadline )) || { echo "::error title=CI del release sin terminar::El CI de $GOLFO_RP_RELEASE_SHA no terminó en 30 minutos; no se publica."; exit 1; }
-            sleep 30
-          done
       - uses: actions/setup-node@v7.0.0
         with:
           node-version-file: .nvmrc
