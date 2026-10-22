@@ -4,6 +4,8 @@ Todos los cambios relevantes de `@golfo/ui` se documentan en este archivo con el
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-10-22
+
 ### Fixed
 
 - `PopoverContent` permite que un hijo directo con `data-popover-shrink` se ajuste al alto disponible del panel y haga scroll por su cuenta, como un panel con encabezado fijo y una lista propia; antes ese hijo conservaba su alto completo y la lista no se podía desplazar. El resto del contenido sigue desplazándose en el panel entero, sin achicar a sus hijos.
