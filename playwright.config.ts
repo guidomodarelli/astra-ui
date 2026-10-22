@@ -13,8 +13,9 @@ export default defineConfig({
   timeout: 60000,
   // Splits work per test instead of per file, so CI shards and local workers stay balanced.
   fullyParallel: true,
-  // Closes WebKit helpers that killed runs leave behind on Windows (see @golfo/cleaner).
-  globalSetup: "@golfo/cleaner/playwright/global-setup",
+  // Closes WebKit helpers that killed runs leave behind on Windows (see @golfo/cleaner), then compiles
+  // the Next routes once the servers are up, so no spec waits on `next dev` (see next-warmup.ts).
+  globalSetup: ["@golfo/cleaner/playwright/global-setup", "./tests/browser/next-warmup.ts"],
   globalTeardown: "@golfo/cleaner/playwright/global-teardown",
   webServer: [
     { command: `node node_modules/vite/bin/vite.js --config tests/browser/vite.config.ts --port ${VITE_PORT} --strictPort`, port: VITE_PORT, reuseExistingServer: false },
