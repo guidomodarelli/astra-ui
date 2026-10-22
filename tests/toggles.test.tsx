@@ -236,6 +236,88 @@ describe("RadioGroup", () => {
     expect(screen.getByLabelText("Elegida")).toHaveTextContent("monthly");
   });
 
+  it("should stay controlled with nothing selected until a null value becomes a choice, without React's controlled-state warning", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    const consoleError = vi.spyOn(console, "error");
+    const consoleWarn = vi.spyOn(console, "warn");
+    function PendingDecision() {
+      const [decision, setDecision] = useState<string | null>(null);
+      return (
+        <RadioGroup
+          label="Decisión"
+          value={decision}
+          onValueChange={setDecision}
+          options={[
+            { value: "keep", label: "Mantener" },
+            { value: "retire", label: "Retirar" },
+          ]}
+        />
+      );
+    }
+    render(<PendingDecision />);
+    expect(screen.getByRole("radio", { name: "Mantener" })).not.toBeChecked();
+    expect(screen.getByRole("radio", { name: "Retirar" })).not.toBeChecked();
+
+    // Act
+    await user.click(screen.getByRole("radio", { name: "Retirar" }));
+
+    // Assert
+    expect(screen.getByRole("radio", { name: "Retirar" })).toBeChecked();
+    const controlledStateWarnings = [...consoleError.mock.calls, ...consoleWarn.mock.calls].filter((call) => call.some((argument) => /uncontrolled to controlled/.test(String(argument))));
+    expect(controlledStateWarnings).toEqual([]);
+    consoleError.mockRestore();
+    consoleWarn.mockRestore();
+  });
+
+  it("should let an uncontrolled group without a default value take its first choice without React's controlled-state warning", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    const consoleError = vi.spyOn(console, "error");
+    const consoleWarn = vi.spyOn(console, "warn");
+    render(<RadioGroup label="Facturación" options={BILLING_OPTIONS} />);
+
+    // Act
+    await user.click(screen.getByRole("radio", { name: "Mensual" }));
+
+    // Assert
+    expect(screen.getByRole("radio", { name: "Mensual" })).toBeChecked();
+    const controlledStateWarnings = [...consoleError.mock.calls, ...consoleWarn.mock.calls].filter((call) => call.some((argument) => /uncontrolled to controlled/.test(String(argument))));
+    expect(controlledStateWarnings).toEqual([]);
+    consoleError.mockRestore();
+    consoleWarn.mockRestore();
+  });
+
+  /** Options where one choice is valued with an empty string. */
+  const PLAN_OPTIONS = [
+    { value: "", label: "Sin plan" },
+    { value: "pro", label: "Pro" },
+  ];
+
+  /** Controlled group that starts with nothing selected through a null value. */
+  function PendingPlanChoice() {
+    const [plan, setPlan] = useState<string | null>(null);
+    return <RadioGroup label="Plan" value={plan} onValueChange={setPlan} options={PLAN_OPTIONS} />;
+  }
+
+  it.each([
+    { mode: "uncontrolled without a default value", group: <RadioGroup label="Plan" options={PLAN_OPTIONS} /> },
+    { mode: "controlled with a null value", group: <PendingPlanChoice /> },
+  ])("should leave an option valued with an empty string unselected until it is chosen when $mode", async ({ group }) => {
+    // Arrange
+    const user = userEvent.setup();
+    render(group);
+    expect(screen.getByRole("radio", { name: "Sin plan" })).not.toBeChecked();
+    expect(screen.getByRole("radio", { name: "Pro" })).not.toBeChecked();
+
+    // Act
+    await user.click(screen.getByRole("radio", { name: "Sin plan" }));
+
+    // Assert
+    expect(screen.getByRole("radio", { name: "Sin plan" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Pro" })).not.toBeChecked();
+  });
+
   it("should not choose a disabled option", async () => {
     // Arrange
     const user = userEvent.setup();

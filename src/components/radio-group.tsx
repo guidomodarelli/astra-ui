@@ -12,6 +12,7 @@ import { animate, motion } from "motion/react";
 
 import {
   RADIO_GROUP_DOT_HIDDEN_SCALE,
+  RADIO_GROUP_NO_SELECTION_SUFFIX,
   RADIO_GROUP_OPTION_ID_SUFFIX,
   RADIO_GROUP_READY_ATTRIBUTE,
 } from "../constants/radio-group.js";
@@ -24,6 +25,20 @@ const CHECKED_OPTION_SELECTOR = '[data-slot="radio-group-option"]:has([data-slot
 
 /** Selector of every option row, observed so the highlight follows rows that resize. */
 const OPTION_SELECTOR = '[data-slot="radio-group-option"]';
+
+/**
+ * Builds the value Radix holds while nothing is selected, so the root stays controlled from the first render. It starts
+ * from the group's generated id and grows until no option uses it, so even an option valued `""` is never preselected.
+ * @param generatedId - The group's unique generated id.
+ * @param options - The group's options, whose values the result must avoid.
+ * @returns A value that matches no option.
+ */
+function getNoSelectionValue(generatedId: string, options: RadioGroupOption[]) {
+  const optionValues = new Set(options.map((option) => option.value));
+  let noSelectionValue = `${generatedId}-${RADIO_GROUP_NO_SELECTION_SUFFIX}`;
+  while (optionValues.has(noSelectionValue)) noSelectionValue = `${noSelectionValue}-${RADIO_GROUP_NO_SELECTION_SUFFIX}`;
+  return noSelectionValue;
+}
 
 /** The value chosen in the enclosing group, read by each option to spring its dot in or out. */
 const RadioGroupValueContext = createContext<string | undefined>(undefined);
@@ -82,8 +97,8 @@ export type RadioGroupProps = {
   hideLabel?: boolean;
   /** Rows in order. Values double as keys, so keep them unique. */
   options: RadioGroupOption[];
-  /** Selected value when controlled. */
-  value?: string;
+  /** Selected value when controlled; `null` keeps the group controlled with nothing selected yet. */
+  value?: string | null;
   /** Initial value when uncontrolled; a form reset restores it. */
   defaultValue?: string;
   /** Called with the chosen value. */
@@ -169,7 +184,8 @@ function RadioGroupOptionRow({ value, label, description, disabled }: RadioGroup
 }
 
 /**
- * A choice of one option from a visible set, controlled with `value` or uncontrolled with `defaultValue`.
+ * A choice of one option from a visible set, controlled with `value` (`null` for no selection) or uncontrolled with `defaultValue`.
+ * The Radix root is always controlled by this component, so neither mode switches it from uncontrolled to controlled.
  * @param props - Legend, its visibility, options, value, change handler, form name and classes.
  * @returns The fieldset with its legend and option rows.
  */
@@ -187,7 +203,8 @@ function RadioGroup({
   const generatedId = useId();
   const legendId = `${generatedId}-legend`;
   const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue);
-  const selectedValue = value ?? uncontrolledValue;
+  const isControlled = value !== undefined;
+  const selectedValue = (isControlled ? value : uncontrolledValue) ?? undefined;
   const groupRef = useRef<HTMLFieldSetElement>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLSpanElement>(null);
@@ -217,9 +234,9 @@ function RadioGroup({
       <RadioGroupPrimitive.Root
         asChild
         name={name ?? generatedId}
-        value={selectedValue}
+        value={selectedValue ?? getNoSelectionValue(generatedId, options)}
         onValueChange={(nextValue) => {
-          if (value === undefined) setUncontrolledValue(nextValue);
+          if (!isControlled) setUncontrolledValue(nextValue);
           onValueChange?.(nextValue);
         }}
       >
