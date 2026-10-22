@@ -42,7 +42,10 @@ function resolvePopoverMotion() {
 
 /**
  * Renders Arc's panel: raised surface, hairline border, panel radius and floating shadow, kept inside the viewport.
- * Content taller than the room left on the placed side scrolls inside the panel instead of running off screen.
+ * Content taller than the room left on the placed side scrolls inside the panel instead of running off screen: direct
+ * children keep their content height, so a child that clips its overflow is not squashed. A direct child marked with
+ * `data-popover-shrink` opts out: it shrinks to the room the panel has left and scrolls inside itself, for a panel
+ * with a fixed header above its own scrolling list.
  * @param props - Radix content properties. `align` defaults to `center`, `sideOffset` to 6px and `collisionPadding`
  *   to 10px.
  * @returns The portaled panel.
@@ -65,7 +68,7 @@ function PopoverContent({
             sideOffset={sideOffset}
             collisionPadding={collisionPadding}
             className={cn(
-              "z-50 flex max-h-(--radix-popover-content-available-height) w-72 max-w-[calc(100vw-20px)] origin-(--radix-popover-content-transform-origin) flex-col gap-2.5 overflow-y-auto overscroll-contain *:shrink-0 rounded-(--radius-panel) border border-border bg-surface-raised p-(--space-4) text-sm leading-(--leading-body) text-foreground shadow-(--shadow-floating) outline-hidden",
+              "z-50 flex max-h-(--radix-popover-content-available-height) w-72 max-w-[calc(100vw-20px)] origin-(--radix-popover-content-transform-origin) flex-col gap-2.5 overflow-y-auto overscroll-contain *:not-data-popover-shrink:shrink-0 *:data-popover-shrink:min-h-0 rounded-(--radius-panel) border border-border bg-surface-raised p-(--space-4) text-sm leading-(--leading-body) text-foreground shadow-(--shadow-floating) outline-hidden",
               className
             )}
             {...props}
