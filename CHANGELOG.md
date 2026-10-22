@@ -11,10 +11,12 @@ Todos los cambios relevantes de `@golfo/ui` se documentan en este archivo con el
 
 ### Changed
 
+- `RadioGroup` acepta `value={null}` para seguir controlado sin ninguna opción elegida, así los formularios ya no tienen que pasar `undefined` mientras falta la elección.
 - Cada versión se publica recién cuando el CI de su commit (incluidas las pruebas de navegador en Chromium y WebKit) termina en verde; el workflow de release ya no repite esas pruebas, así que las versiones nuevas llegan antes a npm.
 
 ### Fixed
 
+- `RadioGroup` ya no muestra en la consola el aviso de React «changing from uncontrolled to controlled» al elegir la primera opción, tanto sin `defaultValue` como con un valor controlado que arranca vacío.
 - `EmptyState` vuelve a animar la altura al cambiar el título o la descripción aunque el dispositivo esté ocupado y tarde en pintar el primer cuadro; antes, en ese caso, el bloque saltaba a la altura nueva sin transición.
 
 ## [2.0.0] - 2026-10-19
