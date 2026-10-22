@@ -4,6 +4,8 @@ Todos los cambios relevantes de `@golfo/ui` se documentan en este archivo con el
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-22
+
 ### Added
 
 - Componentes de tipografía con el estilo de Arc, que también funcionan en Server Components: `Heading` y `H1` a `H6`; `Text`, `Lead`, `Small`, `Blockquote`, `Pre` y `Address`; `Strong`, `B`, `Em`, `I`, `U`, `S`, `Del`, `Ins`, `Mark`, `Code`, `Kbd`, `Samp`, `Var`, `Abbr`, `Cite`, `Dfn`, `Q`, `Sub`, `Sup` y `Time`; y `List`, `OrderedList`, `ListItem`, `DescriptionList`, `DescriptionTerm` y `DescriptionDetails`. Se importan desde la raíz o desde `@golfo/ui/heading`, `@golfo/ui/text`, `@golfo/ui/inline-text` y `@golfo/ui/list`.
