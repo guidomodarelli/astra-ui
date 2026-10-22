@@ -12,6 +12,7 @@ import { animate, motion } from "motion/react";
 
 import {
   RADIO_GROUP_DOT_HIDDEN_SCALE,
+  RADIO_GROUP_NO_SELECTION_SUFFIX,
   RADIO_GROUP_OPTION_ID_SUFFIX,
   RADIO_GROUP_READY_ATTRIBUTE,
 } from "../constants/radio-group.js";
@@ -25,8 +26,19 @@ const CHECKED_OPTION_SELECTOR = '[data-slot="radio-group-option"]:has([data-slot
 /** Selector of every option row, observed so the highlight follows rows that resize. */
 const OPTION_SELECTOR = '[data-slot="radio-group-option"]';
 
-/** Radix's value for "nothing selected": no option uses it, and it keeps the root controlled from the first render. */
-const NO_SELECTION = "";
+/**
+ * Builds the value Radix holds while nothing is selected, so the root stays controlled from the first render. It starts
+ * from the group's generated id and grows until no option uses it, so even an option valued `""` is never preselected.
+ * @param generatedId - The group's unique generated id.
+ * @param options - The group's options, whose values the result must avoid.
+ * @returns A value that matches no option.
+ */
+function getNoSelectionValue(generatedId: string, options: RadioGroupOption[]) {
+  const optionValues = new Set(options.map((option) => option.value));
+  let noSelectionValue = `${generatedId}-${RADIO_GROUP_NO_SELECTION_SUFFIX}`;
+  while (optionValues.has(noSelectionValue)) noSelectionValue = `${noSelectionValue}-${RADIO_GROUP_NO_SELECTION_SUFFIX}`;
+  return noSelectionValue;
+}
 
 /** The value chosen in the enclosing group, read by each option to spring its dot in or out. */
 const RadioGroupValueContext = createContext<string | undefined>(undefined);
@@ -222,7 +234,7 @@ function RadioGroup({
       <RadioGroupPrimitive.Root
         asChild
         name={name ?? generatedId}
-        value={selectedValue ?? NO_SELECTION}
+        value={selectedValue ?? getNoSelectionValue(generatedId, options)}
         onValueChange={(nextValue) => {
           if (!isControlled) setUncontrolledValue(nextValue);
           onValueChange?.(nextValue);

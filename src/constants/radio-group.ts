@@ -11,3 +11,6 @@ export const RADIO_GROUP_OPTION_ID_SUFFIX = {
   label: "label",
   description: "description",
 } as const
+
+/** Suffix of the group's generated id that names its "nothing selected" value for Radix. */
+export const RADIO_GROUP_NO_SELECTION_SUFFIX = "no-selection"
