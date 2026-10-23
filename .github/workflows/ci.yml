@@ -23,6 +23,9 @@ jobs:
     # Linux only: the suite checks browser behavior, which does not depend on the runner's OS, and
     # local development already runs it on Windows.
     runs-on: ubuntu-latest
+    # A normal run takes about 5 minutes; the limit stops a hung step (like playwright install)
+    # instead of letting it run for hours.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -49,6 +52,7 @@ jobs:
     # instead of sharing the 4 vCPU of a single runner.
     name: browser (${{ matrix.shard }}/${{ strategy.job-total }})
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
