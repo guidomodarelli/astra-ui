@@ -3,12 +3,21 @@ on:
   push:
     branches: [main]
   pull_request:
+  # The Release workflow runs this same CI on the exact release commit, so a later push to main
+  # that cancels the push run of that commit does not block the publication.
+  workflow_call:
+    inputs:
+      ref:
+        description: "Commit to validate"
+        required: true
+        type: string
 permissions:
   contents: read
-# A new push to a pull request cancels the run of the commit it replaces; pushes to main always finish.
+# A new run cancels the previous run on the same ref (a pull request or main). A run called by
+# Release gets its own group per commit, so pushes never cancel it.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ci-${{ inputs.ref || github.ref }}
+  cancel-in-progress: true
 jobs:
   validate:
     # Linux only: the suite checks browser behavior, which does not depend on the runner's OS, and
@@ -16,6 +25,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          # Empty on push and pull_request, so checkout uses the commit of the event.
+          ref: ${{ inputs.ref }}
       - uses: actions/setup-node@v7.0.0
         with:
           node-version-file: .nvmrc
@@ -43,6 +55,8 @@ jobs:
         shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
       - uses: actions/setup-node@v7.0.0
         with:
           node-version-file: .nvmrc
